@@ -1,0 +1,211 @@
+openapi: 3.0.0
+info:
+  title: Fine-Tuning API
+  version: 1.0.0
+  description: API for fine-tuning Hugging Face (HF) models on HF data or private data.
+
+paths:
+  /train/hf-data:
+    post:
+      summary: Train HF models on HF data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model_id:
+                  type: string
+                  description: The ID of the HF model to train
+                data_id:
+                  type: string
+                  description: The ID of the HF dataset to use
+                batch_rate:
+                  type: number
+                  description: The batch rate for training
+                learning_rate_multiplier:
+                  type: number
+                  description: The learning rate multiplier
+                epochs:
+                  type: integer
+                  description: The number of epochs
+      responses:
+        '202':
+          description: Training job started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    description: The ID of the training job
+
+  /train/private-data:
+    post:
+      summary: Train HF models on private data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model_id:
+                  type: string
+                  description: The ID of the HF model to train
+                data_id:
+                  type: string
+                  description: The ID of the private dataset to use
+                batch_rate:
+                  type: number
+                  description: The batch rate for training
+                learning_rate_multiplier:
+                  type: number
+                  description: The learning rate multiplier
+                epochs:
+                  type: integer
+                  description: The number of epochs
+      responses:
+        '202':
+          description: Training job started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    description: The ID of the training job
+
+  /upload/data:
+    post:
+      summary: Upload training data
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The training data file to upload
+      responses:
+        '201':
+          description: Data uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data_id:
+                    type: string
+                    description: The ID of the uploaded data
+
+  /job/status/{job_id}:
+    get:
+      summary: Check status of a fine-tuning job
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the job to check
+      responses:
+        '200':
+          description: Job status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - In Progress
+                      - Completed
+                      - Failed
+
+  /job/stop/{job_id}:
+    post:
+      summary: Stop a fine-tuning job
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the job to stop
+      responses:
+        '200':
+          description: Job stopped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Confirmation message
+
+  /job/failure-reason/{job_id}:
+    get:
+      summary: Get reason for job failure
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the failed job
+      responses:
+        '200':
+          description: Failure reason retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reason:
+                    type: string
+                    description: Reason for the job failure
+
+  /jobs:
+    get:
+      summary: Fetch list of all jobs
+      responses:
+        '200':
+          description: List of jobs retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    job_id:
+                      type: string
+                      description: The ID of the job
+                    status:
+                      type: string
+                      description: The status of the job
+
+components:
+  schemas:
+    TrainingParameters:
+      type: object
+      properties:
+        model_id:
+          type: string
+        data_id:
+          type: string
+        batch_rate:
+          type: number
+        learning_rate_multiplier:
+          type: number
+        epochs:
+          type: integer
