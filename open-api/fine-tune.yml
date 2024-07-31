@@ -2,88 +2,18 @@ openapi: 3.0.0
 info:
   title: Fine-Tuning API
   version: 1.0.0
-  description: API for fine-tuning Hugging Face (HF) models on HF data or private data.
+  description: API for fine-tuning large language models with custom datasets
+
+servers:
+  - url: https://api.luminolabs.ai/v1
 
 paths:
-  /train/hf-data:
+  /files:
     post:
-      summary: Train HF models on HF data
+      summary: Upload a file
+      description: Upload a dataset file for fine-tuning
+      operationId: uploadFile
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                model_id:
-                  type: string
-                  description: The ID of the HF model to train
-                data_id:
-                  type: string
-                  description: The ID of the HF dataset to use
-                batch_rate:
-                  type: number
-                  description: The batch rate for training
-                learning_rate_multiplier:
-                  type: number
-                  description: The learning rate multiplier
-                epochs:
-                  type: integer
-                  description: The number of epochs
-      responses:
-        '202':
-          description: Training job started
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  job_id:
-                    type: string
-                    description: The ID of the training job
-
-  /train/private-data:
-    post:
-      summary: Train HF models on private data
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                model_id:
-                  type: string
-                  description: The ID of the HF model to train
-                data_id:
-                  type: string
-                  description: The ID of the private dataset to use
-                batch_rate:
-                  type: number
-                  description: The batch rate for training
-                learning_rate_multiplier:
-                  type: number
-                  description: The learning rate multiplier
-                epochs:
-                  type: integer
-                  description: The number of epochs
-      responses:
-        '202':
-          description: Training job started
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  job_id:
-                    type: string
-                    description: The ID of the training job
-
-  /upload/data:
-    post:
-      summary: Upload training data
-      requestBody:
-        required: true
         content:
           multipart/form-data:
             schema:
@@ -92,120 +22,204 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: The training data file to upload
       responses:
-        '201':
-          description: Data uploaded successfully
+        '200':
+          description: Successful response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data_id:
-                    type: string
-                    description: The ID of the uploaded data
+                $ref: '#/components/schemas/File'
 
-  /job/status/{job_id}:
+  /files/{fileId}:
     get:
-      summary: Check status of a fine-tuning job
+      summary: Retrieve file information
+      description: Get information about an uploaded file
+      operationId: getFile
       parameters:
-        - in: path
-          name: job_id
+        - name: fileId
+          in: path
           required: true
           schema:
             type: string
-          description: The ID of the job to check
       responses:
         '200':
-          description: Job status retrieved
+          description: Successful response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - In Progress
-                      - Completed
-                      - Failed
+                $ref: '#/components/schemas/File'
 
-  /job/stop/{job_id}:
+  /fine-tuning:
     post:
-      summary: Stop a fine-tuning job
-      parameters:
-        - in: path
-          name: job_id
-          required: true
-          schema:
-            type: string
-          description: The ID of the job to stop
+      summary: Create a fine-tuning job
+      description: Start a new fine-tuning job
+      operationId: createFineTuningJob
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FineTuningJobCreate'
       responses:
         '200':
-          description: Job stopped successfully
+          description: Successful response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Confirmation message
+                $ref: '#/components/schemas/FineTuningJob'
 
-  /job/failure-reason/{job_id}:
+  /fine-tuning/{jobId}:
     get:
-      summary: Get reason for job failure
+      summary: Retrieve fine-tuning job
+      description: Get information about a fine-tuning job
+      operationId: getFineTuningJob
       parameters:
-        - in: path
-          name: job_id
+        - name: jobId
+          in: path
           required: true
           schema:
             type: string
-          description: The ID of the failed job
       responses:
         '200':
-          description: Failure reason retrieved
+          description: Successful response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  reason:
-                    type: string
-                    description: Reason for the job failure
+                $ref: '#/components/schemas/FineTuningJob'
 
-  /jobs:
+  /models:
     get:
-      summary: Fetch list of all jobs
+      summary: List available models
+      description: Get a list of models available for fine-tuning
+      operationId: listModels
       responses:
         '200':
-          description: List of jobs retrieved
+          description: Successful response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    job_id:
-                      type: string
-                      description: The ID of the job
-                    status:
-                      type: string
-                      description: The status of the job
+                  $ref: '#/components/schemas/Model'
+
+  /models/{modelId}/deploy:
+    post:
+      summary: Deploy a fine-tuned model
+      description: Deploy a fine-tuned model for inference
+      operationId: deployModel
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelDeploy'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeployedModel'
 
 components:
   schemas:
-    TrainingParameters:
+    File:
       type: object
       properties:
-        model_id:
+        id:
           type: string
-        data_id:
+        filename:
           type: string
-        batch_rate:
-          type: number
-        learning_rate_multiplier:
-          type: number
-        epochs:
+        bytes:
           type: integer
+        created_at:
+          type: integer
+        status:
+          type: string
+          enum: [pending, processed]
+
+    FineTuningJobCreate:
+      type: object
+      required:
+        - training_file
+        - model
+      properties:
+        training_file:
+          type: string
+        model:
+          type: string
+        suffix:
+          type: string
+        n_epochs:
+          type: integer
+        batch_size:
+          type: integer
+        learning_rate:
+          type: number
+        lora:
+          type: boolean
+        lora_r:
+          type: integer
+        lora_alpha:
+          type: integer
+        lora_dropout:
+          type: number
+        wandb_api_key:
+          type: string
+
+    FineTuningJob:
+      type: object
+      properties:
+        id:
+          type: string
+        training_file:
+          type: string
+        model:
+          type: string
+        status:
+          type: string
+          enum: [pending, queued, running, uploading, completed, failed]
+        created_at:
+          type: integer
+        finished_at:
+          type: integer
+        fine_tuned_model:
+          type: string
+
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        context_length:
+          type: integer
+        max_batch_size:
+          type: integer
+        min_batch_size:
+          type: integer
+
+    ModelDeploy:
+      type: object
+      required:
+        - hardware
+      properties:
+        hardware:
+          type: string
+          enum: [RTX6000, L40, L40S, A100, H100]
+
+    DeployedModel:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [deploying, ready, failed]
+        endpoint:
+          type: string
