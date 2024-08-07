@@ -52,66 +52,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /billing/invoices:
-    get:
-      summary: List all invoices for the current user
-      tags:
-        - Billing
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-        - in: query
-          name: per_page
-          schema:
-            type: integer
-            default: 10
-      responses:
-        '200':
-          description: Invoices retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Invoice'
-                  pagination:
-                    $ref: '#/components/schemas/PaginationInfo'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /billing/invoices/{invoice_id}:
-    get:
-      summary: Get details of a specific invoice
-      tags:
-        - Billing
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: invoice_id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Invoice details retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
 components:
   schemas:
     BillingSummary:
@@ -167,53 +107,6 @@ components:
                 type: number
                 format: float
 
-    Invoice:
-      type: object
-      properties:
-        id:
-          type: string
-        invoice_number:
-          type: string
-        issue_date:
-          type: string
-          format: date
-        due_date:
-          type: string
-          format: date
-        total_amount:
-          type: number
-          format: float
-        status:
-          type: string
-          enum: [paid, unpaid, overdue]
-        line_items:
-          type: array
-          items:
-            type: object
-            properties:
-              description:
-                type: string
-              quantity:
-                type: number
-              unit_price:
-                type: number
-                format: float
-              total:
-                type: number
-                format: float
-
-    PaginationInfo:
-      type: object
-      properties:
-        total:
-          type: integer
-        per_page:
-          type: integer
-        current_page:
-          type: integer
-        last_page:
-          type: integer
-
     Error:
       type: object
       properties:
@@ -234,13 +127,6 @@ components:
 
     Unauthorized:
       description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: Resource not found
       content:
         application/json:
           schema:
