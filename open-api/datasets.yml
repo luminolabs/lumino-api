@@ -5,7 +5,7 @@ info:
   description: API for managing dataset files
 
 paths:
-  /datasets:
+  /v1/datasets:
     post:
       summary: Upload a new dataset file
       requestBody:
@@ -44,7 +44,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Dataset'
 
-  /datasets/{dataset_id}:
+  /v1/datasets/{dataset_id}:
     get:
       summary: Get information about a specific dataset
       parameters:
@@ -81,7 +81,7 @@ paths:
                     type: boolean
                     description: Indicates whether the deletion was successful
 
-  /datasets/{dataset_id}/download:
+  /v1/datasets/{dataset_id}/download:
     get:
       summary: Download a specific dataset file
       parameters:

@@ -5,7 +5,7 @@ info:
   description: API for retrieving information about available LLM models
 
 paths:
-  /models:
+  /v1/models:
     get:
       summary: List all available LLM models
       description: Retrieve a list of all available LLM models with basic information
@@ -29,7 +29,7 @@ paths:
                           type: string
                           description: Brief description of the model's capabilities or use cases
 
-  /models/{model_name}:
+  /v1/models/{model_name}:
     get:
       summary: Get detailed information about a specific model
       description: Retrieve detailed information about a specific LLM model

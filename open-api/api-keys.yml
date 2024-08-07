@@ -5,7 +5,7 @@ info:
   description: API for managing API keys for user authentication
 
 paths:
-  /api-keys:
+  /v1/api-keys:
     get:
       summary: List all API keys for the current user
       tags:
@@ -53,7 +53,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api-keys/{key_id}:
+  /v1/api-keys/{key_id}:
     get:
       summary: Get details of a specific API key
       tags:

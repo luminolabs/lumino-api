@@ -5,7 +5,7 @@ info:
   description: API for user management and authentication
 
 paths:
-  /users:
+  /v1/users:
     post:
       summary: Create a new user account (Sign up)
       tags:
@@ -26,7 +26,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /users/login:
+  /v1/users/login:
     post:
       summary: User login (Sign in)
       tags:
@@ -47,7 +47,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /users/me:
+  /v1/users/me:
     get:
       summary: Get current user information
       tags:
@@ -88,7 +88,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /users/{user_id}:
+  /v1/users/{user_id}:
     delete:
       summary: Delete user account (Internal API)
       description: This is an internal API for administrative or automated account removal.
@@ -113,7 +113,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /users/logout:
+  /v1/users/logout:
     post:
       summary: User logout
       tags:
@@ -126,7 +126,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /users/password-reset:
+  /v1/users/password-reset:
     post:
       summary: Request password reset
       tags:
@@ -147,7 +147,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /users/password-reset/{token}:
+  /v1/users/password-reset/{token}:
     post:
       summary: Reset password with token
       tags:

@@ -5,7 +5,7 @@ info:
   description: API for retrieving billing information and usage details
 
 paths:
-  /billing/summary:
+  /v1/billing/summary:
     get:
       summary: Get billing summary for the current user, grouped by service
       tags:
@@ -35,7 +35,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /billing/usage:
+  /v1/billing/usage:
     get:
       summary: Get detailed usage information for a specified period
       tags:

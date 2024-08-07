@@ -5,7 +5,7 @@ info:
   description: API for managing fine-tuning jobs for language models
 
 paths:
-  /fine-tuning-jobs:
+  /v1/fine-tuning:
     post:
       summary: Create a new fine-tuning job
       requestBody:
@@ -53,7 +53,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/FineTuningJobSummary'
 
-  /fine-tuning-jobs/{job_id}:
+  /v1/fine-tuning/{job_id}:
     get:
       summary: Get details of a specific fine-tuning job
       parameters:
@@ -70,7 +70,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/FineTuningJobDetail'
 
-  /fine-tuning-jobs/{job_id}/cancel:
+  /v1/fine-tuning/{job_id}/cancel:
     post:
       summary: Cancel a fine-tuning job (Internal API)
       parameters:
@@ -83,7 +83,7 @@ paths:
         '200':
           description: Job cancelled successfully
 
-  /fine-tuning-jobs/{job_id}/results:
+  /v1/fine-tuning/{job_id}/results:
     get:
       summary: Get results of a completed fine-tuning job
       parameters:
@@ -100,7 +100,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/FineTuningJobResults'
 
-  /fine-tuning-jobs/{job_id}/logs:
+  /v1/fine-tuning/{job_id}/logs:
     get:
       summary: Get logs of a fine-tuning job
       parameters:

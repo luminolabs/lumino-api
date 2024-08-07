@@ -3,7 +3,7 @@ info:
   title: Inference API
   version: 1.2.0
 paths:
-  /inference-endpoints:
+  /v1/inference:
     post:
       summary: Create a new inference endpoint
       requestBody:
@@ -43,7 +43,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/InferenceEndpoint'
 
-  /inference-endpoints/{endpoint_id}:
+  /v1/inference/{endpoint_id}:
     get:
       summary: Get information about a specific inference endpoint
       parameters:
@@ -72,7 +72,7 @@ paths:
         '204':
           description: Successful deletion
 
-  /inference-endpoints/{endpoint_id}/prompts:
+  /v1/inference/{endpoint_id}/prompts:
     post:
       summary: Send a prompt to the model
       parameters:
@@ -126,7 +126,7 @@ paths:
                   pagination:
                     $ref: '#/components/schemas/Pagination'
 
-  /inference-endpoints/{endpoint_id}/prompts/{prompt_id}:
+  /v1/inference/{endpoint_id}/prompts/{prompt_id}:
     get:
       summary: Get a single prompt by ID
       parameters:
