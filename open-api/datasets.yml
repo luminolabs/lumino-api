@@ -1,0 +1,122 @@
+openapi: 3.0.0
+info:
+  title: Datasets API
+  version: 1.0.0
+  description: API for managing dataset files
+
+paths:
+  /datasets:
+    post:
+      summary: Upload a new dataset file
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: JSONL file in OpenAI format
+                name:
+                  type: string
+                  description: User-assigned name for the dataset
+                description:
+                  type: string
+                  description: User-provided description of the dataset
+      responses:
+        '201':
+          description: Successfully uploaded dataset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+    
+    get:
+      summary: List all datasets uploaded by the user
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dataset'
+
+  /datasets/{dataset_id}:
+    get:
+      summary: Get information about a specific dataset
+      parameters:
+        - name: dataset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+    
+    delete:
+      summary: Delete a specific dataset file
+      parameters:
+        - name: dataset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully deleted dataset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the deletion was successful
+
+  /datasets/{dataset_id}/download:
+    get:
+      summary: Download a specific dataset file
+      parameters:
+        - name: dataset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/jsonl:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    Dataset:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the dataset
+        name:
+          type: string
+          description: User-assigned name of the dataset
+        description:
+          type: string
+          description: User-provided description of the dataset
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of when the dataset was uploaded
+        file_size:
+          type: integer
+          description: Size of the dataset file in bytes

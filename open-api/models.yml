@@ -1,0 +1,78 @@
+openapi: 3.0.0
+info:
+  title: Models API
+  version: 1.0.0
+  description: API for retrieving information about available LLM models
+
+paths:
+  /models:
+    get:
+      summary: List all available LLM models
+      description: Retrieve a list of all available LLM models with basic information
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:    
+              schema:
+                type: object
+                properties:
+                  models:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Model name (Hugging Face ID, e.g., llama3-8b-instruct, mixtral-7x8b-v0.1)
+                        description:
+                          type: string
+                          description: Brief description of the model's capabilities or use cases
+
+  /models/{model_name}:
+    get:
+      summary: Get detailed information about a specific model
+      description: Retrieve detailed information about a specific LLM model
+      parameters:
+        - name: model_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name of the model to retrieve information for
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: Model name (Hugging Face ID)
+                  description:
+                    type: string
+                    description: Detailed description of the model
+                  needs_hf_access:
+                    type: boolean
+                    description: Whether Hugging Face access is required to use this model
+                  metadata:
+                    type: object
+                    description: Additional metadata about the model
+                    properties:
+                      release_date:
+                        type: string
+                        format: date
+                        description: The date when the model was released or last updated
+                    additionalProperties: true
+        '404':
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating that the requested model was not found

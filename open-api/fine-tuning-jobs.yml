@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  title: Fine-tune-jobs API
+  version: 1.0.3
+  description: API for managing fine-tuning jobs for language models
+
+paths:
+  /fine-tuning-jobs:
+    post:
+      summary: Create a new fine-tuning job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                base_model:
+                  type: string
+                  description: The base model to fine-tune
+                dataset:
+                  type: string
+                  description: The dataset to use for fine-tuning
+                parameters:
+                  type: object
+                  description: Parameters for the fine-tuning job
+                  properties:
+                    num_epochs:
+                      type: integer
+                      example: 3
+                    learning_rate:
+                      type: number
+                      format: float
+                      example: 0.00002
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJobDetail'
+    
+    get:
+      summary: List all fine-tuning jobs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FineTuningJobSummary'
+
+  /fine-tuning-jobs/{job_id}:
+    get:
+      summary: Get details of a specific fine-tuning job
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJobDetail'
+
+  /fine-tuning-jobs/{job_id}/cancel:
+    post:
+      summary: Cancel a fine-tuning job (Internal API)
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job cancelled successfully
+
+  /fine-tuning-jobs/{job_id}/results:
+    get:
+      summary: Get results of a completed fine-tuning job
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJobResults'
+
+  /fine-tuning-jobs/{job_id}/logs:
+    get:
+      summary: Get logs of a fine-tuning job
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  schemas:
+    FineTuningJobSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        current_step:
+          type: integer
+        total_steps:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        base_model:
+          type: string
+        dataset:
+          type: string
+        run_time:
+          type: number
+        num_tokens:
+          type: integer
+          description: Number of tokens processed in the fine-tuning job
+          example: 1000000
+
+    FineTuningJobDetail:
+      allOf:
+        - $ref: '#/components/schemas/FineTuningJobSummary'
+        - type: object
+          properties:
+            parameters:
+              type: object
+              properties:
+                num_epochs:
+                  type: integer
+                  example: 3
+                learning_rate:
+                  type: number
+                  format: float
+                  example: 0.00002
+              additionalProperties: true
+            current_epoch:
+              type: integer
+              example: 2
+            total_epochs:
+              type: integer
+              example: 3
+            metrics:
+              type: object
+              properties:
+                loss:
+                  type: number
+                  format: float
+                  example: 0.1234
+              additionalProperties: true
+
+    FineTuningJobResults:
+      type: object
+      properties:
+        artifacts:
+          type: array
+          items:
+            type: object
+            properties:
+              file_name:
+                type: string
+              file_type:
+                type: string
+              url:
+                type: string
+          example:
+            - file_name: hf_0001_0001.pt
+              file_type: weight
+              url: https://example.com/artifacts/hf_0001_0001.pt

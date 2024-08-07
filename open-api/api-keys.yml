@@ -1,0 +1,235 @@
+openapi: 3.0.0
+info:
+  title: API Keys Management API
+  version: 1.0.0
+  description: API for managing API keys for user authentication
+
+paths:
+  /api-keys:
+    get:
+      summary: List all API keys for the current user
+      tags:
+        - API Keys
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: API keys retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKey'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create a new API key for the current user
+      tags:
+        - API Keys
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyCreate'
+      responses:
+        '201':
+          description: API key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyWithSecret'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api-keys/{key_id}:
+    get:
+      summary: Get details of a specific API key
+      tags:
+        - API Keys
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: key_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API key details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update a specific API key
+      tags:
+        - API Keys
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: key_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyUpdate'
+      responses:
+        '200':
+          description: API key updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a specific API key
+      tags:
+        - API Keys
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: key_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: API key deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    ApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        prefix:
+          type: string
+          description: First few characters of the API key
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    ApiKeyWithSecret:
+      allOf:
+        - $ref: '#/components/schemas/ApiKey'
+        - type: object
+          properties:
+            secret:
+              type: string
+              description: Full API key secret (only returned on creation)
+
+    ApiKeyCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: A descriptive name for the API key
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date for the API key
+
+    ApiKeyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: A new descriptive name for the API key
+        expires_at:
+          type: string
+          format: date-time
+          description: New expiration date for the API key
+
+    PaginationInfo:
+      type: object
+      properties:
+        total:
+          type: integer
+        per_page:
+          type: integer
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

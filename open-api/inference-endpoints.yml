@@ -1,0 +1,214 @@
+openapi: 3.0.0
+info:
+  title: Inference API
+  version: 1.2.0
+paths:
+  /inference-endpoints:
+    post:
+      summary: Create a new inference endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fine_tuning_job_id:
+                  type: string
+                machine_type:
+                  type: string
+                  description: Type of machine to use for inference (documented externally)
+                parameters:
+                  type: object
+                  description: Additional parameters for endpoint configuration
+                  example:
+                    quantization: "8-bit"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferenceEndpoint'
+    
+    get:
+      summary: List all inference endpoints
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InferenceEndpoint'
+
+  /inference-endpoints/{endpoint_id}:
+    get:
+      summary: Get information about a specific inference endpoint
+      parameters:
+        - name: endpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferenceEndpoint'
+    
+    delete:
+      summary: Delete a specific inference endpoint
+      parameters:
+        - name: endpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successful deletion
+
+  /inference-endpoints/{endpoint_id}/prompts:
+    post:
+      summary: Send a prompt to the model
+      parameters:
+        - name: endpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromptRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+    
+    get:
+      summary: Retrieve conversation history
+      parameters:
+        - name: endpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prompts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Prompt'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /inference-endpoints/{endpoint_id}/prompts/{prompt_id}:
+    get:
+      summary: Get a single prompt by ID
+      parameters:
+        - name: endpoint_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: prompt_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+
+components:
+  schemas:
+    InferenceEndpoint:
+      type: object
+      properties:
+        id:
+          type: string
+        fine_tuning_job_id:
+          type: string
+        machine_type:
+          type: string
+        parameters:
+          type: object
+          description: Additional parameters for endpoint configuration
+          example:
+            quantization: "8-bit"
+        status:
+          type: string
+          enum: [creating, ready, error]
+        created_at:
+          type: string
+          format: date-time
+        total_running_time:
+          type: number
+        total_tokens_used:
+          type: integer
+
+    PromptRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+
+    Prompt:
+      type: object
+      properties:
+        id:
+          type: string
+        prompt:
+          type: string
+        response:
+          type: string
+        tokens_used:
+          type: object
+          properties:
+            input:
+              type: integer
+            output:
+              type: integer
+        processing_time:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
