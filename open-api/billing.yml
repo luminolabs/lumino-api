@@ -1,30 +1,13 @@
 openapi: 3.0.0
 info:
   title: Billing API
-  version: 1.0.0
+  version: 1.1.0
   description: API for retrieving billing information and usage details
 
 paths:
   /billing/summary:
     get:
-      summary: Get billing summary for the current user
-      tags:
-        - Billing
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: Billing summary retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BillingSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /billing/usage:
-    get:
-      summary: Get detailed usage information for the current billing period
+      summary: Get billing summary for the current user, grouped by service
       tags:
         - Billing
       security:
@@ -42,6 +25,38 @@ paths:
             format: date
       responses:
         '200':
+          description: Billing summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/usage:
+    get:
+      summary: Get detailed usage information for a specified period
+      tags:
+        - Billing
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+          required: true
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        '200':
           description: Usage information retrieved successfully
           content:
             application/json:
@@ -57,9 +72,7 @@ components:
     BillingSummary:
       type: object
       properties:
-        current_plan:
-          type: string
-        billing_period:
+        period:
           type: object
           properties:
             start_date:
@@ -68,15 +81,22 @@ components:
             end_date:
               type: string
               format: date
-        total_usage:
+        total_cost:
           type: number
           format: float
-        current_balance:
-          type: number
-          format: float
-        next_invoice_estimate:
-          type: number
-          format: float
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              service:
+                type: string
+              usage:
+                type: number
+                format: float
+              cost:
+                type: number
+                format: float
 
     UsageDetails:
       type: object
@@ -90,14 +110,17 @@ components:
             end_date:
               type: string
               format: date
-        total_usage:
+        total_cost:
           type: number
           format: float
-        breakdown:
+        usage_records:
           type: array
           items:
             type: object
             properties:
+              date:
+                type: string
+                format: date
               service:
                 type: string
               usage:
