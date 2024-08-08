@@ -8,6 +8,10 @@ paths:
   /v1/datasets:
     post:
       summary: Upload a new dataset file
+      tags:
+        - Datasets
+      security:
+        - BearerAuth: []
       requestBody:
         content:
           multipart/form-data:
@@ -18,7 +22,7 @@ paths:
                   type: string
                   format: binary
                   description: JSONL file in OpenAI format
-                name:
+                id:
                   type: string
                   description: User-assigned name for the dataset
                 description:
@@ -38,6 +42,10 @@ paths:
 
     get:
       summary: List all datasets uploaded by the user
+      tags:
+        - Datasets
+      security:
+        - BearerAuth: []
       parameters:
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/ItemsPerPageParam'
@@ -61,6 +69,10 @@ paths:
   /v1/datasets/{dataset_id}:
     get:
       summary: Get information about a specific dataset
+      tags:
+        - Datasets
+      security:
+        - BearerAuth: []
       parameters:
         - name: dataset_id
           in: path
@@ -81,23 +93,20 @@ paths:
 
     delete:
       summary: Delete a specific dataset file
+      tags:
+        - Datasets
+      security:
+        - BearerAuth: []
       parameters:
         - name: dataset_id
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
-        '200':
+        '204':
           description: Successfully deleted dataset
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    description: Indicates whether the deletion was successful
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -106,6 +115,10 @@ paths:
   /v1/datasets/{dataset_id}/download:
     get:
       summary: Download a specific dataset file
+      tags:
+        - Datasets
+      security:
+        - BearerAuth: []
       parameters:
         - name: dataset_id
           in: path
@@ -132,20 +145,19 @@ components:
       properties:
         id:
           type: string
-          description: Unique identifier for the dataset
-        name:
-          type: string
-          description: User-assigned name of the dataset
-        description:
-          type: string
-          description: User-provided description of the dataset
         created_at:
           type: string
           format: date-time
-          description: Timestamp of when the dataset was uploaded
+        status:
+          type: string
+          enum: [uploaded, validated, error]
+        description:
+          type: string
         file_size:
           type: integer
-          description: Size of the dataset file in bytes
+        errors:
+          type: object
+          nullable: true
 
     Pagination:
       type: object
@@ -237,3 +249,8 @@ components:
         minimum: 1
         maximum: 100
       description: Number of items to return per page
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

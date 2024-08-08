@@ -1,28 +1,23 @@
 openapi: 3.0.0
 info:
   title: Inference API
-  version: 1.2.0
+  version: 1.0.0
+  description: API for managing inference endpoints and performing inference queries
+
 paths:
   /v1/inference:
     post:
       summary: Create a new inference endpoint
+      tags:
+        - Inference Endpoints
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                fine_tuning_job_id:
-                  type: string
-                machine_type:
-                  type: string
-                  description: Type of machine to use for inference (documented externally)
-                parameters:
-                  type: object
-                  description: Additional parameters for endpoint configuration
-                  example:
-                    quantization: "8-bit"
+              $ref: '#/components/schemas/InferenceEndpointCreate'
       responses:
         '201':
           description: Created
@@ -37,6 +32,10 @@ paths:
 
     get:
       summary: List all inference endpoints
+      tags:
+        - Inference Endpoints
+      security:
+        - BearerAuth: []
       parameters:
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/ItemsPerPageParam'
@@ -60,6 +59,10 @@ paths:
   /v1/inference/{endpoint_id}:
     get:
       summary: Get information about a specific inference endpoint
+      tags:
+        - Inference Endpoints
+      security:
+        - BearerAuth: []
       parameters:
         - name: endpoint_id
           in: path
@@ -80,6 +83,10 @@ paths:
 
     delete:
       summary: Delete a specific inference endpoint
+      tags:
+        - Inference Endpoints
+      security:
+        - BearerAuth: []
       parameters:
         - name: endpoint_id
           in: path
@@ -97,6 +104,10 @@ paths:
   /v1/inference/{endpoint_id}/prompts:
     post:
       summary: Send a prompt to the model
+      tags:
+        - Inference Queries
+      security:
+        - BearerAuth: []
       parameters:
         - name: endpoint_id
           in: path
@@ -125,6 +136,10 @@ paths:
 
     get:
       summary: Retrieve conversation history
+      tags:
+        - Inference Queries
+      security:
+        - BearerAuth: []
       parameters:
         - name: endpoint_id
           in: path
@@ -155,6 +170,10 @@ paths:
   /v1/inference/{endpoint_id}/prompts/{prompt_id}:
     get:
       summary: Get a single prompt by ID
+      tags:
+        - Inference Queries
+      security:
+        - BearerAuth: []
       parameters:
         - name: endpoint_id
           in: path
@@ -180,33 +199,49 @@ paths:
 
 components:
   schemas:
-    InferenceEndpoint:
+    InferenceEndpointCreate:
       type: object
+      required:
+        - fine_tuned_model_id
+        - machine_type
+        - parameters
       properties:
-        id:
-          type: string
-        fine_tuning_job_id:
+        fine_tuned_model_id:
           type: string
         machine_type:
           type: string
+          description: Type of machine to use for inference
         parameters:
           type: object
           description: Additional parameters for endpoint configuration
           example:
             quantization: "8-bit"
-        status:
+
+    InferenceEndpoint:
+      type: object
+      properties:
+        id:
           type: string
-          enum: [creating, ready, error]
         created_at:
           type: string
           format: date-time
-        total_running_time:
-          type: number
-        total_tokens_used:
-          type: integer
+        updated_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [new, pending, running, deleted, error]
+        fine_tuned_model_id:
+          type: string
+        machine_type:
+          type: string
+        parameters:
+          type: object
 
     PromptRequest:
       type: object
+      required:
+        - prompt
       properties:
         prompt:
           type: string
@@ -216,22 +251,22 @@ components:
       properties:
         id:
           type: string
-        prompt:
+        created_at:
+          type: string
+          format: date-time
+        inference_endpoint_id:
+          type: string
+        request:
           type: string
         response:
           type: string
-        tokens_used:
-          type: object
-          properties:
-            input:
-              type: integer
-            output:
-              type: integer
-        processing_time:
+        input_tokens:
+          type: integer
+        output_tokens:
+          type: integer
+        response_time:
           type: number
-        timestamp:
-          type: string
-          format: date-time
+          format: float
 
     Pagination:
       type: object
@@ -323,3 +358,8 @@ components:
         minimum: 1
         maximum: 100
       description: Number of items to return per page
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

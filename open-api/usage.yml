@@ -1,15 +1,15 @@
 openapi: 3.0.0
 info:
-  title: Billing API
+  title: Usage API
   version: 1.1.0
-  description: API for retrieving billing information and usage details
+  description: API for retrieving usage information and costs
 
 paths:
-  /v1/billing/summary:
+  /v1/usage/total-cost:
     get:
-      summary: Get billing summary for the current user, grouped by service
+      summary: Get total cost for a given period
       tags:
-        - Billing
+        - Usage
       security:
         - BearerAuth: []
       parameters:
@@ -18,35 +18,30 @@ paths:
           schema:
             type: string
             format: date
+          required: true
         - in: query
           name: end_date
           schema:
             type: string
             format: date
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/ItemsPerPageParam'
+          required: true
       responses:
         '200':
-          description: Billing summary retrieved successfully
+          description: Total cost retrieved successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/BillingSummary'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
+                $ref: '#/components/schemas/TotalCost'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/billing/usage:
+  /v1/usage/records:
     get:
-      summary: Get detailed usage information for a specified period
+      summary: Get a list of usage records for a given period
       tags:
-        - Billing
+        - Usage
       security:
         - BearerAuth: []
       parameters:
@@ -66,14 +61,16 @@ paths:
         - $ref: '#/components/parameters/ItemsPerPageParam'
       responses:
         '200':
-          description: Usage information retrieved successfully
+          description: Usage records retrieved successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/UsageDetails'
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UsageRecord'
                   pagination:
                     $ref: '#/components/schemas/Pagination'
         '400':
@@ -83,72 +80,44 @@ paths:
 
 components:
   schemas:
-    BillingSummary:
+    TotalCost:
       type: object
       properties:
-        period:
-          type: object
-          properties:
-            start_date:
-              type: string
-              format: date
-            end_date:
-              type: string
-              format: date
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
         total_cost:
           type: number
           format: float
-        services:
-          type: array
-          items:
-            type: object
-            properties:
-              service:
-                type: string
-              usage:
-                type: number
-                format: float
-              cost:
-                type: number
-                format: float
 
-    UsageDetails:
+    UsageRecord:
       type: object
       properties:
-        period:
-          type: object
-          properties:
-            start_date:
-              type: string
-              format: date
-            end_date:
-              type: string
-              format: date
-        total_cost:
+        id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        service_name:
+          type: string
+        service_id:
+          type: string
+        usage_amount:
           type: number
           format: float
-        usage_records:
-          type: array
-          items:
-            type: object
-            properties:
-              date:
-                type: string
-                format: date
-              service:
-                type: string
-              service_id:
-                type: string
-              usage:
-                type: number
-                format: float
-              cost:
-                type: number
-                format: float
+        cost:
+          type: number
+          format: float
 
     Pagination:
       type: object
       properties:
+        total_items:
+          type: integer
+          description: Total number of items
         total_pages:
           type: integer
           description: Total number of pages
@@ -196,21 +165,6 @@ components:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
   parameters:
     PageParam:
       in: query
@@ -229,6 +183,21 @@ components:
         minimum: 1
         maximum: 100
       description: Number of items to return per page
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
 
   securitySchemes:
     BearerAuth:

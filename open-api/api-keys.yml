@@ -140,11 +140,6 @@ components:
       properties:
         id:
           type: string
-        name:
-          type: string
-        prefix:
-          type: string
-          description: First few characters of the API key
         created_at:
           type: string
           format: date-time
@@ -154,6 +149,9 @@ components:
         expires_at:
           type: string
           format: date-time
+        prefix:
+          type: string
+          description: First few characters of the API key
 
     ApiKeyWithSecret:
       allOf:
@@ -167,9 +165,9 @@ components:
     ApiKeyCreate:
       type: object
       required:
-        - name
+        - id
       properties:
-        name:
+        id:
           type: string
           description: A descriptive name for the API key
         expires_at:
@@ -180,9 +178,6 @@ components:
     ApiKeyUpdate:
       type: object
       properties:
-        name:
-          type: string
-          description: A new descriptive name for the API key
         expires_at:
           type: string
           format: date-time

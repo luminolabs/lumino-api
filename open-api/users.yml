@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Users API
-  version: 1.0.2
+  version: 1.0.0
   description: API for user management and authentication
 
 paths:
@@ -181,18 +181,18 @@ components:
     UserSignup:
       type: object
       required:
+        - name
         - email
         - password
-        - name
       properties:
+        name:
+          type: string
         email:
           type: string
           format: email
         password:
           type: string
           format: password
-        name:
-          type: string
 
     UserLogin:
       type: object
@@ -212,17 +212,22 @@ components:
       properties:
         id:
           type: string
-        email:
-          type: string
-          format: email
-        name:
-          type: string
         created_at:
           type: string
           format: date-time
+          readOnly: true
         updated_at:
           type: string
           format: date-time
+          readOnly: true
+        status:
+          type: string
+          enum: [active, cancelled, disabled]
+        name:
+          type: string
+        email:
+          type: string
+          format: email
 
     UserUpdate:
       type: object
