@@ -16,6 +16,8 @@ paths:
             type: string
             enum: [base, fine-tuned, all]
           description: Filter models by type (default is all)
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/ItemsPerPageParam'
       responses:
         '200':
           description: Successful response
@@ -24,10 +26,16 @@ paths:
               schema:
                 type: object
                 properties:
-                  models:
+                  data:
                     type: array
                     items:
                       $ref: '#/components/schemas/ModelSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /v1/models/{model_name}:
     get:
@@ -47,12 +55,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ModelDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Model not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/NotFound'
 
 components:
   schemas:
@@ -100,9 +106,93 @@ components:
               description: The date when the model was released or last updated
           additionalProperties: true
 
-    Error:
+    Pagination:
       type: object
       properties:
-        error:
+        total_pages:
+          type: integer
+          description: Total number of pages
+        current_page:
+          type: integer
+          description: Current page number
+        items_per_page:
+          type: integer
+          description: Number of items per page
+        next_page:
+          type: integer
+          nullable: true
+          description: Next page number (null if there is no next page)
+        previous_page:
+          type: integer
+          nullable: true
+          description: Previous page number (null if there is no previous page)
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
           type: string
-          description: Error message indicating why the request failed
+          description: A unique error code that identifies the type of error
+        message:
+          type: string
+          description: A human-readable error message
+        details:
+          type: object
+          description: Additional details about the error, if any
+
+    ErrorResponse:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        request_id:
+          type: string
+          description: A unique identifier for the request, useful for debugging and support
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number to retrieve
+    ItemsPerPageParam:
+      in: query
+      name: items_per_page
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Number of items to return per page

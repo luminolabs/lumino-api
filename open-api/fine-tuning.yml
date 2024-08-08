@@ -40,18 +40,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTuningJobDetail'
-    
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
     get:
       summary: List all fine-tuning jobs
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/ItemsPerPageParam'
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FineTuningJobSummary'
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FineTuningJobSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /v1/fine-tuning/{job_id}:
     get:
@@ -69,6 +83,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTuningJobDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /v1/fine-tuning/{job_id}/cancel:
     post:
@@ -82,6 +100,10 @@ paths:
       responses:
         '200':
           description: Job cancelled successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /v1/fine-tuning/{job_id}/results:
     get:
@@ -99,6 +121,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTuningJobResults'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /v1/fine-tuning/{job_id}/logs:
     get:
@@ -116,6 +142,10 @@ paths:
             text/plain:
               schema:
                 type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   schemas:
@@ -196,3 +226,94 @@ components:
             - file_name: hf_0001_0001.pt
               file_type: weight
               url: https://example.com/artifacts/hf_0001_0001.pt
+
+    Pagination:
+      type: object
+      properties:
+        total_pages:
+          type: integer
+          description: Total number of pages
+        current_page:
+          type: integer
+          description: Current page number
+        items_per_page:
+          type: integer
+          description: Number of items per page
+        next_page:
+          type: integer
+          nullable: true
+          description: Next page number (null if there is no next page)
+        previous_page:
+          type: integer
+          nullable: true
+          description: Previous page number (null if there is no previous page)
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: A unique error code that identifies the type of error
+        message:
+          type: string
+          description: A human-readable error message
+        details:
+          type: object
+          description: Additional details about the error, if any
+
+    ErrorResponse:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        request_id:
+          type: string
+          description: A unique identifier for the request, useful for debugging and support
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number to retrieve
+    ItemsPerPageParam:
+      in: query
+      name: items_per_page
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Number of items to return per page

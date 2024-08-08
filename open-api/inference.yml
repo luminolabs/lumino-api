@@ -30,18 +30,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InferenceEndpoint'
-    
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
     get:
       summary: List all inference endpoints
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/ItemsPerPageParam'
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/InferenceEndpoint'
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InferenceEndpoint'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /v1/inference/{endpoint_id}:
     get:
@@ -59,7 +73,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InferenceEndpoint'
-    
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
     delete:
       summary: Delete a specific inference endpoint
       parameters:
@@ -71,6 +89,10 @@ paths:
       responses:
         '204':
           description: Successful deletion
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /v1/inference/{endpoint_id}/prompts:
     post:
@@ -94,7 +116,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Prompt'
-    
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
     get:
       summary: Retrieve conversation history
       parameters:
@@ -103,14 +131,8 @@ paths:
           required: true
           schema:
             type: string
-        - name: page
-          in: query
-          schema:
-            type: integer
-        - name: per_page
-          in: query
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/ItemsPerPageParam'
       responses:
         '200':
           description: Successful response
@@ -119,12 +141,16 @@ paths:
               schema:
                 type: object
                 properties:
-                  prompts:
+                  data:
                     type: array
                     items:
                       $ref: '#/components/schemas/Prompt'
                   pagination:
                     $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /v1/inference/{endpoint_id}/prompts/{prompt_id}:
     get:
@@ -147,6 +173,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Prompt'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   schemas:
@@ -206,9 +236,90 @@ components:
     Pagination:
       type: object
       properties:
-        current_page:
-          type: integer
         total_pages:
           type: integer
-        total_items:
+          description: Total number of pages
+        current_page:
           type: integer
+          description: Current page number
+        items_per_page:
+          type: integer
+          description: Number of items per page
+        next_page:
+          type: integer
+          nullable: true
+          description: Next page number (null if there is no next page)
+        previous_page:
+          type: integer
+          nullable: true
+          description: Previous page number (null if there is no previous page)
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: A unique error code that identifies the type of error
+        message:
+          type: string
+          description: A human-readable error message
+        details:
+          type: object
+          description: Additional details about the error, if any
+
+    ErrorResponse:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        request_id:
+          type: string
+          description: A unique identifier for the request, useful for debugging and support
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number to retrieve
+    ItemsPerPageParam:
+      in: query
+      name: items_per_page
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Number of items to return per page
