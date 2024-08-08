@@ -91,6 +91,8 @@ components:
             properties:
               service:
                 type: string
+              service_id:
+                type: string
               usage:
                 type: number
                 format: float
