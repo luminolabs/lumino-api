@@ -1,0 +1,311 @@
+openapi: 3.0.0
+info:
+  title: Fine-tune-jobs API
+  version: 1.0.0
+  description: API for managing fine-tuning jobs for language models
+
+paths:
+  /v1/fine-tuning:
+    post:
+      summary: Create a new fine-tuning job
+      tags:
+        - Fine-tuning Jobs
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FineTuningJobCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJobDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: List all fine-tuning jobs
+      tags:
+        - Fine-tuning Jobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/ItemsPerPageParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FineTuningJobSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/fine-tuning/{job_id}:
+    get:
+      summary: Get details of a specific fine-tuning job
+      tags:
+        - Fine-tuning Jobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJobDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/fine-tuning/{job_id}/cancel:
+    post:
+      summary: Cancel a fine-tuning job
+      tags:
+        - Fine-tuning Jobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJobDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/fine-tuning/{job_id}/logs:
+    get:
+      summary: Get logs of a fine-tuning job
+      tags:
+        - Fine-tuning Jobs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    FineTuningJobCreate:
+      type: object
+      required:
+        - base_model_id
+        - dataset_id
+        - parameters
+      properties:
+        base_model_id:
+          type: string
+        dataset_id:
+          type: string
+        parameters:
+          type: object
+          properties:
+            num_epochs:
+              type: integer
+              example: 3
+            learning_rate:
+              type: number
+              format: float
+              example: 0.00002
+          additionalProperties: true
+
+    FineTuningJobSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [new, pending, running, succeeded, failed, stopped]
+        base_model_id:
+          type: string
+        dataset_id:
+          type: string
+        current_step:
+          type: integer
+        total_steps:
+          type: integer
+        current_epoch:
+          type: integer
+        total_epochs:
+          type: integer
+        num_tokens:
+          type: integer
+          description: Number of tokens processed in the fine-tuning job
+
+    FineTuningJobDetail:
+      allOf:
+        - $ref: '#/components/schemas/FineTuningJobSummary'
+        - type: object
+          properties:
+            parameters:
+              type: object
+              properties:
+                num_epochs:
+                  type: integer
+                  example: 3
+                learning_rate:
+                  type: number
+                  format: float
+                  example: 0.00002
+              additionalProperties: true
+            metrics:
+              type: object
+              properties:
+                loss:
+                  type: number
+                  format: float
+                  example: 0.1234
+              additionalProperties: true
+
+    Pagination:
+      type: object
+      properties:
+        total_items:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+        current_page:
+          type: integer
+          description: Current page number
+        items_per_page:
+          type: integer
+          description: Number of items per page
+        next_page:
+          type: integer
+          nullable: true
+          description: Next page number (null if there is no next page)
+        previous_page:
+          type: integer
+          nullable: true
+          description: Previous page number (null if there is no previous page)
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: A unique error code that identifies the type of error
+        message:
+          type: string
+          description: A human-readable error message
+        details:
+          type: object
+          description: Additional details about the error, if any
+
+    ErrorResponse:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        request_id:
+          type: string
+          description: A unique identifier for the request, useful for debugging and support
+
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number to retrieve
+    ItemsPerPageParam:
+      in: query
+      name: items_per_page
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Number of items to return per page
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
