@@ -1,0 +1,20 @@
+# Database configuration
+db_host: localhost
+db_port: 5432
+db_name: llm_finetuning
+db_user: postgres
+db_pass: password
+
+# JWT configuration
+secret_key: your_secret_key_here
+algorithm: HS256
+access_token_expire_minutes: 30
+
+# API configuration
+api_v1_prefix: /v1
+
+# Other configurations
+debug: false
+
+# Scheduler Zen URL
+scheduler_zen_url: http://localhost:8000

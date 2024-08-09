@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+psycopg2-binary
+alembic
+python-jose
+passlib
+python-multipart
+pyyaml
+aiohttp
+google-cloud-storage
