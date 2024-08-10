@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.schemas.common import Pagination
-from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobUpdate, FineTuningJobDetailResponse
+from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobDetailResponse
 from app.core.fine_tuning import start_fine_tuning_job, cancel_fine_tuning_job_task, get_job_logs
 
 
