@@ -21,7 +21,7 @@ async def create_user(db: AsyncSession, user: UserCreate) -> UserResponse:
     """Create a new user."""
     existing_user = await get_user_by_email(db, user.email)
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise ValueError("Email already registered")
 
     hashed_password = get_password_hash(user.password)
     db_user = User(email=user.email, name=user.name, password_hash=hashed_password)
@@ -39,7 +39,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
     return user
 
 
-async def get_current_user(
+async def get_current_active_user(
         db: AsyncSession = Depends(get_db),
         token: str = Depends(oauth2_scheme)
 ) -> UserResponse:
@@ -60,6 +60,8 @@ async def get_current_user(
     user = await db.get(User, UUID(user_id))
     if user is None:
         raise credentials_exception
+    if user.status != "active":
+        raise HTTPException(status_code=400, detail="Inactive user")
     return UserResponse.from_orm(user)
 
 
@@ -67,7 +69,7 @@ async def update_user(db: AsyncSession, user_id: UUID, user_update: UserUpdate) 
     """Update a user's information."""
     db_user = await db.get(User, user_id)
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise ValueError("User not found")
 
     update_data = user_update.dict(exclude_unset=True)
     for field, value in update_data.items():
@@ -79,10 +81,10 @@ async def update_user(db: AsyncSession, user_id: UUID, user_update: UserUpdate) 
 
 
 async def delete_user(db: AsyncSession, user_id: UUID) -> None:
-    """Delete a user account."""
+    """Set a user's status to inactive."""
     db_user = await db.get(User, user_id)
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise ValueError("User not found")
 
-    await db.delete(db_user)
+    db_user.status = "inactive"
     await db.commit()

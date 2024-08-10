@@ -1,8 +1,10 @@
+import math
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
+from app.schemas.common import Pagination
 from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobUpdate, FineTuningJobDetailResponse
 from app.core.fine_tuning import start_fine_tuning_job, cancel_fine_tuning_job_task, get_job_logs
 
@@ -11,6 +13,7 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
     """Create a new fine-tuning job."""
     db_job = FineTuningJob(
         user_id=user_id,
+        name=job.name,
         base_model_id=job.base_model_id,
         dataset_id=job.dataset_id,
         status="new"
@@ -33,23 +36,45 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
     return FineTuningJobResponse.from_orm(db_job)
 
 
-async def get_fine_tuning_jobs(db: AsyncSession, user_id: UUID, skip: int = 0, limit: int = 100) -> list[FineTuningJobResponse]:
-    """Get all fine-tuning jobs for a user."""
+async def get_fine_tuning_jobs(
+        db: AsyncSession,
+        user_id: UUID,
+        page: int = 1,
+        items_per_page: int = 20
+) -> tuple[list[FineTuningJobResponse], Pagination]:
+    """Get all fine-tuning jobs for a user with pagination."""
+    total_count = await db.scalar(
+        select(func.count()).select_from(FineTuningJob).where(FineTuningJob.user_id == user_id)
+    )
+
+    total_pages = math.ceil(total_count / items_per_page)
+    offset = (page - 1) * items_per_page
+
     result = await db.execute(
         select(FineTuningJob)
         .where(FineTuningJob.user_id == user_id)
-        .offset(skip)
-        .limit(limit)
+        .offset(offset)
+        .limit(items_per_page)
     )
-    return [FineTuningJobResponse.from_orm(job) for job in result.scalars().all()]
+    jobs = [FineTuningJobResponse.from_orm(job) for job in result.scalars().all()]
+
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page,
+        next_page=page + 1 if page < total_pages else None,
+        previous_page=page - 1 if page > 1 else None
+    )
+
+    return jobs, pagination
 
 
-async def get_fine_tuning_job(db: AsyncSession, job_id: UUID) -> FineTuningJobDetailResponse | None:
+async def get_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) -> FineTuningJobDetailResponse | None:
     """Get a specific fine-tuning job."""
     result = await db.execute(
         select(FineTuningJob, FineTuningJobDetail)
         .join(FineTuningJobDetail)
-        .where(FineTuningJob.id == job_id)
+        .where(FineTuningJob.user_id == user_id, FineTuningJob.name == job_name)
     )
     job, detail = result.first()
     if job:
@@ -60,27 +85,13 @@ async def get_fine_tuning_job(db: AsyncSession, job_id: UUID) -> FineTuningJobDe
     return None
 
 
-async def update_fine_tuning_job(db: AsyncSession, job_id: UUID, job_update: FineTuningJobUpdate) -> FineTuningJobResponse:
-    """Update a fine-tuning job."""
-    db_job = await db.get(FineTuningJob, job_id)
-    if not db_job:
-        raise ValueError("Fine-tuning job not found")
-
-    update_data = job_update.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        if field == "parameters":
-            db_job.details.parameters = value
-        else:
-            setattr(db_job, field, value)
-
-    await db.commit()
-    await db.refresh(db_job)
-    return FineTuningJobResponse.from_orm(db_job)
-
-
-async def cancel_fine_tuning_job(db: AsyncSession, job_id: UUID) -> FineTuningJobResponse:
+async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) -> FineTuningJobResponse:
     """Cancel a fine-tuning job."""
-    db_job = await db.get(FineTuningJob, job_id)
+    result = await db.execute(
+        select(FineTuningJob)
+        .where(FineTuningJob.user_id == user_id, FineTuningJob.name == job_name)
+    )
+    db_job = result.scalar_one_or_none()
     if not db_job:
         raise ValueError("Fine-tuning job not found")
 
@@ -92,15 +103,19 @@ async def cancel_fine_tuning_job(db: AsyncSession, job_id: UUID) -> FineTuningJo
     await db.refresh(db_job)
 
     # Cancel the fine-tuning job task
-    await cancel_fine_tuning_job_task(job_id)
+    await cancel_fine_tuning_job_task(db_job.id)
 
     return FineTuningJobResponse.from_orm(db_job)
 
 
-async def get_fine_tuning_job_logs(db: AsyncSession, job_id: UUID) -> str:
+async def get_fine_tuning_job_logs(db: AsyncSession, user_id: UUID, job_name: str) -> str:
     """Get logs for a fine-tuning job."""
-    db_job = await db.get(FineTuningJob, job_id)
+    result = await db.execute(
+        select(FineTuningJob)
+        .where(FineTuningJob.user_id == user_id, FineTuningJob.name == job_name)
+    )
+    db_job = result.scalar_one_or_none()
     if not db_job:
         raise ValueError("Fine-tuning job not found")
 
-    return await get_job_logs(job_id)
+    return await get_job_logs(db_job.id)

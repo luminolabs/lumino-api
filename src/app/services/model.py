@@ -1,81 +1,94 @@
+import math
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.base_model import BaseModel
 from app.models.fine_tuned_model import FineTunedModel
-from app.schemas.model import BaseModelResponse, FineTunedModelResponse, FineTunedModelCreate, FineTunedModelUpdate
+from app.schemas.common import Pagination
+from app.schemas.model import BaseModelResponse, FineTunedModelResponse
 
 
-async def get_base_models(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[BaseModelResponse]:
-    """Get all available base LLM models."""
+async def get_base_models(
+        db: AsyncSession,
+        page: int = 1,
+        items_per_page: int = 20
+) -> tuple[list[BaseModelResponse], Pagination]:
+    """Get all available base LLM models with pagination."""
+    total_count = await db.scalar(select(func.count()).select_from(BaseModel))
+
+    total_pages = math.ceil(total_count / items_per_page)
+    offset = (page - 1) * items_per_page
+
     result = await db.execute(
         select(BaseModel)
-        .offset(skip)
-        .limit(limit)
+        .offset(offset)
+        .limit(items_per_page)
     )
-    return [BaseModelResponse.from_orm(model) for model in result.scalars().all()]
+    models = [BaseModelResponse.from_orm(model) for model in result.scalars().all()]
+
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page,
+        next_page=page + 1 if page < total_pages else None,
+        previous_page=page - 1 if page > 1 else None
+    )
+
+    return models, pagination
 
 
-async def get_base_model(db: AsyncSession, model_id: UUID) -> BaseModelResponse | None:
+async def get_base_model(db: AsyncSession, model_name: str) -> BaseModelResponse | None:
     """Get a specific base model."""
-    model = await db.get(BaseModel, model_id)
+    result = await db.execute(
+        select(BaseModel)
+        .where(BaseModel.name == model_name)
+    )
+    model = result.scalar_one_or_none()
     if model:
         return BaseModelResponse.from_orm(model)
     return None
 
 
-async def get_fine_tuned_models(db: AsyncSession, user_id: UUID, skip: int = 0, limit: int = 100) -> list[FineTunedModelResponse]:
-    """Get all fine-tuned models for a user."""
+async def get_fine_tuned_models(
+        db: AsyncSession,
+        user_id: UUID,
+        page: int = 1,
+        items_per_page: int = 20
+) -> tuple[list[FineTunedModelResponse], Pagination]:
+    """Get all fine-tuned models for a user with pagination."""
+    total_count = await db.scalar(
+        select(func.count()).select_from(FineTunedModel).where(FineTunedModel.user_id == user_id)
+    )
+
+    total_pages = math.ceil(total_count / items_per_page)
+    offset = (page - 1) * items_per_page
+
     result = await db.execute(
         select(FineTunedModel)
         .where(FineTunedModel.user_id == user_id)
-        .offset(skip)
-        .limit(limit)
+        .offset(offset)
+        .limit(items_per_page)
     )
-    return [FineTunedModelResponse.from_orm(model) for model in result.scalars().all()]
+    models = [FineTunedModelResponse.from_orm(model) for model in result.scalars().all()]
+
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page,
+        next_page=page + 1 if page < total_pages else None,
+        previous_page=page - 1 if page > 1 else None
+    )
+
+    return models, pagination
 
 
-async def get_fine_tuned_model(db: AsyncSession, model_id: UUID) -> FineTunedModelResponse | None:
+async def get_fine_tuned_model(db: AsyncSession, user_id: UUID, model_name: str) -> FineTunedModelResponse | None:
     """Get a specific fine-tuned model."""
-    model = await db.get(FineTunedModel, model_id)
+    result = await db.execute(
+        select(FineTunedModel)
+        .where(FineTunedModel.user_id == user_id, FineTunedModel.name == model_name)
+    )
+    model = result.scalar_one_or_none()
     if model:
         return FineTunedModelResponse.from_orm(model)
     return None
-
-
-async def create_fine_tuned_model(db: AsyncSession, user_id: UUID, model: FineTunedModelCreate) -> FineTunedModelResponse:
-    """Create a new fine-tuned model."""
-    db_model = FineTunedModel(
-        user_id=user_id,
-        fine_tuning_job_id=model.fine_tuning_job_id,
-        description=model.description
-    )
-    db.add(db_model)
-    await db.commit()
-    await db.refresh(db_model)
-    return FineTunedModelResponse.from_orm(db_model)
-
-
-async def update_fine_tuned_model(db: AsyncSession, model_id: UUID, model_update: FineTunedModelUpdate) -> FineTunedModelResponse:
-    """Update a fine-tuned model."""
-    db_model = await db.get(FineTunedModel, model_id)
-    if not db_model:
-        raise ValueError("Fine-tuned model not found")
-
-    update_data = model_update.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(db_model, field, value)
-
-    await db.commit()
-    await db.refresh(db_model)
-    return FineTunedModelResponse.from_orm(db_model)
-
-
-async def delete_fine_tuned_model(db: AsyncSession, model_id: UUID) -> None:
-    """Delete a fine-tuned model."""
-    db_model = await db.get(FineTunedModel, model_id)
-    if not db_model:
-        raise ValueError("Fine-tuned model not found")
-
-    await db.delete(db_model)
-    await db.commit()

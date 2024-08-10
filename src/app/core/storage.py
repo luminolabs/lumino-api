@@ -3,8 +3,6 @@ from fastapi import UploadFile
 from app.config_manager import config
 from typing import AsyncGenerator
 from gcloud.aio.storage import Storage
-from google.auth.exceptions import DefaultCredentialsError
-import asyncio
 from aiohttp import ClientSession
 
 GCS_BUCKET = config.gcs_bucket_datasets
@@ -50,7 +48,7 @@ async def delete_file(file_url: str) -> None:
 
     try:
         async with ClientSession() as session:
-            storage = Storage(session=session, credentials=credentials)
+            storage = Storage(session=session)
 
             await storage.delete(
                 bucket=GCS_BUCKET,
@@ -72,7 +70,7 @@ async def get_file_stream(file_url: str) -> AsyncGenerator[bytes, None]:
 
     try:
         async with ClientSession() as session:
-            storage = Storage(session=session, credentials=credentials)
+            storage = Storage(session=session)
 
             async for chunk in storage.download(
                     bucket=GCS_BUCKET,
@@ -97,7 +95,7 @@ async def generate_signed_url(file_url: str, expiration: int = 3600) -> str:
 
     try:
         async with ClientSession() as session:
-            storage = Storage(session=session, credentials=credentials)
+            storage = Storage(session=session)
 
             signed_url = await storage.get_signed_url(
                 bucket=GCS_BUCKET,

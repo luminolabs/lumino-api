@@ -1,10 +1,12 @@
+import math
 from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.api_key import ApiKey
 from app.schemas.api_key import ApiKeyCreate, ApiKeyUpdate, ApiKeyResponse, ApiKeyWithSecret
 from app.core.security import generate_api_key, verify_api_key_hash
+from app.schemas.common import Pagination
 
 
 async def create_api_key(db: AsyncSession, user_id: UUID, api_key: ApiKeyCreate) -> ApiKeyWithSecret:
@@ -30,28 +32,62 @@ async def create_api_key(db: AsyncSession, user_id: UUID, api_key: ApiKeyCreate)
     )
 
 
-async def get_api_keys(db: AsyncSession, user_id: UUID, skip: int = 0, limit: int = 100) -> list[ApiKeyResponse]:
-    """Get all API keys for a user."""
+async def get_api_keys(
+        db: AsyncSession,
+        user_id: UUID,
+        page: int = 1,
+        items_per_page: int = 20
+) -> tuple[list[ApiKeyResponse], Pagination]:
+    """Get all API keys for a user with pagination."""
+    # Count total items
+    total_count = await db.scalar(
+        select(func.count()).select_from(ApiKey).where(ApiKey.user_id == user_id)
+    )
+
+    # Calculate pagination
+    total_pages = math.ceil(total_count / items_per_page)
+    offset = (page - 1) * items_per_page
+
+    # Fetch items
     result = await db.execute(
         select(ApiKey)
         .where(ApiKey.user_id == user_id)
-        .offset(skip)
-        .limit(limit)
+        .offset(offset)
+        .limit(items_per_page)
     )
-    return [ApiKeyResponse.from_orm(api_key) for api_key in result.scalars().all()]
+    api_keys = [ApiKeyResponse.from_orm(key) for key in result.scalars().all()]
+
+    # Create pagination object
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page,
+        next_page=page + 1 if page < total_pages else None,
+        previous_page=page - 1 if page > 1 else None
+    )
+
+    return api_keys, pagination
 
 
-async def get_api_key(db: AsyncSession, api_key_id: UUID) -> ApiKeyResponse | None:
+async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyResponse | None:
     """Get a specific API key."""
-    api_key = await db.get(ApiKey, api_key_id)
+    result = await db.execute(
+        select(ApiKey)
+        .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
+    )
+    api_key = result.scalar_one_or_none()
     if api_key:
         return ApiKeyResponse.from_orm(api_key)
     return None
 
 
-async def update_api_key(db: AsyncSession, api_key_id: UUID, api_key_update: ApiKeyUpdate) -> ApiKeyResponse:
+async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key_update: ApiKeyUpdate) -> ApiKeyResponse:
     """Update an API key."""
-    db_api_key = await db.get(ApiKey, api_key_id)
+    result = await db.execute(
+        select(ApiKey)
+        .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
+    )
+    db_api_key = result.scalar_one_or_none()
     if not db_api_key:
         raise ValueError("API key not found")
 
@@ -64,9 +100,13 @@ async def update_api_key(db: AsyncSession, api_key_id: UUID, api_key_update: Api
     return ApiKeyResponse.from_orm(db_api_key)
 
 
-async def delete_api_key(db: AsyncSession, api_key_id: UUID) -> None:
+async def delete_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> None:
     """Delete an API key."""
-    db_api_key = await db.get(ApiKey, api_key_id)
+    result = await db.execute(
+        select(ApiKey)
+        .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
+    )
+    db_api_key = result.scalar_one_or_none()
     if not db_api_key:
         raise ValueError("API key not found")
 

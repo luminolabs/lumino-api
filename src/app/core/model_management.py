@@ -81,10 +81,10 @@ async def create_fine_tuned_model(fine_tuning_job_id: UUID):
 
         new_model = FineTunedModel(
             user_id=job.user_id,
-            base_model_id=job.base_model_id,
             fine_tuning_job_id=job.id,
             name=f"ft-{job.base_model.name}-{job.id}",
-            status="available"
+            description=f"Fine-tuned model based on {job.base_model.name}",
+            artifacts={}  # This should be populated with actual artifacts data
         )
         db.add(new_model)
         await db.commit()
@@ -119,7 +119,7 @@ async def delete_fine_tuned_model(model_id: UUID):
 
         # Here you might want to add logic to delete the model from your ML infrastructure
         # For now, we'll just mark it as deleted in the database
-        model.status = "deleted"
+        await db.delete(model)
         await db.commit()
 
 
@@ -130,7 +130,7 @@ async def sync_models_with_internal_api():
     """
     try:
         # Sync base models
-        base_models = await list_base_models()
+        await list_base_models()
 
         # Sync fine-tuned models (assuming the internal API provides this endpoint)
         async with aiohttp.ClientSession() as session:
