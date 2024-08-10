@@ -1,7 +1,7 @@
 from typing import Dict, Union, List
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from fastapi.params import Query
+from fastapi.params import Query, Form
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,8 +25,8 @@ router = APIRouter(tags=["Datasets"])
 @router.post("/datasets", response_model=DatasetResponse, status_code=status.HTTP_201_CREATED)
 async def upload_dataset(
         file: UploadFile = File(...),
-        name: str = None,
-        description: str = None,
+        name: str = Form(None),
+        description: str = Form(None),
         current_user: UserResponse = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:

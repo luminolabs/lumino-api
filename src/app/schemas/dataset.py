@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from uuid import UUID
 from fastapi import UploadFile
@@ -22,6 +22,7 @@ class DatasetResponse(BaseModel):
     storage_url: str
     file_size: int
     errors: dict | None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DatasetUpdate(BaseModel):
