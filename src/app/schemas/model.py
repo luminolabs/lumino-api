@@ -6,26 +6,18 @@ from typing import Dict, Any
 
 class BaseModelResponse(BaseModel):
     id: UUID
-    description: str | None
-    hf_url: str | None
+    description: str
+    hf_url: str
     hf_is_gated: bool
     status: str
-    metadata: Dict[str, Any] | None
+    name: str
+    meta: Dict[str, Any] | None
 
 
 class FineTunedModelResponse(BaseModel):
     id: UUID
     created_at: datetime
-    user_id: UUID
-    fine_tuning_job_id: UUID
+    fine_tuning_job_name: str
+    name: str
     description: str | None
     artifacts: Dict[str, Any] | None
-
-
-class FineTunedModelCreate(BaseModel):
-    fine_tuning_job_id: UUID
-    description: str | None = None
-
-
-class FineTunedModelUpdate(BaseModel):
-    description: str | None = None

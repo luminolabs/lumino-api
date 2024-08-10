@@ -10,7 +10,7 @@ class InferenceQuery(Base):
     """
     __tablename__ = "inference_queries"
 
-    id = Column(UUID, primary_key=True, index=True)
+    id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     inference_endpoint_id = Column(UUID, ForeignKey("inference_endpoints.id"), index=True)
     request = Column(Text)

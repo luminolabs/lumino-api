@@ -37,7 +37,7 @@ class ConfigManager:
 
         :return: The constructed database URL.
         """
-        return f"postgresql://{self.db_user}:{self.db_pass}@{self.db_host}:{self.db_port}/{self.db_name}"
+        return f"postgresql+asyncpg://{self.db_user}:{self.db_pass}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     def load(self) -> dict:
         """

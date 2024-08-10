@@ -11,6 +11,7 @@ async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate
     storage_url = await upload_file(dataset.file, f"datasets/{user_id}/")
 
     db_dataset = Dataset(
+        id=dataset.id,
         user_id=user_id,
         description=dataset.description,
         storage_url=storage_url,

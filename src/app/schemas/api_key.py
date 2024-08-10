@@ -9,6 +9,7 @@ class ApiKeyCreate(BaseModel):
 
 
 class ApiKeyUpdate(BaseModel):
+    name: str | None = None
     expires_at: datetime | None = None
 
 

@@ -5,7 +5,7 @@ from fastapi import UploadFile
 
 
 class DatasetCreate(BaseModel):
-    id: str | None = None
+    name: str | None = None
     description: str | None = None
     file: UploadFile
 
@@ -16,8 +16,8 @@ class DatasetCreate(BaseModel):
 class DatasetResponse(BaseModel):
     id: UUID
     created_at: datetime
-    user_id: UUID
     status: str
+    name: str
     description: str | None
     storage_url: str
     file_size: int
@@ -25,4 +25,5 @@ class DatasetResponse(BaseModel):
 
 
 class DatasetUpdate(BaseModel):
+    name: str | None = None
     description: str | None = None

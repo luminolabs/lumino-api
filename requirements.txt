@@ -2,11 +2,15 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic
+pydantic[email]
 psycopg2-binary
 alembic
 python-jose
-passlib
+passlib[bcrypt]
 python-multipart
 pyyaml
+gcloud-aio-storage
 aiohttp
-google-cloud-storage
+asyncpg
+greenlet
+bcrypt

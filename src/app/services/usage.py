@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 from datetime import date
 from sqlalchemy import select, func
@@ -53,7 +54,7 @@ async def get_usage_by_service(
         user_id: UUID,
         start_date: date,
         end_date: date
-) -> dict[str, float]:
+) -> dict[Any, dict[str, float]]:
     """Get usage breakdown by service for a given period."""
     result = await db.execute(
         select(Usage.service_name, func.sum(Usage.usage_amount), func.sum(Usage.cost))

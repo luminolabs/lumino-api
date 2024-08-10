@@ -1,7 +1,10 @@
+from datetime import timedelta
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config_manager import config
+from app.core.security import create_access_token
 from app.database import get_db
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, LoginRequest
 from app.services.user import (
@@ -58,8 +61,11 @@ async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)) ->
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # TODO: Implement JWT token generation
-    return {"access_token": "dummy_token", "token_type": "bearer"}
+    access_token_expires = timedelta(minutes=config.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/users/me", response_model=UserResponse)

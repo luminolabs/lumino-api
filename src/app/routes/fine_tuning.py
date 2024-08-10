@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobUpdate
+from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse
 from app.services.fine_tuning import (
     create_fine_tuning_job,
     get_fine_tuning_jobs,

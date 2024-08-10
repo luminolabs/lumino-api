@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas.dataset import DatasetCreate, DatasetResponse
+from app.schemas.user import UserResponse
 from app.services.dataset import (
     create_dataset,
     get_datasets,
@@ -20,9 +21,9 @@ router = APIRouter(tags=["Datasets"])
 @router.post("/datasets", response_model=DatasetResponse, status_code=status.HTTP_201_CREATED)
 async def upload_dataset(
         file: UploadFile = File(...),
-        dataset_id: str = None,
-        description: str = None,
-        current_user: dict = Depends(get_current_user),
+        dataset_id: str | None = None,
+        description: str | None = None,
+        current_user: UserResponse = Depends(get_current_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:
     """
@@ -32,7 +33,7 @@ async def upload_dataset(
         file (UploadFile): The dataset file to upload.
         dataset_id (str, optional): User-assigned name for the dataset.
         description (str, optional): User-provided description of the dataset.
-        current_user (dict): The current authenticated user.
+        current_user (UserResponse): The current authenticated user.
         db (AsyncSession): The database session.
 
     Returns:
@@ -47,7 +48,7 @@ async def upload_dataset(
             description=description,
             file=file,
         )
-        return await create_dataset(db, current_user["id"], dataset_create)
+        return await create_dataset(db, current_user.id, dataset_create)  # Use dot notation here
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
