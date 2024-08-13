@@ -1,17 +1,17 @@
 -- Create enum types for statuses
-CREATE TYPE user_status AS ENUM ('active', 'inactive');
-CREATE TYPE api_key_status AS ENUM ('active', 'expired', 'revoked');
-CREATE TYPE dataset_status AS ENUM ('uploaded', 'validated', 'error');
-CREATE TYPE fine_tuning_job_status AS ENUM ('new', 'pending', 'running', 'succeeded', 'failed', 'stopped');
-CREATE TYPE base_model_status AS ENUM ('active', 'inactive', 'deprecated');
-CREATE TYPE inference_endpoint_status AS ENUM ('new', 'pending', 'running', 'deleted', 'failed');
+CREATE TYPE userstatus AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE apikeystatus AS ENUM ('ACTIVE', 'EXPIRED', 'REVOKED');
+CREATE TYPE datasetstatus AS ENUM ('UPLOADED', 'VALIDATED', 'ERROR');
+CREATE TYPE finetuningjobstatus AS ENUM ('NEW', 'PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'STOPPED');
+CREATE TYPE basemodelstatus AS ENUM ('ACTIVE', 'INACTIVE', 'DEPRECATED');
+CREATE TYPE inferenceendpointstatus AS ENUM ('NEW', 'PENDING', 'RUNNING', 'DELETED', 'FAILED');
 
 -- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status user_status NOT NULL DEFAULT 'active',
+    status userstatus NOT NULL DEFAULT 'ACTIVE',
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL
@@ -24,7 +24,7 @@ CREATE TABLE base_models (
     description TEXT,
     hf_url VARCHAR(255),
     hf_is_gated BOOLEAN,
-    status base_model_status,
+    status basemodelstatus,
     name VARCHAR(255) NOT NULL,
     meta JSONB
 );
@@ -35,7 +35,7 @@ CREATE TABLE datasets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id UUID NOT NULL,
-    status dataset_status,
+    status datasetstatus,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     storage_url VARCHAR(255),
@@ -53,7 +53,7 @@ CREATE TABLE fine_tuning_jobs (
     user_id UUID NOT NULL,
     base_model_id UUID NOT NULL,
     dataset_id UUID NOT NULL,
-    status fine_tuning_job_status,
+    status finetuningjobstatus,
     name VARCHAR(255) NOT NULL,
     current_step INTEGER,
     total_steps INTEGER,
@@ -95,7 +95,7 @@ CREATE TABLE inference_endpoints (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id UUID NOT NULL,
     fine_tuned_model_id UUID NOT NULL,
-    status inference_endpoint_status,
+    status inferenceendpointstatus,
     name VARCHAR(255) NOT NULL,
     machine_type VARCHAR(50),
     parameters JSONB,
@@ -124,7 +124,7 @@ CREATE TABLE api_keys (
     last_used_at TIMESTAMP WITH TIME ZONE,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     user_id UUID NOT NULL,
-    status api_key_status,
+    status apikeystatus,
     name VARCHAR(255),
     prefix VARCHAR(8),
     hashed_key VARCHAR(255) NOT NULL,

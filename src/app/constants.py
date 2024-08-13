@@ -2,41 +2,41 @@ from enum import Enum
 
 
 class UserStatus(str, Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
 
 
 class ApiKeyStatus(str, Enum):
-    ACTIVE = "active"
-    EXPIRED = "expired"
-    REVOKED = "revoked"
+    ACTIVE = "ACTIVE"
+    EXPIRED = "EXPIRED"
+    REVOKED = "REVOKED"
 
 
 class DatasetStatus(str, Enum):
-    UPLOADED = "uploaded"
-    VALIDATED = "validated"
-    ERROR = "error"
+    UPLOADED = "UPLOADED"
+    VALIDATED = "VALIDATED"
+    ERROR = "ERROR"
 
 
 class FineTuningJobStatus(str, Enum):
-    NEW = "new"
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-    STOPPING = "stopping"
-    STOPPED = "stopped"
+    NEW = "NEW"
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCEEDED = "SUCCEEDED"
+    FAILED = "FAILED"
+    STOPPING = "STOPPING"
+    STOPPED = "STOPPED"
 
 
 class BaseModelStatus(str, Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    DEPRECATED = "deprecated"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    DEPRECATED = "DEPRECATED"
 
 
 class InferenceEndpointStatus(str, Enum):
-    NEW = "new"
-    PENDING = "pending"
-    RUNNING = "running"
-    DELETED = "deleted"
-    FAILED = "failed"
+    NEW = "NEW"
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    DELETED = "DELETED"
+    FAILED = "FAILED"
