@@ -1,8 +1,8 @@
 -- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(50) NOT NULL DEFAULT 'active',
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -25,7 +25,7 @@ CREATE UNIQUE INDEX idx_base_models_name ON base_models(name);
 -- Datasets table
 CREATE TABLE datasets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id UUID NOT NULL,
     status VARCHAR(50),
     name VARCHAR(255) NOT NULL,
@@ -40,8 +40,8 @@ CREATE UNIQUE INDEX idx_datasets_user_id_name ON datasets(user_id, name);
 -- Fine-tuning jobs table
 CREATE TABLE fine_tuning_jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id UUID NOT NULL,
     base_model_id UUID NOT NULL,
     dataset_id UUID NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE fine_tuning_job_details (
 -- Fine-tuned models table
 CREATE TABLE fine_tuned_models (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id UUID NOT NULL,
     fine_tuning_job_id UUID NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -83,8 +83,8 @@ CREATE UNIQUE INDEX idx_fine_tuned_models_user_id_name ON fine_tuned_models(user
 -- Inference endpoints table
 CREATE TABLE inference_endpoints (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id UUID NOT NULL,
     fine_tuned_model_id UUID NOT NULL,
     status VARCHAR(50),
@@ -99,7 +99,7 @@ CREATE UNIQUE INDEX idx_inference_endpoints_user_id_name ON inference_endpoints(
 -- Inference queries table
 CREATE TABLE inference_queries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     inference_endpoint_id UUID NOT NULL,
     request TEXT,
     response TEXT,
@@ -112,9 +112,9 @@ CREATE TABLE inference_queries (
 -- API keys table
 CREATE TABLE api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_used_at TIMESTAMP,
-    expires_at TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     user_id UUID NOT NULL,
     status VARCHAR(50),
     name VARCHAR(255),
@@ -127,7 +127,7 @@ CREATE UNIQUE INDEX idx_api_keys_user_id_name ON api_keys(user_id, name);
 -- Usage table
 CREATE TABLE usage (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id UUID NOT NULL,
     service_name VARCHAR(50),
     usage_amount DECIMAL,
