@@ -3,6 +3,8 @@ from uuid import UUID
 from datetime import datetime
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.constants import ApiKeyStatus
 from app.models.api_key import ApiKey
 from app.schemas.api_key import ApiKeyCreate, ApiKeyUpdate, ApiKeyResponse, ApiKeyWithSecret
 from app.core.security import generate_api_key, verify_api_key_hash
@@ -20,7 +22,7 @@ async def create_api_key(db: AsyncSession, user_id: UUID, api_key: ApiKeyCreate)
         expires_at=api_key.expires_at,
         prefix=prefix,
         hashed_key=hashed_key,
-        status="active"
+        status=ApiKeyStatus.ACTIVE,
     )
     db.add(db_api_key)
     await db.commit()
@@ -120,7 +122,7 @@ async def verify_api_key(db: AsyncSession, api_key: str) -> UUID | None:
     result = await db.execute(select(ApiKey).where(ApiKey.prefix == prefix))
     db_api_key = result.scalar_one_or_none()
 
-    if db_api_key and db_api_key.status == "active" and verify_api_key_hash(api_key, db_api_key.hashed_key):
+    if db_api_key and db_api_key.status == ApiKeyStatus.ACTIVE and verify_api_key_hash(api_key, db_api_key.hashed_key):
         if db_api_key.expires_at and db_api_key.expires_at < datetime.utcnow():
             return None
         db_api_key.last_used_at = datetime.utcnow()

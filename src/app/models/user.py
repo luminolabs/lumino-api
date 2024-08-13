@@ -1,7 +1,9 @@
 from uuid import uuid4
-from sqlalchemy import Column, String, DateTime, UUID, UniqueConstraint, Index
+from sqlalchemy import Column, String, DateTime, UUID, Index, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from app.constants import UserStatus
 from app.database import Base
 
 
@@ -14,7 +16,7 @@ class User(Base):
     id = Column(UUID, primary_key=True, default=uuid4, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
-    status = Column(String(50), nullable=False, default="active")
+    status = Column(Enum(UserStatus), nullable=False, default=UserStatus.ACTIVE)
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
     password_hash = Column(String(255), nullable=False)

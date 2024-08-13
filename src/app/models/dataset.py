@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, DateTime, UUID, BigInteger, JSON, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, UUID, BigInteger, JSON, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from app.constants import DatasetStatus
 from app.database import Base
 
 
@@ -13,7 +15,7 @@ class Dataset(Base):
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
-    status = Column(String(50))
+    status = Column(Enum(DatasetStatus), nullable=False, default=DatasetStatus.UPLOADED)
     name = Column(String(255), nullable=False)
     description = Column(String)
     storage_url = Column(String(255))  # URL to the stored dataset file

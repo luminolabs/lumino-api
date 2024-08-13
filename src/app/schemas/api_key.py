@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
 
+from app.constants import ApiKeyStatus
+
 
 class ApiKeyCreate(BaseModel):
     name: str
@@ -18,7 +20,7 @@ class ApiKeyResponse(BaseModel):
     created_at: datetime
     last_used_at: datetime | None
     expires_at: datetime | None
-    status: str
+    status: ApiKeyStatus
     name: str
     prefix: str
 

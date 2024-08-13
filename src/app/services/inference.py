@@ -2,6 +2,8 @@ import math
 from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.constants import InferenceEndpointStatus
 from app.models.inference_endpoint import InferenceEndpoint
 from app.models.inference_query import InferenceQuery
 from app.schemas.common import Pagination
@@ -23,7 +25,7 @@ async def create_inference_endpoint(db: AsyncSession, user_id: UUID, endpoint: I
         fine_tuned_model_id=endpoint.fine_tuned_model_id,
         machine_type=endpoint.machine_type,
         parameters=endpoint.parameters,
-        status="creating"
+        status=InferenceEndpointStatus.NEW
     )
     db.add(db_endpoint)
     await db.commit()

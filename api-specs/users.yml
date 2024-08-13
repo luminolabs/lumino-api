@@ -222,7 +222,7 @@ components:
           readOnly: true
         status:
           type: string
-          enum: [active, cancelled, disabled]
+          enum: [active, disabled]
         name:
           type: string
         email:
@@ -275,7 +275,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 

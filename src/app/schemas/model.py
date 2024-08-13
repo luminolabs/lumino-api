@@ -3,13 +3,15 @@ from datetime import datetime
 from uuid import UUID
 from typing import Dict, Any
 
+from app.constants import BaseModelStatus
+
 
 class BaseModelResponse(BaseModel):
     id: UUID
     description: str
     hf_url: str
     hf_is_gated: bool
-    status: str
+    status: BaseModelStatus
     name: str
     meta: Dict[str, Any] | None
 

@@ -103,7 +103,7 @@ components:
           format: date-time
         service_name:
           type: string
-        service_id:
+        service_name:
           type: string
         usage_amount:
           type: number
@@ -161,7 +161,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 

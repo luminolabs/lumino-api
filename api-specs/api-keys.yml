@@ -56,7 +56,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/api-keys/{key_id}:
+  /v1/api-keys/{key_name}:
     get:
       summary: Get details of a specific API key
       tags:
@@ -65,7 +65,7 @@ paths:
         - BearerAuth: []
       parameters:
         - in: path
-          name: key_id
+          name: key_name
           required: true
           schema:
             type: string
@@ -89,7 +89,7 @@ paths:
         - BearerAuth: []
       parameters:
         - in: path
-          name: key_id
+          name: key_name
           required: true
           schema:
             type: string
@@ -121,10 +121,11 @@ paths:
         - BearerAuth: []
       parameters:
         - in: path
-          name: key_id
+          name: key_name
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '204':
           description: API key deleted successfully
@@ -149,6 +150,13 @@ components:
         expires_at:
           type: string
           format: date-time
+        status:
+          type: string
+          enum: [active, expired, revoked]
+          description: Current status of the API key
+        name:
+          type: string
+          description: A descriptive name for the API key
         prefix:
           type: string
           description: First few characters of the API key
@@ -165,9 +173,9 @@ components:
     ApiKeyCreate:
       type: object
       required:
-        - id
+        - name
       properties:
-        id:
+        name:
           type: string
           description: A descriptive name for the API key
         expires_at:
@@ -229,7 +237,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 

@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, DateTime, UUID, JSON, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, UUID, JSON, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from app.constants import InferenceEndpointStatus
 from app.database import Base
 
 
@@ -15,7 +17,7 @@ class InferenceEndpoint(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
     fine_tuned_model_id = Column(UUID, ForeignKey("fine_tuned_models.id"), nullable=False)
-    status = Column(String(50))
+    status = Column(Enum(InferenceEndpointStatus), nullable=False, default=InferenceEndpointStatus.NEW)
     name = Column(String(255), nullable=False)
     machine_type = Column(String(50))
     parameters = Column(JSON)  # Stores endpoint configuration parameters

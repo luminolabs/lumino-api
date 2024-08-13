@@ -3,6 +3,8 @@ from datetime import datetime
 from uuid import UUID
 from typing import Dict, Any
 
+from app.constants import FineTuningJobStatus
+
 
 class FineTuningJobCreate(BaseModel):
     base_model_name: str
@@ -16,7 +18,7 @@ class FineTuningJobResponse(BaseModel):
     updated_at: datetime
     base_model_name: str
     dataset_name: str
-    status: str
+    status: FineTuningJobStatus
     name: str
     current_step: int | None
     total_steps: int | None

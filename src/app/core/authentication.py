@@ -2,6 +2,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.constants import UserStatus
 from app.database import get_db
 from app.models.user import User
 from app.core.security import SECRET_KEY, ALGORITHM
@@ -44,7 +46,7 @@ async def get_current_active_user(
     """
     Get the current active user.
     """
-    if current_user.status != "active":
+    if current_user.status != UserStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 

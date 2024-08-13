@@ -96,15 +96,15 @@ async def reset_password(token: str, new_password: str, db: AsyncSession = Depen
     return {"message": "Password has been reset successfully"}
 
 
-@router.delete("/users/me", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_account(
-        current_user: UserResponse = Depends(get_current_active_user),
+        user_id: str,
         db: AsyncSession = Depends(get_db)
 ) -> None:
     """
     Set the current user's account to inactive.
     """
     try:
-        await delete_user(db, current_user.id)
+        await delete_user(db, user_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

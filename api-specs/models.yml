@@ -32,7 +32,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/models/base/{model_id}:
+  /v1/models/base/{model_name}:
     get:
       summary: Get detailed information about a specific base model
       tags:
@@ -40,7 +40,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: model_id
+        - name: model_name
           in: path
           required: true
           schema:
@@ -57,7 +57,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v1/models/me:
+  /v1/models/fine-tuned:
     get:
       summary: List all fine-tuned models for the current user
       tags:
@@ -84,7 +84,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/models/me/{model_id}:
+  /v1/models/fine-tuned/{model_name}:
     get:
       summary: Get detailed information about a specific fine-tuned model
       tags:
@@ -92,7 +92,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: model_id
+        - name: model_name
           in: path
           required: true
           schema:
@@ -137,7 +137,7 @@ components:
         created_at:
           type: string
           format: date-time
-        fine_tuning_job_id:
+        fine_tuning_job_name:
           type: string
         description:
           type: string
@@ -191,7 +191,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 

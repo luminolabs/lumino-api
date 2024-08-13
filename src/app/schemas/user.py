@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 from uuid import UUID
 
+from app.constants import UserStatus
+
 
 class UserCreate(BaseModel):
     name: str
@@ -18,7 +20,7 @@ class UserResponse(BaseModel):
     id: UUID
     created_at: datetime
     updated_at: datetime
-    status: str
+    status: UserStatus
     name: str
     email: EmailStr
     model_config = ConfigDict(from_attributes=True)

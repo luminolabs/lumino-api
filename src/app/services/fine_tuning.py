@@ -2,6 +2,8 @@ import math
 from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.constants import FineTuningJobStatus
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.schemas.common import Pagination
@@ -16,7 +18,7 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
         name=job.name,
         base_model_id=job.base_model_id,
         dataset_id=job.dataset_id,
-        status="new"
+        status=FineTuningJobStatus.NEW
     )
     db.add(db_job)
     await db.flush()
@@ -95,10 +97,10 @@ async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str)
     if not db_job:
         raise ValueError("Fine-tuning job not found")
 
-    if db_job.status not in ["new", "pending", "running"]:
+    if db_job.status not in [FineTuningJobStatus.NEW, FineTuningJobStatus.PENDING, FineTuningJobStatus.RUNNING]:
         raise ValueError("Job cannot be cancelled in its current state")
 
-    db_job.status = "cancelled"
+    db_job.status = FineTuningJobStatus.STOPPING
     await db.commit()
     await db.refresh(db_job)
 

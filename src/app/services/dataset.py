@@ -1,6 +1,8 @@
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.constants import DatasetStatus
 from app.models.dataset import Dataset
 from app.schemas.common import Pagination
 from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
@@ -17,7 +19,7 @@ async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate
         description=dataset.description,
         storage_url=storage_url,
         file_size=dataset.file.size,
-        status="uploaded"
+        status=DatasetStatus.UPLOADED
     )
     db.add(db_dataset)
     await db.commit()

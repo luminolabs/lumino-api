@@ -1,5 +1,7 @@
 from uuid import UUID
 import aiohttp
+
+from app.constants import FineTuningJobStatus
 from app.database import AsyncSessionLocal
 from app.models.base_model import BaseModel
 from app.models.fine_tuned_model import FineTunedModel
@@ -76,7 +78,7 @@ async def create_fine_tuned_model(fine_tuning_job_id: UUID):
     """
     async with AsyncSessionLocal() as db:
         job = await db.get(FineTuningJob, fine_tuning_job_id)
-        if not job or job.status != "completed":
+        if not job or job.status != FineTuningJobStatus.SUCCEEDED:
             raise ValueError("Fine-tuning job not found or not completed")
 
         new_model = FineTunedModel(

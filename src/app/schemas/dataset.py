@@ -3,6 +3,8 @@ from datetime import datetime
 from uuid import UUID
 from fastapi import UploadFile
 
+from app.constants import DatasetStatus
+
 
 class DatasetCreate(BaseModel):
     name: str | None = None
@@ -16,7 +18,7 @@ class DatasetCreate(BaseModel):
 class DatasetResponse(BaseModel):
     id: UUID
     created_at: datetime
-    status: str
+    status: DatasetStatus
     name: str
     description: str | None
     storage_url: str

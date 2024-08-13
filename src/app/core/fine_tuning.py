@@ -1,5 +1,7 @@
 from uuid import UUID
 import aiohttp
+
+from app.constants import FineTuningJobStatus
 from app.database import AsyncSessionLocal
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
@@ -27,10 +29,6 @@ async def start_fine_tuning_job(job_id: UUID):
             .where(FineTuningJob.id == job_id)
         )
         job, dataset, base_model, job_detail = result.first()
-
-        # Update job status
-        job.status = "running"
-        await db.commit()
 
     try:
         # Prepare the payload for the internal API
@@ -60,7 +58,7 @@ async def start_fine_tuning_job(job_id: UUID):
                     # Update job with response data if needed
                     async with AsyncSessionLocal() as db:
                         job = await db.get(FineTuningJob, job_id)
-                        job.status = "in_progress"
+                        job.status = FineTuningJobStatus.NEW
                         job.details.internal_job_id = response_data.get("internal_job_id")
                         await db.commit()
                 else:
@@ -70,7 +68,7 @@ async def start_fine_tuning_job(job_id: UUID):
         print(f"Error starting fine-tuning job: {e}")
         async with AsyncSessionLocal() as db:
             job = await db.get(FineTuningJob, job_id)
-            job.status = "failed"
+            job.status = FineTuningJobStatus.FAILED
             job.details.error_message = str(e)
             await db.commit()
 
@@ -94,7 +92,7 @@ async def cancel_fine_tuning_job_task(job_id: UUID):
                 if response.status == 200:
                     async with AsyncSessionLocal() as db:
                         job = await db.get(FineTuningJob, job_id)
-                        job.status = "cancelled"
+                        job.status = FineTuningJobStatus.STOPPING
                         await db.commit()
                 else:
                     raise Exception(f"Failed to cancel fine-tuning job: {await response.text()}")

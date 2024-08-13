@@ -4,6 +4,7 @@ from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants import UserStatus
 from app.core.authentication import oauth2_scheme
 from app.database import get_db
 from app.models.user import User
@@ -60,7 +61,7 @@ async def get_current_active_user(
     user = await db.get(User, UUID(user_id))
     if user is None:
         raise credentials_exception
-    if user.status != "active":
+    if user.status != UserStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Inactive user")
     return UserResponse.from_orm(user)
 
@@ -86,5 +87,5 @@ async def delete_user(db: AsyncSession, user_id: UUID) -> None:
     if not db_user:
         raise ValueError("User not found")
 
-    db_user.status = "inactive"
+    db_user.status = UserStatus.INACTIVE
     await db.commit()

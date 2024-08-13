@@ -1,7 +1,8 @@
-from sqlalchemy import Column, String, Boolean, UUID, JSON
+from sqlalchemy import Column, String, Boolean, UUID, JSON, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
+from app.constants import BaseModelStatus
 from app.database import Base
 
 
@@ -16,7 +17,7 @@ class BaseModel(Base):
     description = Column(String)
     hf_url = Column(String(255))  # URL to the model on Hugging Face
     hf_is_gated = Column(Boolean)  # Whether the model is gated on Hugging Face
-    status = Column(String(50))
+    status = Column(Enum(BaseModelStatus), nullable=False, default=BaseModelStatus.INACTIVE)
     meta = Column(JSON)  # Additional meta stored as JSON
 
     # Relationships

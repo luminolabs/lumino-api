@@ -56,7 +56,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/inference/{endpoint_id}:
+  /v1/inference/{endpoint_name}:
     get:
       summary: Get information about a specific inference endpoint
       tags:
@@ -64,7 +64,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: endpoint_id
+        - name: endpoint_name
           in: path
           required: true
           schema:
@@ -88,7 +88,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: endpoint_id
+        - name: endpoint_name
           in: path
           required: true
           schema:
@@ -101,7 +101,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v1/inference/{endpoint_id}/prompts:
+  /v1/inference/{endpoint_name}/prompts:
     post:
       summary: Send a prompt to the model
       tags:
@@ -109,7 +109,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: endpoint_id
+        - name: endpoint_name
           in: path
           required: true
           schema:
@@ -141,7 +141,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: endpoint_id
+        - name: endpoint_name
           in: path
           required: true
           schema:
@@ -167,15 +167,15 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v1/inference/{endpoint_id}/prompts/{prompt_id}:
+  /v1/inference/{endpoint_name}/prompts/{prompt_id}:
     get:
-      summary: Get a single prompt by ID
+      summary: Get information about a specific prompt
       tags:
         - Inference Queries
       security:
         - BearerAuth: []
       parameters:
-        - name: endpoint_id
+        - name: endpoint_name
           in: path
           required: true
           schema:
@@ -202,11 +202,11 @@ components:
     InferenceEndpointCreate:
       type: object
       required:
-        - fine_tuned_model_id
+        - fine_tuned_model_name
         - machine_type
         - parameters
       properties:
-        fine_tuned_model_id:
+        fine_tuned_model_name:
           type: string
         machine_type:
           type: string
@@ -230,8 +230,8 @@ components:
           format: date-time
         status:
           type: string
-          enum: [new, pending, running, deleted, error]
-        fine_tuned_model_id:
+          enum: [new, pending, running, deleted, failed]
+        fine_tuned_model_name:
           type: string
         machine_type:
           type: string
@@ -254,7 +254,7 @@ components:
         created_at:
           type: string
           format: date-time
-        inference_endpoint_id:
+        inference_endpoint_name:
           type: string
         request:
           type: string
@@ -314,7 +314,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 

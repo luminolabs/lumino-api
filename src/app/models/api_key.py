@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, DateTime, UUID, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, UUID, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from app.constants import ApiKeyStatus
 from app.database import Base
 
 
@@ -15,7 +17,7 @@ class ApiKey(Base):
     last_used_at = Column(DateTime)
     expires_at = Column(DateTime)
     user_id = Column(UUID, ForeignKey("users.id"), index=True)
-    status = Column(String(50))
+    status = Column(Enum(ApiKeyStatus), nullable=False, default=ApiKeyStatus.ACTIVE)
     name = Column(String(255))
     prefix = Column(String(8), unique=True, index=True)
     hashed_key = Column(String(255), nullable=False)

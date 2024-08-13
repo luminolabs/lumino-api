@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, DateTime, UUID, Integer, BigInteger, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, UUID, Integer, BigInteger, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from app.constants import FineTuningJobStatus
 from app.database import Base
 
 
@@ -16,7 +18,7 @@ class FineTuningJob(Base):
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
     base_model_id = Column(UUID, ForeignKey("base_models.id"), nullable=False)
     dataset_id = Column(UUID, ForeignKey("datasets.id"), nullable=False)
-    status = Column(String(50))
+    status = Column(Enum(FineTuningJobStatus), nullable=False, default=FineTuningJobStatus.NEW)
     name = Column(String(255), nullable=False)
     current_step = Column(Integer)
     total_steps = Column(Integer)

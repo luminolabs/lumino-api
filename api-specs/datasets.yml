@@ -66,7 +66,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/datasets/{dataset_id}:
+  /v1/datasets/{dataset_name}:
     get:
       summary: Get information about a specific dataset
       tags:
@@ -74,7 +74,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: dataset_id
+        - name: dataset_name
           in: path
           required: true
           schema:
@@ -98,7 +98,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: dataset_id
+        - name: dataset_name
           in: path
           required: true
           schema:
@@ -112,7 +112,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v1/datasets/{dataset_id}/download:
+  /v1/datasets/{dataset_name}/download:
     get:
       summary: Download a specific dataset file
       tags:
@@ -120,7 +120,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: dataset_id
+        - name: dataset_name
           in: path
           required: true
           schema:
@@ -205,7 +205,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 
