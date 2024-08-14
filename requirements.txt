@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+pydantic[email]
+psycopg2-binary
+alembic
+python-jose
+passlib[bcrypt]
+python-multipart
+pyyaml
+gcloud-aio-storage
+aiohttp
+asyncpg
+greenlet
+bcrypt

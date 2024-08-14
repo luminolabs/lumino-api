@@ -1,0 +1,16 @@
+{
+  "output": {
+    "filePath": "lumino-api.txt",
+    "style": "plain",
+    "headerText": "Lumino API",
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "showLineNumbers": false,
+    "topFilesLength": 0
+  },
+  "include": ["**/*"],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true
+  }
+}
