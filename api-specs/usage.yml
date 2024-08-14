@@ -140,12 +140,12 @@ components:
       type: object
       required:
         - code
-        - message
+        - detail
       properties:
         code:
           type: string
           description: A unique error code that identifies the type of error
-        message:
+        detail:
           type: string
           description: A human-readable error message
         details:
