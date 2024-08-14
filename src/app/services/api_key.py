@@ -213,7 +213,6 @@ async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key
             setattr(db_api_key, field, value)
 
         await db.commit()
-        await db.refresh(db_api_key)
         logger.info(f"Updated API key: {key_name} for user: {user_id}")
         return ApiKeyResponse.from_orm(db_api_key)
     except SQLAlchemyError as e:
@@ -249,7 +248,6 @@ async def revoke_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiK
         # Store as timezone-naive UTC datetime
         db_api_key.expires_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await db.commit()
-        await db.refresh(db_api_key)
         logger.info(f"Revoked API key: {key_name} for user: {user_id}")
         return ApiKeyResponse.from_orm(db_api_key)
     except SQLAlchemyError as e:
