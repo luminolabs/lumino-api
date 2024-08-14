@@ -6,7 +6,7 @@ from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config_manager import config
-from app.core.authentication import get_current_active_user, oauth2_scheme, get_api_key
+from app.core.authentication import get_current_active_user, oauth2_scheme, get_api_key, logout_user
 from app.core.exceptions import (
     BadRequestError,
     UnauthorizedError,
@@ -117,36 +117,12 @@ async def logout(
 
     try:
         logger.info(f"Logging out user: {current_user.id}")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        expires_at = datetime.fromtimestamp(payload.get("exp"))
-        blacklisted_token = BlacklistedToken(token=token, expires_at=expires_at)
-        db.add(blacklisted_token)
-        await db.commit()
+        await logout_user(token, db)
         logger.info(f"Successfully logged out user: {current_user.id}")
         return {"detail": "Successfully logged out"}
     except JWTError:
         logger.error(f"Error during logout for user: {current_user.id}")
         raise InvalidTokenError("Invalid token")
-
-
-@router.post("/users/password-reset")
-async def request_password_reset(email: str, db: AsyncSession = Depends(get_db)) -> dict:
-    """
-    Request a password reset for a user.
-    """
-    # TODO: Implement password reset logic
-    logger.info(f"Password reset requested for email: {email}")
-    return {"detail": "Password reset email sent"}
-
-
-@router.post("/users/password-reset/{token}")
-async def reset_password(token: str, new_password: str, db: AsyncSession = Depends(get_db)) -> dict:
-    """
-    Reset a user's password using a reset token.
-    """
-    # TODO: Implement password reset logic
-    logger.info("Password reset attempt")
-    return {"detail": "Password has been reset successfully"}
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -168,3 +144,23 @@ async def delete_user_account(
     except UserNotFoundError as e:
         logger.error(f"Error deleting user {user_id}: {str(e)}")
         raise NotFoundError(str(e))
+
+
+@router.post("/users/password-reset")
+async def request_password_reset(email: str, db: AsyncSession = Depends(get_db)) -> dict:
+    """
+    Request a password reset for a user.
+    """
+    # TODO: Implement password reset logic
+    logger.info(f"Password reset requested for email: {email}")
+    return {"detail": "Password reset email sent"}
+
+
+@router.post("/users/password-reset/{token}")
+async def reset_password(token: str, new_password: str, db: AsyncSession = Depends(get_db)) -> dict:
+    """
+    Reset a user's password using a reset token.
+    """
+    # TODO: Implement password reset logic
+    logger.info("Password reset attempt")
+    return {"detail": "Password has been reset successfully"}

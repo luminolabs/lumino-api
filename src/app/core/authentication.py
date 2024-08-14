@@ -27,7 +27,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 async def is_token_blacklisted(db: AsyncSession, token: str) -> bool:
     """
-    Check if a token is blacklisted.
+    Check if a token is logged out.
     """
     result = await db.execute(
         select(BlacklistedToken).where(
@@ -36,7 +36,7 @@ async def is_token_blacklisted(db: AsyncSession, token: str) -> bool:
     )
     is_blacklisted = result.scalar_one_or_none() is not None
     if is_blacklisted:
-        logger.warning(f"Attempt to use blacklisted token: {token[:10]}...")
+        logger.warning(f"Attempt to use logged out token: {token[:10]}...")
     return is_blacklisted
 
 
@@ -67,8 +67,8 @@ async def get_user_from_jwt(token: str, db: AsyncSession) -> User | None:
     """
     try:
         if await is_token_blacklisted(db, token):
-            logger.warning(f"Attempt to use blacklisted JWT token: {token[:10]}...")
-            raise ExpiredTokenError("Token has been blacklisted")
+            logger.warning(f"Attempt to use logged out JWT token: {token[:10]}...")
+            raise ExpiredTokenError("Token has been logged out")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
@@ -117,3 +117,14 @@ async def get_current_active_user(
     except (InvalidTokenError, ExpiredTokenError, UserNotFoundError) as e:
         logger.warning(f"Failed authentication attempt with JWT: {str(e)}")
         raise UnauthorizedError(str(e))
+
+
+async def logout_user(token: str, db: AsyncSession):
+    """
+    Blacklist a JWT token.
+    """
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    expires_at = datetime.fromtimestamp(payload.get("exp"))
+    blacklisted_token = BlacklistedToken(token=token, expires_at=expires_at)
+    db.add(blacklisted_token)
+    await db.commit()
