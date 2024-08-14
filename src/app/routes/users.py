@@ -46,7 +46,7 @@ async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)) -> UserRe
         return new_user
     except EmailAlreadyExistsError as e:
         logger.error(f"Error creating user: {str(e)}")
-        raise BadRequestError(str(e))
+        raise BadRequestError(e.detail)
 
 
 @router.post("/users/login", response_model=dict)
@@ -94,7 +94,7 @@ async def update_current_user(
         return updated_user
     except UserNotFoundError as e:
         logger.error(f"Error updating user {current_user.id}: {str(e)}")
-        raise NotFoundError(str(e))
+        raise NotFoundError(e.detail)
 
 
 @router.post("/users/logout")
@@ -143,7 +143,7 @@ async def delete_user_account(
         logger.info(f"Successfully deleted user account: {user_id}")
     except UserNotFoundError as e:
         logger.error(f"Error deleting user {user_id}: {str(e)}")
-        raise NotFoundError(str(e))
+        raise NotFoundError(e.detail)
 
 
 @router.post("/users/password-reset")
