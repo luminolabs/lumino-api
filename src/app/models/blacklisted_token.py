@@ -1,9 +1,13 @@
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.sql import func
+
 from app.database import Base
 
 
 class BlacklistedToken(Base):
+    """
+    Represents a token / user session that has been logged out or invalidated.
+    """
     __tablename__ = "blacklisted_tokens"
 
     token = Column(String, primary_key=True, index=True)

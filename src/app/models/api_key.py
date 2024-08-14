@@ -1,12 +1,16 @@
 from sqlalchemy import Column, String, DateTime, UUID, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.core.security import verify_password
 
 from app.constants import ApiKeyStatus
+from app.core.security import verify_password
 from app.database import Base
 
+
 class ApiKey(Base):
+    """
+    Represents an API key that can be used to authenticate requests
+    """
     __tablename__ = "api_keys"
 
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
