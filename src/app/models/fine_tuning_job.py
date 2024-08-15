@@ -9,6 +9,21 @@ from app.database import Base
 class FineTuningJob(Base):
     """
     Represents a fine-tuning job for a language model.
+
+    Attributes:
+        id (UUID): The unique identifier for the fine-tuning job.
+        created_at (DateTime): The timestamp when the job was created.
+        updated_at (DateTime): The timestamp when the job was last updated.
+        user_id (UUID): The ID of the user who created the job.
+        base_model_id (UUID): The ID of the base model used for fine-tuning.
+        dataset_id (UUID): The ID of the dataset used for fine-tuning.
+        status (FineTuningJobStatus): The current status of the job.
+        name (str): The name of the fine-tuning job.
+        current_step (int): The current step of the fine-tuning process.
+        total_steps (int): The total number of steps in the fine-tuning process.
+        current_epoch (int): The current epoch of the fine-tuning process.
+        total_epochs (int): The total number of epochs in the fine-tuning process.
+        num_tokens (int): The number of tokens processed in the fine-tuning job.
     """
     __tablename__ = "fine_tuning_jobs"
 
