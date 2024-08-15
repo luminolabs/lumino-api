@@ -148,6 +148,25 @@ class ModelRetrievalError(BadRequestError):
         super().__init__(detail)
 
 
+# Fine-Tuning exceptions
+
+
+class FineTuningJobCreationError(BadRequestError):
+    """Exception raised when there's an error creating a fine-tuning job."""
+    def __init__(self, detail: str = "Failed to create fine-tuning job"):
+        super().__init__(detail)
+
+class FineTuningJobNotFoundError(NotFoundError):
+    """Exception raised when a requested fine-tuning job is not found."""
+    def __init__(self, detail: str = "Fine-tuning job not found"):
+        super().__init__(detail)
+
+class FineTuningJobCancelError(BadRequestError):
+    """Exception raised when there's an error cancelling a fine-tuning job."""
+    def __init__(self, detail: str = "Failed to cancel fine-tuning job"):
+        super().__init__(detail)
+
+
 # Exception handlers
 
 
