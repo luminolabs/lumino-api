@@ -45,7 +45,7 @@ async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)) -> UserRe
         logger.info(f"Successfully created new user with ID: {new_user.id}")
         return new_user
     except EmailAlreadyExistsError as e:
-        logger.error(f"Error creating user: {str(e)}")
+        logger.error(f"Error creating user: {e.detail}")
         raise BadRequestError(e.detail)
 
 
@@ -93,7 +93,7 @@ async def update_current_user(
         logger.info(f"Successfully updated user: {current_user.id}")
         return updated_user
     except UserNotFoundError as e:
-        logger.error(f"Error updating user {current_user.id}: {str(e)}")
+        logger.error(f"Error updating user {current_user.id}: {e.detail}")
         raise NotFoundError(e.detail)
 
 
@@ -142,7 +142,7 @@ async def delete_user_account(
         await delete_user(db, user_id)
         logger.info(f"Successfully deleted user account: {user_id}")
     except UserNotFoundError as e:
-        logger.error(f"Error deleting user {user_id}: {str(e)}")
+        logger.error(f"Error deleting user {user_id}: {e.detail}")
         raise NotFoundError(e.detail)
 
 

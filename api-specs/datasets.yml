@@ -112,32 +112,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v1/datasets/{dataset_name}/download:
-    get:
-      summary: Download a specific dataset file
-      tags:
-        - Datasets
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: dataset_name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/jsonl:
-              schema:
-                type: string
-                format: binary
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
 components:
   schemas:
     Dataset:
