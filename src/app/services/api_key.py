@@ -79,7 +79,7 @@ async def create_api_key(db: AsyncSession, user_id: UUID, api_key: ApiKeyCreate)
             secret=key
         )
     except SQLAlchemyError as e:
-        logger.error(f"Database error while creating API key for user {user_id}: {str(e)}")
+        logger.error(f"Database error while creating API key for user {user_id}: {e.detail}")
         await db.rollback()
         raise ApiKeyCreationError("Failed to create API key due to a database error")
 
@@ -133,7 +133,7 @@ async def get_api_keys(
         logger.info(f"Retrieved API keys for user: {user_id}, page: {page}")
         return api_keys, pagination
     except SQLAlchemyError as e:
-        logger.error(f"Database error while fetching API keys for user {user_id}: {str(e)}")
+        logger.error(f"Database error while fetching API keys for user {user_id}: {e.detail}")
         raise ApiKeyNotFoundError("Failed to retrieve API keys due to a database error")
 
 
@@ -164,7 +164,7 @@ async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyR
         logger.warning(f"API key not found: {key_name} for user: {user_id}")
         return None
     except SQLAlchemyError as e:
-        logger.error(f"Database error while fetching API key {key_name} for user {user_id}: {str(e)}")
+        logger.error(f"Database error while fetching API key {key_name} for user {user_id}: {e.detail}")
         raise ApiKeyNotFoundError("Failed to retrieve API key due to a database error")
 
 
@@ -216,7 +216,7 @@ async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key
         logger.info(f"Updated API key: {key_name} for user: {user_id}")
         return ApiKeyResponse.from_orm(db_api_key)
     except SQLAlchemyError as e:
-        logger.error(f"Database error while updating API key {key_name} for user {user_id}: {str(e)}")
+        logger.error(f"Database error while updating API key {key_name} for user {user_id}: {e.detail}")
         await db.rollback()
         raise ApiKeyUpdateError("Failed to update API key due to a database error")
 
@@ -251,7 +251,7 @@ async def revoke_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiK
         logger.info(f"Revoked API key: {key_name} for user: {user_id}")
         return ApiKeyResponse.from_orm(db_api_key)
     except SQLAlchemyError as e:
-        logger.error(f"Database error while revoking API key {key_name} for user {user_id}: {str(e)}")
+        logger.error(f"Database error while revoking API key {key_name} for user {user_id}: {e.detail}")
         await db.rollback()
         raise ApiKeyRevocationError("Failed to revoke API key due to a database error")
 
@@ -284,5 +284,5 @@ async def verify_api_key(db: AsyncSession, api_key: str) -> UUID | None:
         logger.warning(f"Invalid API key used: {prefix}")
         return None
     except SQLAlchemyError as e:
-        logger.error(f"Database error while verifying API key: {str(e)}")
+        logger.error(f"Database error while verifying API key: {e.detail}")
         return None

@@ -9,6 +9,21 @@ from app.database import Base
 class Dataset(Base):
     """
     Represents a dataset used for fine-tuning language models.
+
+    Attributes:
+        id (UUID): The unique identifier for the dataset.
+        created_at (DateTime): The timestamp when the dataset was created.
+        user_id (UUID): The ID of the user who owns this dataset.
+        status (DatasetStatus): The current status of the dataset.
+        name (str): The name of the dataset.
+        description (str | None): An optional description of the dataset.
+        storage_url (str): The URL where the dataset file is stored.
+        file_size (int): The size of the dataset file in bytes.
+        errors (dict | None): Any errors encountered during dataset processing.
+
+    Relationships:
+        user (User): The user who owns this dataset.
+        fine_tuning_jobs (list[FineTuningJob]): The fine-tuning jobs using this dataset.
     """
     __tablename__ = "datasets"
 
@@ -18,9 +33,9 @@ class Dataset(Base):
     status = Column(Enum(DatasetStatus), nullable=False, default=DatasetStatus.UPLOADED)
     name = Column(String(255), nullable=False)
     description = Column(String)
-    storage_url = Column(String(255))  # URL to the stored dataset file
-    file_size = Column(BigInteger)  # Size of the dataset file in bytes
-    errors = Column(JSON)  # Any errors encountered during processing
+    storage_url = Column(String(255))
+    file_size = Column(BigInteger)
+    errors = Column(JSON)
 
     # Relationships
     user = relationship("User", back_populates="datasets")
@@ -31,4 +46,10 @@ class Dataset(Base):
     )
 
     def __repr__(self) -> str:
+        """
+        Returns a string representation of the Dataset instance.
+
+        Returns:
+            str: A string representation of the Dataset.
+        """
         return f"<Dataset(id={self.id}, name={self.name}, user_id={self.user_id}, status={self.status})>"

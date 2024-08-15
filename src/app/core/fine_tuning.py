@@ -69,7 +69,7 @@ async def start_fine_tuning_job(job_id: UUID):
         async with AsyncSessionLocal() as db:
             job = await db.get(FineTuningJob, job_id)
             job.status = FineTuningJobStatus.FAILED
-            job.details.error_message = str(e)
+            job.details.error_message = e.detail
             await db.commit()
 
 

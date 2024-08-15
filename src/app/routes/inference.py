@@ -37,7 +37,7 @@ async def create_new_inference_endpoint(
     try:
         return await create_inference_endpoint(db, current_user.id, endpoint)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=e.detail)
 
 
 @router.get("/inference", response_model=Dict[str, Union[List[InferenceEndpointResponse], Pagination]])
@@ -78,7 +78,7 @@ async def delete_inference_endpoint_request(
     try:
         await delete_inference_endpoint(db, current_user.id, endpoint_name)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=e.detail)
 
 
 @router.post("/inference/{endpoint_name}/prompts", response_model=PromptResponse)
@@ -92,7 +92,7 @@ async def send_prompt_to_model(
     try:
         return await send_prompt(db, current_user.id, endpoint_name, prompt)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=e.detail)
 
 
 @router.get("/inference/{endpoint_name}/prompts", response_model=list[PromptResponse])
@@ -107,7 +107,7 @@ async def retrieve_conversation_history(
     try:
         return await get_conversation_history(db, current_user.id, endpoint_name, skip, limit)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=e.detail)
 
 
 @router.get("/inference/{endpoint_name}/prompts/{prompt_id}", response_model=PromptResponse)
@@ -121,4 +121,4 @@ async def get_single_prompt_request(
     try:
         return await get_single_prompt(db, current_user.id, endpoint_name, prompt_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=e.detail)

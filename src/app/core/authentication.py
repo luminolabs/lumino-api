@@ -115,8 +115,8 @@ async def get_current_active_user(
         user = await get_user_from_jwt(token, db)
         return UserResponse.from_orm(user)
     except (InvalidTokenError, ExpiredTokenError, UserNotFoundError) as e:
-        logger.warning(f"Failed authentication attempt with JWT: {str(e)}")
-        raise UnauthorizedError(str(e))
+        logger.warning(f"Failed authentication attempt with JWT: {e.detail}")
+        raise UnauthorizedError(e.detail)
 
 
 async def logout_user(token: str, db: AsyncSession):

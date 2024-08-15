@@ -32,7 +32,7 @@ async def create_new_fine_tuning_job(
     try:
         return await create_fine_tuning_job(db, current_user.id, job)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=e.detail)
 
 
 @router.get("/fine-tuning", response_model=Dict[str, Union[List[FineTuningJobResponse], Pagination]])
@@ -79,7 +79,7 @@ async def cancel_fine_tuning_job_request(
     try:
         return await cancel_fine_tuning_job(db, current_user.id, job_name)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=e.detail)
 
 
 @router.get("/fine-tuning/{job_name}/logs")
@@ -94,4 +94,4 @@ async def get_fine_tuning_job_logs_request(
     try:
         return await get_fine_tuning_job_logs(db, current_user.id, job_name)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=e.detail)

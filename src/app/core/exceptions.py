@@ -91,6 +91,41 @@ class ApiKeyRevocationError(BadRequestError):
         super().__init__(detail)
 
 
+# Dataset exceptions
+
+
+class DatasetCreationError(BadRequestError):
+    """Exception raised when there's an error creating a dataset."""
+    def __init__(self, detail: str = "Failed to create dataset"):
+        super().__init__(detail)
+
+
+class DatasetNotFoundError(NotFoundError):
+    """Exception raised when a requested dataset is not found."""
+    def __init__(self, detail: str = "Dataset not found"):
+        super().__init__(detail)
+
+
+class DatasetUpdateError(BadRequestError):
+    """Exception raised when there's an error updating a dataset."""
+    def __init__(self, detail: str = "Failed to update dataset"):
+        super().__init__(detail)
+
+
+class DatasetDeletionError(BadRequestError):
+    """Exception raised when there's an error deleting a dataset."""
+    def __init__(self, detail: str = "Failed to delete dataset"):
+        super().__init__(detail)
+
+
+# Storage exceptions
+
+class StorageError(AppException):
+    """Exception raised when there's an error with storage operations."""
+    def __init__(self, detail: str = "Storage operation failed"):
+        super().__init__(status_code=500, detail=detail)
+
+
 # Exception handlers
 
 

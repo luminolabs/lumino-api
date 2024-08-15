@@ -59,7 +59,7 @@ async def create_new_api_key(
         logger.info(f"Successfully created API key for user: {current_user.id}")
         return new_api_key
     except ApiKeyCreationError as e:
-        logger.error(f"Error creating API key for user {current_user.id}: {str(e)}")
+        logger.error(f"Error creating API key for user {current_user.id}: {e.detail}")
         raise BadRequestError(e.detail)
 
 
@@ -147,10 +147,10 @@ async def update_api_key_details(
         logger.info(f"Successfully updated API key for user: {current_user.id}, key name: {key_name}")
         return updated_key
     except ApiKeyNotFoundError as e:
-        logger.error(f"API key not found for user {current_user.id}, key name {key_name}: {str(e)}")
+        logger.error(f"API key not found for user {current_user.id}, key name {key_name}: {e.detail}")
         raise NotFoundError(e.detail)
     except ApiKeyUpdateError as e:
-        logger.error(f"Error updating API key for user {current_user.id}, key name {key_name}: {str(e)}")
+        logger.error(f"Error updating API key for user {current_user.id}, key name {key_name}: {e.detail}")
         raise BadRequestError(e.detail)
 
 
@@ -181,8 +181,8 @@ async def revoke_api_key_route(
         logger.info(f"Successfully revoked API key for user: {current_user.id}, key name: {key_name}")
         return revoked_key
     except ApiKeyNotFoundError as e:
-        logger.error(f"API key not found for user {current_user.id}, key name {key_name}: {str(e)}")
+        logger.error(f"API key not found for user {current_user.id}, key name {key_name}: {e.detail}")
         raise NotFoundError(e.detail)
     except ApiKeyRevocationError as e:
-        logger.error(f"Error revoking API key for user {current_user.id}, key name {key_name}: {str(e)}")
+        logger.error(f"Error revoking API key for user {current_user.id}, key name {key_name}: {e.detail}")
         raise BadRequestError(e.detail)
