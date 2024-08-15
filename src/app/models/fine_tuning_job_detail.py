@@ -6,6 +6,11 @@ from app.database import Base
 class FineTuningJobDetail(Base):
     """
     Represents detailed information for a fine-tuning job.
+
+    Attributes:
+        fine_tuning_job_id (UUID): The ID of the associated fine-tuning job.
+        parameters (JSON): The parameters used for the fine-tuning job.
+        metrics (JSON): The metrics collected during the fine-tuning process.
     """
     __tablename__ = "fine_tuning_job_details"
 

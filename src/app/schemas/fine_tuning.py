@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from uuid import UUID
 from typing import Dict, Any
@@ -25,6 +25,7 @@ class FineTuningJobResponse(BaseModel):
     current_epoch: int | None
     total_epochs: int | None
     num_tokens: int | None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FineTuningJobDetailResponse(FineTuningJobResponse):
