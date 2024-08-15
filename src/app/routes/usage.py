@@ -32,7 +32,7 @@ async def get_total_cost_for_period(
             total_cost=total_cost
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=e.detail)
 
 
 @router.get("/usage/records", response_model=Dict[str, Union[List[UsageRecordResponse], Pagination]])

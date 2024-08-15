@@ -147,6 +147,14 @@ CREATE TABLE usage (
     FOREIGN KEY (inference_endpoint_id) REFERENCES inference_endpoints(id)
 );
 
+-- Blacklisted tokens table
+CREATE TABLE blacklisted_tokens (
+    token VARCHAR(255) PRIMARY KEY,
+    blacklisted_on TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+CREATE INDEX idx_blacklisted_tokens_expires_at ON blacklisted_tokens(expires_at);
+
 -- Create indexes for frequently queried columns
 CREATE INDEX idx_datasets_user_id ON datasets(user_id);
 CREATE INDEX idx_fine_tuning_jobs_user_id ON fine_tuning_jobs(user_id);

@@ -3,12 +3,13 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.constants import ApiKeyStatus
+from app.core.security import verify_password
 from app.database import Base
 
 
 class ApiKey(Base):
     """
-    Represents an API key used for authentication.
+    Represents an API key that can be used to authenticate requests
     """
     __tablename__ = "api_keys"
 
@@ -28,6 +29,9 @@ class ApiKey(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'name', name='uq_api_key_user_id_name'),
     )
+
+    def verify_key(self, api_key: str) -> bool:
+        return verify_password(api_key, self.hashed_key)
 
     def __repr__(self) -> str:
         return f"<ApiKey(id={self.id}, user_id={self.user_id}, name={self.name}, status={self.status})>"
