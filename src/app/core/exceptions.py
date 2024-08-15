@@ -120,10 +120,32 @@ class DatasetDeletionError(BadRequestError):
 
 # Storage exceptions
 
+
 class StorageError(AppException):
     """Exception raised when there's an error with storage operations."""
     def __init__(self, detail: str = "Storage operation failed"):
         super().__init__(status_code=500, detail=detail)
+
+
+# Model exceptions
+
+
+class BaseModelNotFoundError(NotFoundError):
+    """Exception raised when a requested base model is not found."""
+    def __init__(self, detail: str = "Base model not found"):
+        super().__init__(detail)
+
+
+class FineTunedModelNotFoundError(NotFoundError):
+    """Exception raised when a requested fine-tuned model is not found."""
+    def __init__(self, detail: str = "Fine-tuned model not found"):
+        super().__init__(detail)
+
+
+class ModelRetrievalError(BadRequestError):
+    """Exception raised when there's an error retrieving models."""
+    def __init__(self, detail: str = "Failed to retrieve models"):
+        super().__init__(detail)
 
 
 # Exception handlers
