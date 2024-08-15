@@ -1,16 +1,23 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from uuid import UUID
 from typing import Dict, Any
 
 from app.constants import InferenceEndpointStatus
+from app.schemas.common import NAME_REGEX_LABEL
 
 
 class InferenceEndpointCreate(BaseModel):
     fine_tuned_model_name: str
     machine_type: str
     parameters: Dict[str, Any]
-    name: str
+    name: str = Field(
+        ...,
+        description=f"The name of the inference endpoint. {NAME_REGEX_LABEL}",
+        pattern="^[a-z0-9_-]+$",
+        min_length=1,
+        max_length=255
+    )
 
 
 class InferenceEndpointResponse(BaseModel):

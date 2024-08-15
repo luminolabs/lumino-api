@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import UploadFile
 
 from app.constants import DatasetStatus
+from app.schemas.common import NAME_REGEX_LABEL
 
 
 class DatasetCreate(BaseModel):
@@ -15,7 +16,13 @@ class DatasetCreate(BaseModel):
         description (str | None): An optional description of the dataset.
         file (UploadFile): The uploaded dataset file.
     """
-    name: str = Field(..., description="The name of the dataset")
+    name: str = Field(
+        ...,
+        description=f"The name of the dataset. {NAME_REGEX_LABEL}",
+        pattern="^[a-z0-9_-]+$",
+        min_length=1,
+        max_length=255
+    )
     description: str | None = Field(None, description="An optional description of the dataset")
     file: UploadFile
 
@@ -56,5 +63,11 @@ class DatasetUpdate(BaseModel):
         name (str | None): The new name for the dataset (optional).
         description (str | None): The new description for the dataset (optional).
     """
-    name: str | None = Field(None, description="The new name for the dataset")
+    name: str | None = Field(
+        None,
+        description=f"The new name for the dataset. {NAME_REGEX_LABEL}",
+        pattern="^[a-z0-9_-]+$",
+        min_length=1,
+        max_length=255
+    )
     description: str | None = Field(None, description="The new description for the dataset")
