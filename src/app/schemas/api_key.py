@@ -6,6 +6,7 @@ from uuid import UUID
 from typing import Optional
 
 from app.constants import ApiKeyStatus
+from app.schemas.common import NAME_REGEX_LABEL
 
 
 class ApiKeyCreate(BaseModel):
@@ -16,7 +17,13 @@ class ApiKeyCreate(BaseModel):
         name (str): The name of the API key.
         expires_at (Optional[datetime]): The expiration date and time of the API key.
     """
-    name: str = Field(..., description="The name of the API key")
+    name: str = Field(
+        ...,
+        description=f"The name of the API key. {NAME_REGEX_LABEL}",
+        pattern="^[a-z0-9_-]+$",
+        min_length=1,
+        max_length=255
+    )
     expires_at: Optional[datetime] = Field(None, description="The expiration date and time of the API key")
 
     class Config:
@@ -32,7 +39,13 @@ class ApiKeyUpdate(BaseModel):
         name (Optional[str]): The new name for the API key.
         expires_at (Optional[datetime]): The new expiration date and time for the API key.
     """
-    name: Optional[str] = Field(None, description="The new name for the API key")
+    name: Optional[str] = Field(
+        ...,
+        description=f"The new name of the API key. {NAME_REGEX_LABEL}",
+        pattern="^[a-z0-9_-]+$",
+        min_length=1,
+        max_length=255
+    )
     expires_at: Optional[datetime] = Field(None, description="The new expiration date and time for the API key")
 
     class Config:

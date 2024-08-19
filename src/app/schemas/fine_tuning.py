@@ -1,14 +1,22 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 from typing import Dict, Any
 
 from app.constants import FineTuningJobStatus
+from app.schemas.common import NAME_REGEX_LABEL
 
 
 class FineTuningJobCreate(BaseModel):
     base_model_name: str
     dataset_name: str
+    name: str = Field(
+        ...,
+        description=f"The name of the fine-tuning job. {NAME_REGEX_LABEL}",
+        pattern="^[a-z0-9_-]+$",
+        min_length=1,
+        max_length=255
+    )
     parameters: Dict[str, Any]
 
 
