@@ -153,12 +153,26 @@ async def logout_bearer_token(token: str, db: AsyncSession):
 
 
 async def login_email_password(db: AsyncSession, email: str, password: str) -> str:
+    """
+    Login a user using email and password.
+
+    Args:
+        db (AsyncSession): The database session.
+        email (str): The user's email address.
+        password (str): The user's password.
+    Returns:
+        str: The bearer token for the user.
+    """
     logger.info(f"Login attempt for user: {email}")
+
+    # Authenticate the user and create a bearer token
     user = await authenticate_user(db, email, password)
-    access_token_expires = timedelta(minutes=config.bearer_token_expire_minutes)
+    bearer_token_expires = timedelta(minutes=config.bearer_token_expire_minutes)
     bearer_token = create_bearer_token(
-        data={"sub": str(user.id)}, expires_delta=access_token_expires
+        data={"sub": str(user.id)}, expires_delta=bearer_token_expires
     )
+
+    # Log successful login and return the bearer token
     logger.info(f"Successful login for user: {email}")
     return bearer_token
 
