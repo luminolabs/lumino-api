@@ -121,7 +121,7 @@ class ApiKeyNotFoundError(NotFoundError):
 # Dataset exceptions
 
 
-class DatasetCreationError(BadRequestError):
+class DatasetAlreadyExistsError(BadRequestError):
     """Exception raised when there's an error creating a dataset."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
@@ -131,27 +131,6 @@ class DatasetNotFoundError(NotFoundError):
     """Exception raised when a requested dataset is not found."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
-
-
-class DatasetUpdateError(BadRequestError):
-    """Exception raised when there's an error updating a dataset."""
-    def __init__(self, detail: str, logger: Optional[Logger] = None):
-        super().__init__(detail, logger)
-
-
-class DatasetDeletionError(BadRequestError):
-    """Exception raised when there's an error deleting a dataset."""
-    def __init__(self, detail: str, logger: Optional[Logger] = None):
-        super().__init__(detail, logger)
-
-
-# Storage exceptions
-
-
-class StorageError(AppException):
-    """Exception raised when there's an error with storage operations."""
-    def __init__(self, detail: str = "Storage operation failed", logger: Optional[Logger] = None):
-        super().__init__(status_code=500, detail=detail, logger=logger)
 
 
 # Model exceptions

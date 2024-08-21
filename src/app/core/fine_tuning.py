@@ -51,7 +51,7 @@ async def start_fine_tuning_job(job_id: UUID):
             "args": {
                 "job_config_name": base_model.name,
                 "dataset_id": dataset.id,
-                "train_file_path": dataset.storage_url.split("/")[-1],
+                "train_file_path": dataset.file_name.split("/")[-1],
                 "batch_size": job_detail.parameters.get("batch_size", 2),
                 "shuffle": job_detail.parameters.get("shuffle", True),
                 "num_epochs": job_detail.parameters.get("num_epochs", 1),

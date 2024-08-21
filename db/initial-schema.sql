@@ -38,7 +38,7 @@ CREATE TABLE datasets (
     status datasetstatus,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    storage_url VARCHAR(255),
+    file_name VARCHAR(255),
     file_size BIGINT,
     errors JSONB,
     FOREIGN KEY (user_id) REFERENCES users(id)

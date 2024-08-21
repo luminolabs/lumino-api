@@ -8,7 +8,8 @@ sqlalchemy_log_all: False  # Set to True to log all SQL queries in verbose mode
 
 # GCP
 gcp_project: neat-airport-407301
-gcs_bucket_datasets: lum-pipeline-zen-jobs-us
+gcs_bucket: lum-pipeline-zen-jobs-us
+gcs_datasets_path: datasets
 
 # Database
 # Set these in your .env file when running on a local env

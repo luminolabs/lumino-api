@@ -125,7 +125,7 @@ async def get_api_keys(
     return api_keys, pagination
 
 
-async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyResponse | None:
+async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyResponse:
     """
     Get a specific API key.
 
@@ -135,7 +135,7 @@ async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyR
         key_name (str): The name of the API key.
 
     Returns:
-        ApiKeyResponse | None: The API key if found, None otherwise.
+        ApiKeyResponse: The API key if found, None otherwise.
 
     Raises:
         ApiKeyNotFoundError: If the API key is not found.
@@ -145,9 +145,11 @@ async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyR
         select(ApiKey)
         .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
     )).scalar_one_or_none()
+
     # Raise an error if the API key is not found
     if not api_key:
         raise ApiKeyNotFoundError(f"API key not found: {key_name} for user: {user_id}", logger)
+
     # Log and return the API key
     logger.info(f"Retrieved API key: {key_name} for user: {user_id}")
     return ApiKeyResponse.from_orm(api_key)
@@ -174,6 +176,7 @@ async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key
         select(ApiKey)
         .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
     )).scalar_one_or_none()
+
     # Raise an error if the API key is not found
     if not db_api_key:
         raise ApiKeyNotFoundError(f"API key not found: {key_name} for user: {user_id}", logger)

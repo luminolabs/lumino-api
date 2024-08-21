@@ -10,6 +10,20 @@ from app.database import Base
 class ApiKey(Base):
     """
     Represents an API key that can be used to authenticate requests.
+
+    Attributes:
+        id (UUID): The unique identifier for the API key.
+        created_at (DateTime): The timestamp when the API key was created.
+        last_used_at (DateTime | None): The timestamp when the API key was last used.
+        expires_at (DateTime): The timestamp when the API key expires.
+        user_id (UUID): The ID of the user who owns this API key.
+        status (ApiKeyStatus): The current status of the API key.
+        name (str): The name of the API key.
+        prefix (str): The prefix of the API key.
+        key_hash (str): The hashed API key.
+
+    Relationships:
+        user (User): The user who owns this API key.
     """
     __tablename__ = "api_keys"
 
