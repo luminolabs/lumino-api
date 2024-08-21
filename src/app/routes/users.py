@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -89,7 +87,6 @@ async def update_current_user(
 async def logout(
         current_user: User = Depends(get_current_active_user),
         token: str = Depends(oauth2_scheme),
-        api_key: Optional[str] = Depends(get_api_key),
         db: AsyncSession = Depends(get_db)
 ):
     """
@@ -98,16 +95,10 @@ async def logout(
     Args:
         current_user (User): The current authenticated user.
         token (str): The bearer token to blacklist.
-        api_key (str): The API key if present.
         db (AsyncSession): The database session.
     Raises:
         BadRequestError: If the user tries to log out using an API key.
     """
-    if api_key:
-        logger.warning(f"Logout attempt using API key for user: {current_user.id}")
-        raise BadRequestError(f"Can't logout using an API key, "
-                              f"only with bearer token: {api_key[:8]}...", logger)
-    
     await logout_bearer_token(token, db)
     return {"message": "Successfully logged out"}
 

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Optional, Dict
 from uuid import UUID
 
 from fastapi import Depends, Header
@@ -27,12 +26,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 
 # This is the scheme we'll use for authenticating users on our API
-async def get_api_key(x_api_key: Optional[str] = Header(None)) -> str | None:
+async def get_api_key(x_api_key: str | None = Header(None)) -> str | None:
     """
     Get the API key from the request header; this is using FastAPI's Header dependency.
 
     Args:
-        x_api_key (str): The API key from the request header.
+        x_api_key (str | None): The API key from the request header.
     Returns:
         str: The API key from the request header.
     """
@@ -101,16 +100,16 @@ async def get_user_from_bearer_token(token: str, db: AsyncSession) -> User:
 
 
 async def get_current_active_user(
-        token: str = Depends(oauth2_scheme),
-        api_key: Optional[str] = Depends(get_api_key),
+        token: str | None = Depends(oauth2_scheme),
+        api_key: str | None = Depends(get_api_key),
         db: AsyncSession = Depends(get_db)
 ) -> User:
     """
     Get the current active user from either a bearer token or an API key.
 
     Args:
-        token (str): The bearer token to decode and verify.
-        api_key (str): The API key to verify.
+        token (str | None): The bearer token to decode and verify.
+        api_key (str | None): The API key to verify.
         db (AsyncSession): The database session.
     Returns:
         UserResponse: The current active user.
