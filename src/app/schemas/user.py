@@ -1,8 +1,7 @@
 from datetime import datetime
 from uuid import UUID
-from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from app.constants import UserStatus
 
@@ -19,8 +18,8 @@ class UserUpdate(BaseModel):
     """
     Schema for updating user information.
     """
-    name: Optional[str] = Field(None, min_length=1, max_length=255, description="The updated name of the user")
-    email: Optional[EmailStr] = Field(None, description="The updated email address of the user")
+    name: str | None = Field(None, min_length=1, max_length=255, description="The updated name of the user")
+    email: EmailStr | None = Field(None, description="The updated email address of the user")
 
 
 class UserResponse(BaseModel):

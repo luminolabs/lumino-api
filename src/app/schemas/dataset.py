@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime
 from uuid import UUID
 from fastapi import UploadFile
-from typing import Optional
 
 from app.constants import DatasetStatus
 from app.core.exceptions import BadRequestError
@@ -13,7 +12,7 @@ class DatasetCreate(BaseModel):
     Schema for creating a new dataset.
     """
     name: str = Field(..., min_length=1, max_length=255, description="The name of the dataset")
-    description: Optional[str] = Field(None, max_length=1000, description="An optional description of the dataset")
+    description: str | None = Field(None, max_length=1000, description="A description of the dataset")
     file: UploadFile = Field(..., description="The uploaded dataset file")
 
     @field_validator('file')
@@ -32,15 +31,15 @@ class DatasetResponse(BaseModel):
     user_id: UUID = Field(..., description="The ID of the user who owns this dataset")
     status: DatasetStatus = Field(..., description="The current status of the dataset")
     name: str = Field(..., description="The name of the dataset")
-    description: Optional[str] = Field(None, description="The description of the dataset, if any")
+    description: str | None = Field(None, description="The description of the dataset, if any")
     file_name: str = Field(..., description="The name of the stored dataset file")
     file_size: int = Field(..., description="The size of the dataset file in bytes")
-    errors: Optional[dict] = Field(None, description="Any errors encountered during dataset processing, if any")
+    errors: dict | None = Field(None, description="Any errors encountered during dataset processing, if any")
     model_config = ConfigDict(from_attributes=True)
 
 class DatasetUpdate(BaseModel):
     """
     Schema for updating an existing dataset.
     """
-    name: Optional[str] = Field(None, min_length=1, max_length=255, description="The new name for the dataset")
-    description: Optional[str] = Field(None, max_length=1000, description="The new description for the dataset")
+    name: str | None = Field(None, min_length=1, max_length=255, description="The new name for the dataset")
+    description: str | None = Field(None, max_length=1000, description="The new description for the dataset")

@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime, timezone
 from uuid import UUID
-from typing import Optional
 
 from app.constants import ApiKeyStatus
 from app.core.exceptions import BadRequestError
@@ -30,8 +29,8 @@ class ApiKeyUpdate(BaseModel):
     """
     Schema for updating an existing API key.
     """
-    name: Optional[str] = Field(None, min_length=1, max_length=255, description="The new name for the API key")
-    expires_at: Optional[datetime] = Field(None, description="The new expiration date and time for the API key")
+    name: str | None = Field(None, min_length=1, max_length=255, description="The new name for the API key")
+    expires_at: datetime | None = Field(None, description="The new expiration date and time for the API key")
 
     @field_validator('expires_at')
     def expiration_must_be_future(cls, v: datetime) -> datetime:
