@@ -177,7 +177,7 @@ async def is_bearer_token_logged_out(db: AsyncSession, token: str) -> bool:
     is_logged_out = (await db.execute(
         select(BlacklistedToken).where(
             BlacklistedToken.token == token,
-            )
+        )
     )).scalar_one_or_none() is not None
     # Return whether the token is logged out
     return is_logged_out
