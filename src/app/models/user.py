@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.constants import UserStatus
+from app.core.cryptography import verify_password
 from app.database import Base
 
 
@@ -13,6 +14,7 @@ class User(Base):
     """
     __tablename__ = "users"
 
+    # Columns
     id = Column(UUID, primary_key=True, default=uuid4, nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -29,10 +31,21 @@ class User(Base):
     api_keys = relationship("ApiKey", back_populates="user")
     usage_records = relationship("Usage", back_populates="user")
 
-    # Unique index on email
+    # Indexes
     __table_args__ = (
         Index('idx_users_email', email, unique=True),
     )
+
+    def verify_password(self, password: str) -> bool:
+        """
+        Verify the provided password the stored hashed password.
+
+        Args:
+            password (str): The password to verify.
+        Returns:
+            bool: True if the password is valid, False otherwise.
+        """
+        return verify_password(password, self.password_hash)
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, name={self.name}, email={self.email})>"

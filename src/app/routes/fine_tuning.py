@@ -182,5 +182,5 @@ async def get_fine_tuning_job_logs_request(
         logger.error(f"Fine-tuning job not found for user {current_user.id}, job name {job_name}: {e.detail}")
         raise NotFoundError(e.detail)
     except Exception as e:
-        logger.error(f"Error retrieving logs for fine-tuning job {job_name}, user {current_user.id}: {str(e)}")
-        raise BadRequestError(f"Failed to retrieve logs: {str(e)}")
+        logger.error(f"Error retrieving logs for fine-tuning job {job_name}, user {current_user.id}: {e}")
+        raise BadRequestError(f"Failed to retrieve logs: {e}")

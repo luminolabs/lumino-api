@@ -9,7 +9,7 @@ from app.core.exceptions import (
     BaseModelNotFoundError,
     FineTunedModelNotFoundError
 )
-from app.models import FineTuningJob
+from app.models.fine_tuning_job import FineTuningJob
 from app.models.base_model import BaseModel
 from app.models.fine_tuned_model import FineTunedModel
 from app.schemas.common import Pagination
@@ -69,7 +69,7 @@ async def get_base_models(
         logger.info(f"Successfully retrieved {len(models)} base models")
         return models, pagination
     except Exception as e:
-        logger.error(f"Error retrieving base models: {str(e)}")
+        logger.error(f"Error retrieving base models: {e}")
         raise ModelRetrievalError("Failed to retrieve base models from the database")
 
 
@@ -100,7 +100,7 @@ async def get_base_model(db: AsyncSession, model_name: str) -> BaseModelResponse
         logger.warning(f"Base model not found: {model_name}")
         return None
     except Exception as e:
-        logger.error(f"Error retrieving base model {model_name}: {str(e)}")
+        logger.error(f"Error retrieving base model {model_name}: {e}")
         raise BaseModelNotFoundError(f"Failed to retrieve base model '{model_name}' from the database")
 
 
@@ -165,7 +165,7 @@ async def get_fine_tuned_models(
         logger.info(f"Successfully retrieved {len(models)} fine-tuned models for user: {user_id}")
         return models, pagination
     except Exception as e:
-        logger.error(f"Error retrieving fine-tuned models for user {user_id}: {str(e)}")
+        logger.error(f"Error retrieving fine-tuned models for user {user_id}: {e}")
         raise ModelRetrievalError("Failed to retrieve fine-tuned models from the database")
 
 
@@ -201,5 +201,5 @@ async def get_fine_tuned_model(db: AsyncSession, user_id: UUID, model_name: str)
         logger.warning(f"Fine-tuned model not found: {model_name} for user: {user_id}")
         return None
     except Exception as e:
-        logger.error(f"Error retrieving fine-tuned model {model_name} for user {user_id}: {str(e)}")
+        logger.error(f"Error retrieving fine-tuned model {model_name} for user {user_id}: {e}")
         raise FineTunedModelNotFoundError(f"Failed to retrieve fine-tuned model '{model_name}' from the database")

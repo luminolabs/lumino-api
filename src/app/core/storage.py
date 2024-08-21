@@ -1,7 +1,6 @@
 import os
 from fastapi import UploadFile
 from app.config_manager import config
-from typing import AsyncGenerator
 from gcloud.aio.storage import Storage
 from aiohttp import ClientSession, ClientResponseError
 from app.utils import setup_logger
@@ -47,7 +46,7 @@ async def upload_file(file: UploadFile, path: str) -> str:
     except Exception as e:
         logger.error(f"Error uploading file to Google Cloud Storage: {e}")
         logger.error("Are you authenticated with Google Cloud SDK? Run 'gcloud auth application-default login'")
-        raise StorageError(f"Failed to upload file: {e.detail}")
+        raise StorageError(f"Failed to upload file: {e}")
 
 
 async def delete_file(file_url: str) -> None:
@@ -71,9 +70,15 @@ async def delete_file(file_url: str) -> None:
                 object_name=file_path
             )
         logger.info(f"Successfully deleted file: {file_path}")
-    except Exception as e:
-        logger.error(f"Error deleting file from Google Cloud Storage: {e}")
-        raise StorageError(f"Failed to delete file: {e.detail}")
+    except ClientResponseError as e:
+        if e.status == 404:
+            logger.warning(f"File not found in Google Cloud Storage: {file_path}")
+        elif e.status == 400 and "invalid_grant" in e.message:
+            logger.error("Authentication error: Are you authenticated with Google Cloud SDK?")
+            raise StorageError("Authentication error: Are you authenticated with Google Cloud SDK?")
+        else:
+            logger.error(f"Error deleting file from Google Cloud Storage: {e}")
+            raise StorageError(f"Failed to delete file: {e}")
 
 
 async def generate_signed_url(file_url: str, expiration: int = 3600) -> str:
@@ -105,4 +110,4 @@ async def generate_signed_url(file_url: str, expiration: int = 3600) -> str:
         return signed_url
     except Exception as e:
         logger.error(f"Error generating signed URL: {e}")
-        raise StorageError(f"Failed to generate signed URL: {e.detail}")
+        raise StorageError(f"Failed to generate signed URL: {e}")

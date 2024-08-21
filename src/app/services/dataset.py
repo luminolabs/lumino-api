@@ -65,12 +65,12 @@ async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate
     except DatasetCreationError:
         raise
     except Exception as e:
-        logger.error(f"Error creating dataset for user {user_id}: {e.detail}")
+        logger.error(f"Error creating dataset for user {user_id}: {e}")
         await db.rollback()
         # Delete the uploaded file if there was an error
         if 'storage_url' in locals():
             await delete_file(storage_url)
-        raise DatasetCreationError(f"Failed to create dataset: {e.detail}")
+        raise DatasetCreationError(f"Failed to create dataset: {e}")
 
 
 async def get_datasets(
@@ -122,7 +122,7 @@ async def get_datasets(
         logger.info(f"Retrieved datasets for user: {user_id}, page: {page}")
         return datasets, pagination
     except Exception as e:
-        logger.error(f"Error retrieving datasets for user {user_id}: {e.detail}")
+        logger.error(f"Error retrieving datasets for user {user_id}: {e}")
         raise
 
 
@@ -150,7 +150,7 @@ async def get_dataset(db: AsyncSession, user_id: UUID, dataset_name: str) -> Dat
         logger.warning(f"Dataset not found: {dataset_name} for user: {user_id}")
         return None
     except Exception as e:
-        logger.error(f"Error retrieving dataset {dataset_name} for user {user_id}: {e.detail}")
+        logger.error(f"Error retrieving dataset {dataset_name} for user {user_id}: {e}")
         raise
 
 
@@ -191,9 +191,9 @@ async def update_dataset(db: AsyncSession, user_id: UUID, dataset_name: str, dat
     except DatasetNotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Error updating dataset {dataset_name} for user {user_id}: {e.detail}")
+        logger.error(f"Error updating dataset {dataset_name} for user {user_id}: {e}")
         await db.rollback()
-        raise DatasetUpdateError(f"Failed to update dataset: {e.detail}")
+        raise DatasetUpdateError(f"Failed to update dataset: {e}")
 
 
 async def delete_dataset(db: AsyncSession, user_id: UUID, dataset_name: str) -> None:
@@ -220,12 +220,12 @@ async def delete_dataset(db: AsyncSession, user_id: UUID, dataset_name: str) -> 
             raise DatasetNotFoundError("Dataset not found")
 
         await delete_file(db_dataset.storage_url)
-        await db.delete(db_dataset)
+        db_dataset.status = DatasetStatus.DELETED
         await db.commit()
         logger.info(f"Successfully deleted dataset: {dataset_name} for user: {user_id}")
     except DatasetNotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Error deleting dataset {dataset_name} for user {user_id}: {e.detail}")
+        logger.error(f"Error deleting dataset {dataset_name} for user {user_id}: {e}")
         await db.rollback()
-        raise DatasetDeletionError(f"Failed to delete dataset: {e.detail}")
+        raise DatasetDeletionError(f"Failed to delete dataset: {e}")

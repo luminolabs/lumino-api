@@ -1,7 +1,8 @@
 from datetime import datetime
 from uuid import UUID
+from typing import Optional
 
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from app.constants import UserStatus
 
@@ -9,71 +10,46 @@ from app.constants import UserStatus
 class UserCreate(BaseModel):
     """
     Schema for creating a new user.
-
-    Attributes:
-        name (str): The name of the user.
-        email (EmailStr): The email address of the user.
-        password (str): The password for the user account.
     """
-    name: str
-    email: EmailStr
-    password: str
+    name: str = Field(..., description="The name of the user")
+    email: EmailStr = Field(..., description="The email address of the user")
+    password: str = Field(..., description="The password for the user account")
 
 
 class UserUpdate(BaseModel):
     """
     Schema for updating user information.
-
-    Attributes:
-        name (str | None): The updated name of the user (optional).
-        email (EmailStr | None): The updated email address of the user (optional).
     """
-    name: str | None = None
-    email: EmailStr | None = None
+    name: Optional[str] = Field(None, description="The updated name of the user")
+    email: Optional[EmailStr] = Field(None, description="The updated email address of the user")
 
 
 class UserResponse(BaseModel):
     """
     Schema for user response data.
-
-    Attributes:
-        id (UUID): The unique identifier for the user.
-        created_at (datetime): The timestamp when the user was created.
-        updated_at (datetime): The timestamp when the user was last updated.
-        status (UserStatus): The current status of the user.
-        name (str): The name of the user.
-        email (EmailStr): The email address of the user.
     """
-    id: UUID
-    created_at: datetime
-    updated_at: datetime
-    status: UserStatus
-    name: str
-    email: EmailStr
+    id: UUID = Field(..., description="The unique identifier for the user")
+    created_at: datetime = Field(..., description="The timestamp when the user was created")
+    updated_at: datetime = Field(..., description="The timestamp when the user was last updated")
+    status: UserStatus = Field(..., description="The current status of the user")
+    name: str = Field(..., description="The name of the user")
+    email: EmailStr = Field(..., description="The email address of the user")
     model_config = ConfigDict(from_attributes=True)
 
 
 class LoginRequest(BaseModel):
     """
     Schema for user login request.
-
-    Attributes:
-        email (EmailStr): The email address for login.
-        password (str): The password for login.
     """
-    email: EmailStr
-    password: str
+    email: EmailStr = Field(..., description="The email address for login")
+    password: str = Field(..., description="The password for login")
 
 
 class LoginResponse(BaseModel):
     """
     Schema for login response.
-
-    Attributes:
-        access_token (str): The JWT access token.
-        token_type (str): The type of the token (e.g., "bearer").
-        expires_in (int): The expiration time of the token in seconds.
     """
-    access_token: str
-    token_type: str
-    expires_in: int
+    access_token: str = Field(..., description="The JWT access token")
+    token_type: str = Field(..., description="The type of the token (e.g., 'bearer')")
+    expires_in: int = Field(..., description="The expiration time of the token in seconds")
+    model_config = ConfigDict(from_attributes=True)

@@ -30,10 +30,10 @@ class BaseModel(Base):
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     name = Column(String(255), nullable=False, unique=True)
     description = Column(String)
-    hf_url = Column(String(255))  # URL to the model on Hugging Face
-    hf_is_gated = Column(Boolean)  # Whether the model is gated on Hugging Face
+    hf_url = Column(String(255))
+    hf_is_gated = Column(Boolean)
     status = Column(Enum(BaseModelStatus), nullable=False, default=BaseModelStatus.INACTIVE)
-    meta = Column(JSON)  # Additional meta stored as JSON
+    meta = Column(JSON)
 
     # Relationships
     fine_tuning_jobs = relationship("FineTuningJob", back_populates="base_model")

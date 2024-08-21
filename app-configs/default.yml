@@ -1,7 +1,10 @@
-# Logging
+# Application logging
 log_level: INFO
 log_stdout: true
 log_file: ./.logs/output.log
+
+# sqlalchemy logging
+sqlalchemy_log_all: False  # Set to True to log all SQL queries in verbose mode
 
 # GCP
 gcp_project: neat-airport-407301
@@ -18,11 +21,12 @@ db_port:
 
 # API configuration
 api_v1_prefix: /v1
+admin_user_id:
 
 # JWT configuration
-secret_key: your_secret_key_here
-algorithm: HS256
-access_token_expire_minutes: 30
+bearer_token_secret_key: your_secret_key_here  # TODO: Create a GCP secret for this
+bearer_token_algorithm: HS256  # Algorithm used to sign tokens
+bearer_token_expire_minutes: 1440  # 24 hours
 
 # Scheduler Zen URL
 scheduler_zen_url: http://localhost:8000

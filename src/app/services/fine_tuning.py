@@ -82,8 +82,8 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
         logger.error(f"Error creating fine-tuning job for user {user_id}: {e.detail}")
         raise
     except Exception as e:
-        logger.error(f"Unexpected error creating fine-tuning job for user {user_id}: {str(e)}")
-        raise FineTuningJobCreationError(f"Failed to create fine-tuning job: {str(e)}")
+        logger.error(f"Unexpected error creating fine-tuning job for user {user_id}: {e}")
+        raise FineTuningJobCreationError(f"Failed to create fine-tuning job: {e}")
 
 
 async def get_fine_tuning_jobs(
@@ -143,7 +143,7 @@ async def get_fine_tuning_jobs(
         logger.info(f"Retrieved {len(jobs)} fine-tuning jobs for user: {user_id}")
         return jobs, pagination
     except Exception as e:
-        logger.error(f"Error retrieving fine-tuning jobs for user {user_id}: {str(e)}")
+        logger.error(f"Error retrieving fine-tuning jobs for user {user_id}: {e}")
         raise
 
 
@@ -183,8 +183,8 @@ async def get_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) ->
         logger.warning(f"Fine-tuning job not found: {job_name} for user: {user_id}")
         return None
     except Exception as e:
-        logger.error(f"Error retrieving fine-tuning job {job_name} for user {user_id}: {str(e)}")
-        raise FineTuningJobNotFoundError(f"Failed to retrieve fine-tuning job: {str(e)}")
+        logger.error(f"Error retrieving fine-tuning job {job_name} for user {user_id}: {e}")
+        raise FineTuningJobNotFoundError(f"Failed to retrieve fine-tuning job: {e}")
 
 
 async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) -> FineTuningJobResponse:
@@ -229,8 +229,8 @@ async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str)
     except (FineTuningJobNotFoundError, FineTuningJobCancelError):
         raise
     except Exception as e:
-        logger.error(f"Error cancelling fine-tuning job {job_name} for user {user_id}: {str(e)}")
-        raise FineTuningJobCancelError(f"Failed to cancel fine-tuning job: {str(e)}")
+        logger.error(f"Error cancelling fine-tuning job {job_name} for user {user_id}: {e}")
+        raise FineTuningJobCancelError(f"Failed to cancel fine-tuning job: {e}")
 
 
 async def get_fine_tuning_job_logs(db: AsyncSession, user_id: UUID, job_name: str) -> str:
@@ -264,5 +264,5 @@ async def get_fine_tuning_job_logs(db: AsyncSession, user_id: UUID, job_name: st
     except FineTuningJobNotFoundError:
         raise
     except Exception as e:
-        logger.error(f"Error retrieving logs for fine-tuning job {job_name}, user {user_id}: {str(e)}")
-        raise FineTuningJobNotFoundError(f"Failed to retrieve logs: {str(e)}")
+        logger.error(f"Error retrieving logs for fine-tuning job {job_name}, user {user_id}: {e}")
+        raise FineTuningJobNotFoundError(f"Failed to retrieve logs: {e}")

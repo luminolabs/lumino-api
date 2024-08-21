@@ -1,130 +1,208 @@
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Optional, Dict
 from uuid import UUID
 
 from fastapi import Depends, Header
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config_manager import config
 from app.constants import UserStatus
-from app.core.exceptions import UnauthorizedError, InvalidTokenError, ExpiredTokenError, UserNotFoundError
-from app.core.security import SECRET_KEY, ALGORITHM
+from app.core.exceptions import InvalidApiKeyError, InvalidBearerTokenError, UnauthorizedError, ServerError
+from app.core.cryptography import decode_bearer_token, create_bearer_token
 from app.database import get_db
 from app.models.api_key import ApiKey
 from app.models.blacklisted_token import BlacklistedToken
 from app.models.user import User
 from app.schemas.user import UserResponse
+from app.services.user import logger, get_user_by_email
 from app.utils import setup_logger
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
+# This is the scheme we'll use for authenticating users on our web UI
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 
-async def is_token_blacklisted(db: AsyncSession, token: str) -> bool:
+# This is the scheme we'll use for authenticating users on our API
+async def get_api_key(x_api_key: Optional[str] = Header(None)) -> str | None:
     """
-    Check if a token is logged out.
+    Get the API key from the request header; this is using FastAPI's Header dependency.
+
+    Args:
+        x_api_key (str): The API key from the request header.
+    Returns:
+        str: The API key from the request header.
     """
-    result = await db.execute(
-        select(BlacklistedToken).where(
-            BlacklistedToken.token == token,
-        )
-    )
-    is_blacklisted = result.scalar_one_or_none() is not None
-    if is_blacklisted:
-        logger.warning(f"Attempt to use logged out token: {token[:10]}...")
-    return is_blacklisted
+    return x_api_key
 
 
-async def get_user_from_api_key(db: AsyncSession, api_key: str) -> User | None:
+async def get_user_from_api_key(db: AsyncSession, api_key: str) -> User:
     """
     Get a user from an API key.
+
+    Args:
+        api_key (str): The API key to verify.
+        db (AsyncSession): The database session.
+    Returns:
+        User: The user associated with the API key.
+    Raises:
+        InvalidApiKeyError: If the API key is invalid or the user can't be found
     """
-    result = await db.execute(
+    # Get the API key from the database
+    db_api_key = (await db.execute(
         select(ApiKey).where(
             ApiKey.prefix == api_key[:8],
             ApiKey.status == 'ACTIVE',
             ApiKey.expires_at > datetime.utcnow()
         )
-    )
-    db_api_key = result.scalar_one_or_none()
-    if db_api_key and db_api_key.verify_key(api_key):
-        user = await db.get(User, db_api_key.user_id)
-        if user:
-            logger.info(f"User authenticated via API key: {user.id}")
-            return user
-    logger.warning(f"Failed authentication attempt with API key: {api_key[:8]}...")
-    return None
+    )).scalar_one_or_none()
+    # Raise an error if the API key is not found
+    if not db_api_key:
+        raise InvalidApiKeyError(f"API key not found or expired: {api_key[:8]}...", logger)
+    # Raise an error if the API key can't be verified
+    if not db_api_key.verify_key(api_key):
+        raise InvalidApiKeyError(f"Can't verify API key: {api_key[:8]}...", logger)
+    # Everything checks out, return the user
+    logger.info(f"User authenticated via API key: {db_api_key.user.id}, API key: {api_key[:8]}...")
+    return db_api_key.user
 
 
-async def get_user_from_jwt(token: str, db: AsyncSession) -> User | None:
+async def get_user_from_bearer_token(token: str, db: AsyncSession) -> User:
     """
-    Get a user from a JWT token.
-    """
-    try:
-        if await is_token_blacklisted(db, token):
-            logger.warning(f"Attempt to use logged out JWT token: {token[:10]}...")
-            raise ExpiredTokenError("Token has been logged out")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            logger.warning("JWT token payload does not contain user ID")
-            raise InvalidTokenError("Invalid token payload")
-        user = await db.get(User, UUID(user_id))
-        if user and user.status == UserStatus.ACTIVE:
-            logger.info(f"User authenticated via JWT: {user.id}")
-            return user
-        logger.warning(f"User not found or inactive for JWT token: {token[:10]}...")
-        raise UserNotFoundError("User not found or inactive")
-    except JWTError:
-        logger.error(f"Invalid JWT token: {token[:10]}...")
-        raise InvalidTokenError("Invalid token")
+    Get a user from a bearer token.
 
-
-async def get_api_key(x_api_key: Optional[str] = Header(None)) -> Optional[str]:
+    Args:
+        token (str): The bearer token to decode and verify.
+        db (AsyncSession): The database session.
+    Returns:
+        User: The user associated with the bearer token.
+    Raises:
+        InvalidTokenError: If the bearer token is invalid or the user can't be found.
     """
-    Get the API key from the request header.
-    """
-    return x_api_key
+    # Decode the token
+    payload = decode_bearer_token(token)
+    # Check if the token is logged out
+    if await is_bearer_token_logged_out(db, token):
+        raise InvalidBearerTokenError(f"Bearer token is logged out: {token[:8]}...", logger)
+    # Get the user id from the token payload
+    user_id: str = payload.get("sub")
+    if user_id is None:
+        raise InvalidBearerTokenError(f"Bearer token does not contain user ID: {token[:8]}...", logger)
+    # Get the user from the database
+    db_user = await db.get(User, UUID(user_id))
+    if not db_user:
+        raise InvalidBearerTokenError(f"User not found for bearer token: {token[:8]}...", logger)
+    # Everything checks out, return the user
+    logger.info(f"User authenticated via bearer token: {db_user.id}, token: {token[:8]}...")
+    return db_user
 
 
 async def get_current_active_user(
         token: str = Depends(oauth2_scheme),
         api_key: Optional[str] = Depends(get_api_key),
         db: AsyncSession = Depends(get_db)
-) -> UserResponse:
+) -> User:
     """
-    Get the current active user from either a JWT token or an API key.
+    Get the current active user from either a bearer token or an API key.
+
+    Args:
+        token (str): The bearer token to decode and verify.
+        api_key (str): The API key to verify.
+        db (AsyncSession): The database session.
+    Returns:
+        UserResponse: The current active user.
+    Raises:
+        UnauthorizedError: If no API key or bearer token is provided.
+        ServerError: If a user or exception is expected, but neither comes back.
     """
+    # Check if there is an API key or token provided
+    if not api_key and not token:
+        raise UnauthorizedError("No API key or bearer token provided", logger)
+    # Check if the API key and associated user are valid
     if api_key:
-        user = await get_user_from_api_key(db, api_key)
-        if user and user.status == UserStatus.ACTIVE:
-            return UserResponse.from_orm(user)
-        logger.warning("Failed authentication attempt with API key")
-        raise UnauthorizedError("Invalid API key")
-
-    if not token:
-        logger.warning("No token provided for authentication")
-        raise UnauthorizedError("No authentication token provided")
-
-    try:
-        user = await get_user_from_jwt(token, db)
-        return UserResponse.from_orm(user)
-    except (InvalidTokenError, ExpiredTokenError, UserNotFoundError) as e:
-        logger.warning(f"Failed authentication attempt with JWT: {e.detail}")
-        raise UnauthorizedError(e.detail)
+        db_user = await get_user_from_api_key(db, api_key)
+        if db_user and db_user.status == UserStatus.ACTIVE:
+            return db_user
+    # Check if the bearer token and associated user are valid
+    if token:
+        db_user = await get_user_from_bearer_token(token, db)
+        if db_user and db_user.status == UserStatus.ACTIVE:
+            return db_user
+    # We shouldn't get here, but if we do, raise a server error
+    raise ServerError("User or exception expected, but got neither", logger)
 
 
-async def logout_user(token: str, db: AsyncSession):
+async def logout_bearer_token(token: str, db: AsyncSession):
     """
-    Blacklist a JWT token.
+    Blacklist a bearer token.
+
+    Args:
+        token (str): The bearer token to blacklist.
+        db (AsyncSession): The database session.
     """
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    # Get the bearer token payload
+    payload = decode_bearer_token(token)
+    # Add the bearer token to the blacklist
     expires_at = datetime.fromtimestamp(payload.get("exp"))
     blacklisted_token = BlacklistedToken(token=token, expires_at=expires_at)
     db.add(blacklisted_token)
     await db.commit()
+
+
+async def login_email_password(db: AsyncSession, email: str, password: str) -> str:
+    logger.info(f"Login attempt for user: {email}")
+    user = await authenticate_user(db, email, password)
+    access_token_expires = timedelta(minutes=config.bearer_token_expire_minutes)
+    bearer_token = create_bearer_token(
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
+    )
+    logger.info(f"Successful login for user: {email}")
+    return bearer_token
+
+
+async def is_bearer_token_logged_out(db: AsyncSession, token: str) -> bool:
+    """
+    Check if a token is logged out.
+
+    Args:
+        token (str): The token to check.
+        db (AsyncSession): The database session.
+    Returns:
+        bool: Whether the token is logged out.
+    """
+    # Check if the token is logged out
+    is_logged_out = (await db.execute(
+        select(BlacklistedToken).where(
+            BlacklistedToken.token == token,
+            )
+    )).scalar_one_or_none() is not None
+    # Return whether the token is logged out
+    return is_logged_out
+
+
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> User:
+    """
+    Authenticate a user.
+
+    Args:
+        db (AsyncSession): The database session.
+        email (str): The user's email address.
+        password (str): The user's password.
+    Returns:
+        User: The authenticated user, or None if authentication fails.
+    Raises:
+        UnauthorizedError: If the email or password is invalid
+    """
+    logger.info(f"Attempting to authenticate user: {email}")
+
+    # Retrieve the user by email and verify the password
+    user = await get_user_by_email(db, email)
+    if not user or not user.verify_password(password):
+        raise UnauthorizedError("Invalid email or password", logger)
+
+    # Log and return the authenticated user
+    logger.info(f"Successfully authenticated user: {email}")
+    return user

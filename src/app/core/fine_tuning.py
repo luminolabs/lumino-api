@@ -79,13 +79,13 @@ async def start_fine_tuning_job(job_id: UUID):
                     raise FineTuningJobCreationError(f"Failed to start fine-tuning job: {await response.text()}")
 
     except Exception as e:
-        logger.error(f"Error starting fine-tuning job {job_id}: {str(e)}")
+        logger.error(f"Error starting fine-tuning job {job_id}: {e}")
         async with AsyncSessionLocal() as db:
             job = await db.get(FineTuningJob, job_id)
             job.status = FineTuningJobStatus.FAILED
             job.details.error_message = str(e)
             await db.commit()
-        raise FineTuningJobCreationError(f"Failed to start fine-tuning job: {str(e)}")
+        raise FineTuningJobCreationError(f"Failed to start fine-tuning job: {e}")
 
 
 async def cancel_fine_tuning_job_task(job_id: UUID):
@@ -119,8 +119,8 @@ async def cancel_fine_tuning_job_task(job_id: UUID):
                     raise FineTuningJobCancelError(f"Failed to cancel fine-tuning job: {await response.text()}")
 
     except Exception as e:
-        logger.error(f"Error cancelling fine-tuning job {job_id}: {str(e)}")
-        raise FineTuningJobCancelError(f"Failed to cancel fine-tuning job: {str(e)}")
+        logger.error(f"Error cancelling fine-tuning job {job_id}: {e}")
+        raise FineTuningJobCancelError(f"Failed to cancel fine-tuning job: {e}")
 
 
 async def get_job_logs(job_id: UUID) -> str:
@@ -155,8 +155,8 @@ async def get_job_logs(job_id: UUID) -> str:
                     raise FineTuningJobNotFoundError(f"Failed to get job logs: {await response.text()}")
 
     except Exception as e:
-        logger.error(f"Error getting job logs for job {job_id}: {str(e)}")
-        raise FineTuningJobNotFoundError(f"Failed to retrieve job logs: {str(e)}")
+        logger.error(f"Error getting job logs for job {job_id}: {e}")
+        raise FineTuningJobNotFoundError(f"Failed to retrieve job logs: {e}")
 
 
 async def check_job_status(job_id: UUID):
@@ -194,5 +194,5 @@ async def check_job_status(job_id: UUID):
                     raise FineTuningJobNotFoundError(f"Failed to check job status: {await response.text()}")
 
     except Exception as e:
-        logger.error(f"Error checking job status for job {job_id}: {str(e)}")
-        raise FineTuningJobNotFoundError(f"Failed to check job status: {str(e)}")
+        logger.error(f"Error checking job status for job {job_id}: {e}")
+        raise FineTuningJobNotFoundError(f"Failed to check job status: {e}")

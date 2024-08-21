@@ -36,7 +36,7 @@ class FineTunedModel(Base):
     fine_tuning_job_id = Column(UUID, ForeignKey("fine_tuning_jobs.id"), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(String)
-    artifacts = Column(JSON)  # Stores information about model artifacts
+    artifacts = Column(JSON)
 
     # Relationships
     user = relationship("User", back_populates="fine_tuned_models")

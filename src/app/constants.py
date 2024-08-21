@@ -16,6 +16,7 @@ class DatasetStatus(str, Enum):
     UPLOADED = "UPLOADED"
     VALIDATED = "VALIDATED"
     ERROR = "ERROR"
+    DELETED = "DELETED"
 
 
 class FineTuningJobStatus(str, Enum):

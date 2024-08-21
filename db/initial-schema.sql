@@ -1,7 +1,7 @@
 -- Create enum types for statuses
 CREATE TYPE userstatus AS ENUM ('ACTIVE', 'INACTIVE');
 CREATE TYPE apikeystatus AS ENUM ('ACTIVE', 'EXPIRED', 'REVOKED');
-CREATE TYPE datasetstatus AS ENUM ('UPLOADED', 'VALIDATED', 'ERROR');
+CREATE TYPE datasetstatus AS ENUM ('UPLOADED', 'VALIDATED', 'ERROR', 'DELETED');
 CREATE TYPE finetuningjobstatus AS ENUM ('NEW', 'PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'STOPPED');
 CREATE TYPE basemodelstatus AS ENUM ('ACTIVE', 'INACTIVE', 'DEPRECATED');
 CREATE TYPE inferenceendpointstatus AS ENUM ('NEW', 'PENDING', 'RUNNING', 'DELETED', 'FAILED');
@@ -127,7 +127,7 @@ CREATE TABLE api_keys (
     status apikeystatus,
     name VARCHAR(255),
     prefix VARCHAR(8),
-    hashed_key VARCHAR(255) NOT NULL,
+    key_hash VARCHAR(255) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 CREATE UNIQUE INDEX idx_api_keys_user_id_name ON api_keys(user_id, name);

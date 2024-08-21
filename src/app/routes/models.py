@@ -60,7 +60,7 @@ async def list_base_models(
             "pagination": pagination
         }
     except ModelRetrievalError as e:
-        logger.error(f"Error retrieving base models: {str(e)}")
+        logger.error(f"Error retrieving base models: {e}")
         raise
 
 
@@ -122,7 +122,7 @@ async def list_fine_tuned_models(
             "pagination": pagination
         }
     except ModelRetrievalError as e:
-        logger.error(f"Error retrieving fine-tuned models for user {current_user.id}: {str(e)}")
+        logger.error(f"Error retrieving fine-tuned models for user {current_user.id}: {e}")
         raise
 
 

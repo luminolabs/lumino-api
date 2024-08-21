@@ -1,7 +1,6 @@
 from typing import Dict, Union, List
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, status, UploadFile, File
 from fastapi.params import Query, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
