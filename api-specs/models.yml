@@ -123,8 +123,6 @@ components:
           type: string
         hf_url:
           type: string
-        hf_is_gated:
-          type: boolean
         metadata:
           type: object
           additionalProperties: true

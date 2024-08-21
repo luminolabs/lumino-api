@@ -23,7 +23,6 @@ CREATE TABLE base_models (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     description TEXT,
     hf_url VARCHAR(255),
-    hf_is_gated BOOLEAN,
     status basemodelstatus,
     name VARCHAR(255) NOT NULL,
     meta JSONB

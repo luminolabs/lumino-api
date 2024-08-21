@@ -148,12 +148,6 @@ class FineTunedModelNotFoundError(NotFoundError):
         super().__init__(detail, logger)
 
 
-class ModelRetrievalError(BadRequestError):
-    """Exception raised when there's an error retrieving models."""
-    def __init__(self, detail: str, logger: Optional[Logger] = None):
-        super().__init__(detail, logger)
-
-
 # Fine-Tuning exceptions
 
 
