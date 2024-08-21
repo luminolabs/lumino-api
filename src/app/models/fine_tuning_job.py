@@ -24,6 +24,14 @@ class FineTuningJob(Base):
         current_epoch (int): The current epoch of the fine-tuning process.
         total_epochs (int): The total number of epochs in the fine-tuning process.
         num_tokens (int): The number of tokens processed in the fine-tuning job.
+
+    Relationships:
+        user (User): The user who created the fine-tuning job.
+        base_model (BaseModel): The base model used for fine-tuning.
+        dataset (Dataset): The dataset used for fine-tuning.
+        details (FineTuningJobDetail): The details of the fine-tuning job.
+        fine_tuned_model (FineTunedModel): The fine-tuned model created by the job.
+        usage_record (Usage): The usage record for the fine-tuning job.
     """
     __tablename__ = "fine_tuning_jobs"
 
@@ -47,6 +55,7 @@ class FineTuningJob(Base):
     dataset = relationship("Dataset", back_populates="fine_tuning_jobs")
     details = relationship("FineTuningJobDetail", back_populates="fine_tuning_job", uselist=False)
     fine_tuned_model = relationship("FineTunedModel", back_populates="fine_tuning_job", uselist=False)
+    usage_record = relationship("Usage", back_populates="fine_tuning_job", uselist=False)
 
     __table_args__ = (
         UniqueConstraint('user_id', 'name', name='uq_fine_tuning_job_user_id_name'),

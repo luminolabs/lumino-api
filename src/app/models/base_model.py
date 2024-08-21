@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, UUID, JSON, Enum
+from sqlalchemy import Column, String, UUID, JSON, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 

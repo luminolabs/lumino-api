@@ -11,6 +11,22 @@ from app.database import Base
 class User(Base):
     """
     Represents a user in the system.
+
+    Attributes:
+        id (UUID): The unique identifier for the user.
+        created_at (DateTime): The timestamp when the user was created.
+        updated_at (DateTime): The timestamp when the user was last updated.
+        status (UserStatus): The current status of the user.
+        name (str): The name of the user.
+        email (str): The email address of the user.
+        password_hash (str): The hashed password of the user.
+
+    Relationships:
+        datasets (List[Dataset]): The datasets created by the user.
+        fine_tuning_jobs (List[FineTuningJob]): The fine-tuning jobs created by the user.
+        fine_tuned_models (List[FineTunedModel]): The fine-tuned models created by the user.
+        api_keys (List[ApiKey]): The API keys owned by the user.
+        usage_records (List[Usage]): The usage records for the user
     """
     __tablename__ = "users"
 

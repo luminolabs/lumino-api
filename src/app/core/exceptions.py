@@ -7,6 +7,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.config_manager import config
+from app.utils import setup_logger
+
+# Set up logger
+logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
+
 
 class AppException(HTTPException):
     """Base exception for application-specific errors."""
@@ -190,6 +196,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     """Handler for SQLAlchemy database errors."""
+    logger.exception(f"An unexpected database error occurred: {exc}, {exc.with_traceback(exc.__traceback__)}")
     return JSONResponse(
         status_code=500,
         content={"status": 500, "message": "An unexpected database error occurred"},
@@ -198,6 +205,7 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
 
 async def generic_exception_handler(request: Request, exc: Exception):
     """Handler for generic, uncaught exceptions."""
+    logger.exception(f"An unexpected error occurred: {exc}, {exc.with_traceback(exc.__traceback__)}")
     return JSONResponse(
         status_code=500,
         content={"status": 500, "message": "An unexpected error occurred"},

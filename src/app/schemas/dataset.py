@@ -28,7 +28,6 @@ class DatasetResponse(BaseModel):
     """
     id: UUID = Field(..., description="The unique identifier of the dataset")
     created_at: datetime = Field(..., description="The timestamp when the dataset was created")
-    user_id: UUID = Field(..., description="The ID of the user who owns this dataset")
     status: DatasetStatus = Field(..., description="The current status of the dataset")
     name: str = Field(..., description="The name of the dataset")
     description: str | None = Field(None, description="The description of the dataset, if any")

@@ -19,7 +19,6 @@ class ApiKeyCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255, description="The name of the API key")
     expires_at: datetime = Field(None, description="The expiration date and time of the API key")
 
-
     @field_validator('expires_at')
     def expiration_must_be_future(cls, v: datetime) -> datetime:
         return _expiration_must_be_future(v)
