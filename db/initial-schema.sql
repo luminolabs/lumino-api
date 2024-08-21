@@ -4,7 +4,6 @@ CREATE TYPE apikeystatus AS ENUM ('ACTIVE', 'EXPIRED', 'REVOKED');
 CREATE TYPE datasetstatus AS ENUM ('UPLOADED', 'VALIDATED', 'ERROR', 'DELETED');
 CREATE TYPE finetuningjobstatus AS ENUM ('NEW', 'PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'STOPPED');
 CREATE TYPE basemodelstatus AS ENUM ('ACTIVE', 'INACTIVE', 'DEPRECATED');
-CREATE TYPE inferenceendpointstatus AS ENUM ('NEW', 'PENDING', 'RUNNING', 'DELETED', 'FAILED');
 
 -- Users table
 CREATE TABLE users (
@@ -87,35 +86,6 @@ CREATE TABLE fine_tuned_models (
 );
 CREATE UNIQUE INDEX idx_fine_tuned_models_user_id_name ON fine_tuned_models(user_id, name);
 
--- Inference endpoints table
-CREATE TABLE inference_endpoints (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    user_id UUID NOT NULL,
-    fine_tuned_model_id UUID NOT NULL,
-    status inferenceendpointstatus,
-    name VARCHAR(255) NOT NULL,
-    machine_type VARCHAR(50),
-    parameters JSONB,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (fine_tuned_model_id) REFERENCES fine_tuned_models(id)
-);
-CREATE UNIQUE INDEX idx_inference_endpoints_user_id_name ON inference_endpoints(user_id, name);
-
--- Inference queries table
-CREATE TABLE inference_queries (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    inference_endpoint_id UUID NOT NULL,
-    request TEXT,
-    response TEXT,
-    input_tokens INTEGER,
-    output_tokens INTEGER,
-    response_time NUMERIC,
-    FOREIGN KEY (inference_endpoint_id) REFERENCES inference_endpoints(id)
-);
-
 -- API keys table
 CREATE TABLE api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -140,10 +110,8 @@ CREATE TABLE usage (
     usage_amount DECIMAL,
     cost DECIMAL NOT NULL,
     fine_tuning_job_id UUID NOT NULL,
-    inference_endpoint_id UUID NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (fine_tuning_job_id) REFERENCES fine_tuning_jobs(id),
-    FOREIGN KEY (inference_endpoint_id) REFERENCES inference_endpoints(id)
 );
 
 -- Blacklisted tokens table
@@ -158,6 +126,5 @@ CREATE INDEX idx_blacklisted_tokens_expires_at ON blacklisted_tokens(expires_at)
 CREATE INDEX idx_datasets_user_id ON datasets(user_id);
 CREATE INDEX idx_fine_tuning_jobs_user_id ON fine_tuning_jobs(user_id);
 CREATE INDEX idx_fine_tuned_models_user_id ON fine_tuned_models(user_id);
-CREATE INDEX idx_inference_endpoints_user_id ON inference_endpoints(user_id);
 CREATE INDEX idx_api_keys_user_id ON api_keys(user_id);
 CREATE INDEX idx_usage_user_id ON usage(user_id);

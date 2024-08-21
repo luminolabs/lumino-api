@@ -11,7 +11,6 @@ class UsageRecordResponse(BaseModel):
     usage_amount: Decimal
     cost: Decimal
     fine_tuning_job_name: str
-    inference_endpoint_name: str
 
 
 class TotalCostResponse(BaseModel):

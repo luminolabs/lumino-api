@@ -27,7 +27,6 @@ class User(Base):
     datasets = relationship("Dataset", back_populates="user")
     fine_tuning_jobs = relationship("FineTuningJob", back_populates="user")
     fine_tuned_models = relationship("FineTunedModel", back_populates="user")
-    inference_endpoints = relationship("InferenceEndpoint", back_populates="user")
     api_keys = relationship("ApiKey", back_populates="user")
     usage_records = relationship("Usage", back_populates="user")
 

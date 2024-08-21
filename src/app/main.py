@@ -15,7 +15,7 @@ from app.core.exceptions import (
     generic_exception_handler,
 )
 from app.database import engine, Base
-from app.routes import users, api_keys, datasets, fine_tuning, models, inference, usage
+from app.routes import users, api_keys, datasets, fine_tuning, models, usage
 from app.tasks.token_cleanup import cleanup_expired_tokens
 
 scheduler = AsyncIOScheduler()
@@ -47,7 +47,6 @@ app.include_router(api_keys.router, prefix=api_prefix)
 app.include_router(datasets.router, prefix=api_prefix)
 app.include_router(fine_tuning.router, prefix=api_prefix)
 app.include_router(models.router, prefix=api_prefix)
-app.include_router(inference.router, prefix=api_prefix)
 app.include_router(usage.router, prefix=api_prefix)
 
 

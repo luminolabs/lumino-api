@@ -20,7 +20,6 @@ class FineTunedModel(Base):
     Relationships:
         user (User): The user who created this fine-tuned model.
         fine_tuning_job (FineTuningJob): The fine-tuning job that created this model.
-        inference_endpoints (list[InferenceEndpoint]): The inference endpoints using this model.
     """
     __tablename__ = "fine_tuned_models"
 
@@ -36,7 +35,6 @@ class FineTunedModel(Base):
     # Relationships
     user = relationship("User", back_populates="fine_tuned_models")
     fine_tuning_job = relationship("FineTuningJob", back_populates="fine_tuned_model")
-    inference_endpoints = relationship("InferenceEndpoint", back_populates="fine_tuned_model")
 
     # Constraints
     __table_args__ = (

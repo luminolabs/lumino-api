@@ -1,6 +1,6 @@
 # LLM Fine-tuning API
 
-This project provides a comprehensive API for managing Large Language Model (LLM) fine-tuning processes, inference endpoints, and related resources. It allows users to upload datasets, create fine-tuning jobs, manage inference endpoints, and track usage.
+This project provides a comprehensive API for managing Large Language Model (LLM) fine-tuning processes and related resources. It allows users to upload datasets, create fine-tuning jobs, and track usage.
 
 ## Table of Contents
 
@@ -29,7 +29,6 @@ The API is divided into several modules:
 3. **Datasets**: Upload and management of training datasets
 4. **Fine-tuning**: Creation and monitoring of fine-tuning jobs
 5. **Models**: Information about base models and fine-tuned models
-6. **Inference**: Management of inference endpoints and query execution
 7. **Usage**: Tracking of resource usage and associated costs
 
 ## Authentication
