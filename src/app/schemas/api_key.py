@@ -1,24 +1,41 @@
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+from datetime import datetime, timezone
 from uuid import UUID
 from typing import Optional
 
 from app.constants import ApiKeyStatus
+from app.core.exceptions import BadRequestError
+
+
+def _expiration_must_be_future(v: datetime) -> datetime:
+    if v.astimezone(timezone.utc) <= datetime.utcnow().astimezone(timezone.utc):
+        raise BadRequestError('Expiration date must be in the future')
+    return v
 
 
 class ApiKeyCreate(BaseModel):
     """
     Schema for creating a new API key.
     """
-    name: str = Field(..., description="The name of the API key")
+    name: str = Field(..., min_length=1, max_length=255, description="The name of the API key")
     expires_at: datetime = Field(None, description="The expiration date and time of the API key")
+
+
+    @field_validator('expires_at')
+    def expiration_must_be_future(cls, v: datetime) -> datetime:
+        return _expiration_must_be_future(v)
+
 
 class ApiKeyUpdate(BaseModel):
     """
     Schema for updating an existing API key.
     """
-    name: Optional[str] = Field(None, description="The new name for the API key")
+    name: Optional[str] = Field(None, min_length=1, max_length=255, description="The new name for the API key")
     expires_at: Optional[datetime] = Field(None, description="The new expiration date and time for the API key")
+
+    @field_validator('expires_at')
+    def expiration_must_be_future(cls, v: datetime) -> datetime:
+        return _expiration_must_be_future(v)
 
 
 class ApiKeyResponse(BaseModel):
@@ -33,7 +50,6 @@ class ApiKeyResponse(BaseModel):
     name: str = Field(..., description="The name of the API key")
     prefix: str = Field(..., description="The prefix of the API key (first few characters)")
     model_config = ConfigDict(from_attributes=True)
-
 
 class ApiKeyWithSecretResponse(ApiKeyResponse):
     """

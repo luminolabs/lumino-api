@@ -2,25 +2,24 @@ from datetime import datetime
 from uuid import UUID
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
 from app.constants import UserStatus
-
 
 class UserCreate(BaseModel):
     """
     Schema for creating a new user.
     """
-    name: str = Field(..., description="The name of the user")
+    name: str = Field(..., min_length=1, max_length=255, description="The name of the user")
     email: EmailStr = Field(..., description="The email address of the user")
-    password: str = Field(..., description="The password for the user account")
+    password: str = Field(..., min_length=8, max_length=100, description="The password for the user account")
 
 
 class UserUpdate(BaseModel):
     """
     Schema for updating user information.
     """
-    name: Optional[str] = Field(None, description="The updated name of the user")
+    name: Optional[str] = Field(None, min_length=1, max_length=255, description="The updated name of the user")
     email: Optional[EmailStr] = Field(None, description="The updated email address of the user")
 
 
