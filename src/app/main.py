@@ -16,6 +16,7 @@ from app.core.exceptions import (
 )
 from app.database import engine, Base
 from app.routes import users, api_keys, datasets, fine_tuning, models, usage
+from app.tasks.api_key_cleanup import cleanup_expired_api_keys
 from app.tasks.token_cleanup import cleanup_expired_tokens
 
 scheduler = AsyncIOScheduler()
@@ -24,12 +25,21 @@ scheduler = AsyncIOScheduler()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
+    # -------
+    # Run database migrations
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    scheduler.add_job(cleanup_expired_tokens, 'interval', hours=1)
+    # Add the token cleanup task to the background scheduler
+    scheduler.add_job(cleanup_expired_tokens, 'interval', minutes=1)
+    # Add the API key cleanup task to the background scheduler
+    scheduler.add_job(cleanup_expired_api_keys, 'interval', minutes=1)
+    # Start the background scheduler
     scheduler.start()
+
     yield
     # Shutdown
+    # --------
+    # Stop the background scheduler
     scheduler.shutdown()
 
 

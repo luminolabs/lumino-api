@@ -1,13 +1,21 @@
 from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from app.models.blacklisted_token import BlacklistedToken
 from app.database import AsyncSessionLocal
+from app.config_manager import config
+from app.utils import setup_logger
 
+# Set up logger
+logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 async def cleanup_expired_tokens():
+    """
+    Removes expired tokens from the blacklisted token table.
+    """
     async with AsyncSessionLocal() as session:
-        await session.execute(
-            delete(BlacklistedToken).where(BlacklistedToken.expires_at < datetime.utcnow())
-        )
+        # Delete tokens that have expired from the blacklisted token table
+        delete_query = delete(BlacklistedToken).where(BlacklistedToken.expires_at < datetime.utcnow())
+        result = await session.execute(delete_query)
+        deleted_count = result.rowcount
         await session.commit()
+        logger.info(f"Blacklisted tokens cleanup completed. Removed {deleted_count} expired tokens")
