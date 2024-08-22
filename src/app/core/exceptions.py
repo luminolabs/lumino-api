@@ -157,14 +157,14 @@ class FineTunedModelNotFoundError(NotFoundError):
 # Fine-Tuning exceptions
 
 
-class FineTuningJobCreationError(BadRequestError):
-    """Exception raised when there's an error creating a fine-tuning job."""
+class FineTuningJobNotFoundError(NotFoundError):
+    """Exception raised when a requested fine-tuning job is not found."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
-class FineTuningJobNotFoundError(NotFoundError):
-    """Exception raised when a requested fine-tuning job is not found."""
+class FineTuningJobCreationError(BadRequestError):
+    """Exception raised when there's an error creating a fine-tuning job."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 

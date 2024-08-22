@@ -35,6 +35,7 @@ class FineTuningJob(Base):
     """
     __tablename__ = "fine_tuning_jobs"
 
+    # Columns
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -43,11 +44,11 @@ class FineTuningJob(Base):
     dataset_id = Column(UUID, ForeignKey("datasets.id"), nullable=False)
     status = Column(Enum(FineTuningJobStatus), nullable=False, default=FineTuningJobStatus.NEW)
     name = Column(String(255), nullable=False)
-    current_step = Column(Integer)
-    total_steps = Column(Integer)
-    current_epoch = Column(Integer)
-    total_epochs = Column(Integer)
-    num_tokens = Column(BigInteger)
+    current_step = Column(Integer, nullable=True)
+    total_steps = Column(Integer, nullable=True)
+    current_epoch = Column(Integer, nullable=True)
+    total_epochs = Column(Integer, nullable=True)
+    num_tokens = Column(BigInteger, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="fine_tuning_jobs")
@@ -57,6 +58,7 @@ class FineTuningJob(Base):
     fine_tuned_model = relationship("FineTunedModel", back_populates="fine_tuning_job", uselist=False)
     usage_record = relationship("Usage", back_populates="fine_tuning_job", uselist=False)
 
+    # Indexes
     __table_args__ = (
         UniqueConstraint('user_id', 'name', name='uq_fine_tuning_job_user_id_name'),
     )
