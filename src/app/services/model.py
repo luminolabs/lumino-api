@@ -9,7 +9,7 @@ from app.models.base_model import BaseModel
 from app.models.fine_tuned_model import FineTunedModel
 from app.schemas.common import Pagination
 from app.schemas.model import BaseModelResponse, FineTunedModelResponse
-from app.utils import setup_logger
+from app.utils import setup_logger, paginate_query
 from app.core.exceptions import (
     BaseModelNotFoundError,
     FineTunedModelNotFoundError
@@ -35,33 +35,15 @@ async def get_base_models(
     Returns:
         tuple[list[BaseModelResponse], Pagination]: A tuple containing the list of base models and pagination info.
     """
-    # Count the total items
-    total_count = await db.scalar(
-        select(func.count()).select_from(BaseModel)
-    )
-
-    # Calculate pagination
-    total_pages = math.ceil(total_count / items_per_page)
-    offset = (page - 1) * items_per_page
-
-    # Fetch items
-    result = await db.execute(
-        select(BaseModel)
-        .offset(offset)
-        .limit(items_per_page)
-    )
-    models = [BaseModelResponse.from_orm(model) for model in result.scalars().all()]
-
-    # Create pagination object
-    pagination = Pagination(
-        total_pages=total_pages,
-        current_page=page,
-        items_per_page=items_per_page,
-    )
-
-    # Log and return models and pagination
-    logger.info(f"Retrieved {len(models)} base models, page: {page}")
-    return models, pagination
+    # Construct the query
+    query = select(BaseModel)
+    # Paginate the query
+    models, pagination = await paginate_query(db, query, page, items_per_page)
+    # Create response objects
+    model_responses = [BaseModelResponse.from_orm(model) for model in models]
+    # Log and return objects
+    logger.info(f"Retrieved {len(model_responses)} base models, page: {page}")
+    return model_responses, pagination
 
 
 async def get_base_model(db: AsyncSession, model_name: str) -> BaseModelResponse:
@@ -111,38 +93,21 @@ async def get_fine_tuned_models(
     Returns:
         tuple[list[FineTunedModelResponse], Pagination]: A tuple containing the list of fine-tuned models and pagination info.
     """
-    # Count the total items
-    total_count = await db.scalar(
-        select(func.count()).select_from(FineTunedModel).where(FineTunedModel.user_id == user_id)
-    )
-
-    # Calculate pagination
-    total_pages = math.ceil(total_count / items_per_page)
-    offset = (page - 1) * items_per_page
-
-    # Fetch items
-    result = await db.execute(
+    # Construct the query
+    query = (
         select(FineTunedModel, FineTuningJob.name.label('job_name'))
         .join(FineTuningJob, FineTunedModel.fine_tuning_job_id == FineTuningJob.id)
         .where(FineTunedModel.user_id == user_id)
-        .offset(offset)
-        .limit(items_per_page)
     )
-
+    # Paginate the query
+    results, pagination = await paginate_query(db, query, page, items_per_page)
+    # Create response objects
     models = []
-    for row in result:
+    for row in results:
         model_dict = row.FineTunedModel.__dict__
         model_dict['fine_tuning_job_name'] = row.job_name
         models.append(FineTunedModelResponse(**model_dict))
-
-    # Create pagination object
-    pagination = Pagination(
-        total_pages=total_pages,
-        current_page=page,
-        items_per_page=items_per_page,
-    )
-
-    # Log and return models and pagination
+    # Log and return objects
     logger.info(f"Retrieved {len(models)} fine-tuned models for user: {user_id}, page: {page}")
     return models, pagination
 

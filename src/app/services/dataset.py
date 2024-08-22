@@ -15,7 +15,7 @@ from app.models.dataset import Dataset
 from app.schemas.common import Pagination
 from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
 from app.core.storage import upload_file, delete_file
-from app.utils import setup_logger
+from app.utils import setup_logger, paginate_query
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
@@ -91,33 +91,15 @@ async def get_datasets(
     Returns:
         tuple[list[DatasetResponse], Pagination]: A tuple containing the list of datasets and pagination info.
     """
-    # Count the total items
-    total_count = await db.scalar(
-        select(func.count()).select_from(Dataset).where(Dataset.user_id == user_id)
-    )
-
-    # Calculate pagination
-    total_pages = math.ceil(total_count / items_per_page)
-    offset = (page - 1) * items_per_page
-
-    # Fetch items
-    result = await db.execute(
-        select(Dataset)
-        .where(Dataset.user_id == user_id)
-        .offset(offset)
-        .limit(items_per_page)
-    )
-    datasets = [DatasetResponse.from_orm(dataset) for dataset in result.scalars().all()]
-
-    # Create pagination object
-    pagination = Pagination(
-        total_pages=total_pages,
-        current_page=page,
-        items_per_page=items_per_page,
-    )
-
+    # Construct the query
+    query = select(Dataset).where(Dataset.user_id == user_id)
+    # Paginate the query
+    datasets, pagination = await paginate_query(db, query, page, items_per_page)
+    # Create response objects
+    dataset_responses = [DatasetResponse.from_orm(dataset) for dataset in datasets]
+    # Log and return objects
     logger.info(f"Retrieved datasets for user: {user_id}, page: {page}")
-    return datasets, pagination
+    return dataset_responses, pagination
 
 
 async def get_dataset(db: AsyncSession, user_id: UUID, dataset_name: str) -> DatasetResponse:

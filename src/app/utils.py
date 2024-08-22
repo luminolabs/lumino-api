@@ -2,8 +2,56 @@ import logging
 import os
 import sys
 from logging.handlers import TimedRotatingFileHandler
+from typing import TypeVar, List, Tuple
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import Select
 
 from app.config_manager import config
+from app.schemas.common import Pagination
+
+T = TypeVar('T')
+
+
+async def paginate_query(
+        db: AsyncSession,
+        query: Select,
+        page: int,
+        items_per_page: int
+) -> Tuple[List[T], Pagination]:
+    """
+    Paginate a query and return the items and pagination object.
+
+    Args:
+        db (AsyncSession): The database session.
+        query (Select): The SQLAlchemy query.
+        page (int): The page number.
+        items_per_page (int): The number of items per page.
+    Returns:
+        Tuple[List[T], Pagination]: A tuple of the items and pagination object.
+    """
+    # Count total items
+    count_query = select(func.count()).select_from(query.subquery())
+    total_count = await db.scalar(count_query)
+
+    # Calculate pagination
+    total_pages = (total_count + items_per_page - 1) // items_per_page
+    offset = (page - 1) * items_per_page
+
+    # Fetch items
+    result = await db.execute(query.offset(offset).limit(items_per_page))
+    items = result.scalars().all()
+
+    # Create pagination object
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page,
+    )
+
+    # Return items and pagination
+    return items, pagination
 
 
 def setup_logger(name: str,

@@ -9,7 +9,7 @@ from app.models.fine_tuning_job import FineTuningJob
 from app.models.usage import Usage
 from app.schemas.common import Pagination
 from app.schemas.usage import UsageRecordResponse, TotalCostResponse
-from app.utils import setup_logger
+from app.utils import setup_logger, paginate_query
 from app.core.exceptions import BadRequestError
 
 # Set up logger
@@ -88,7 +88,6 @@ async def get_usage_records(
     # Validate dates
     if start_date and end_date and end_date < start_date:
         raise BadRequestError(f"End date must be after start date; start_date: {start_date}, end_date: {end_date}")
-
     # Construct query
     query = (
         select(Usage, FineTuningJob.name.label('fine_tuning_job_name'))
@@ -99,35 +98,14 @@ async def get_usage_records(
         query = query.where(func.date(Usage.created_at) >= start_date)
     if end_date:
         query = query.where(func.date(Usage.created_at) <= end_date)
-
-    # Count total items
-    count_query = select(func.count()).select_from(query.subquery())
-    total_count = await db.scalar(count_query)
-
-    # Calculate pagination
-    total_pages = math.ceil(total_count / items_per_page)
-    offset = (page - 1) * items_per_page
-
-    # Fetch items and convert to response objects
-    result = await db.execute(
-        query.order_by(Usage.created_at.desc())
-        .offset(offset)
-        .limit(items_per_page)
-    )
-
+    # Paginate query
+    results, pagination = await paginate_query(db, query.order_by(Usage.created_at.desc()), page, items_per_page)
     records = []
-    for row in result:
-        usage_record = row.Usage
-        usage_dict = usage_record.__dict__
+    # Create response objects
+    for row in results:
+        usage_dict = row.Usage.__dict__
         usage_dict['fine_tuning_job_name'] = row.fine_tuning_job_name
         records.append(UsageRecordResponse(**usage_dict))
-
-    # Create pagination object
-    pagination = Pagination(
-        total_pages=total_pages,
-        current_page=page,
-        items_per_page=items_per_page,
-    )
-
+    # Log and return records
     logger.info(f"Retrieved {len(records)} usage records for user: {user_id}, page: {page}")
     return records, pagination

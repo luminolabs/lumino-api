@@ -10,7 +10,7 @@ from app.models.api_key import ApiKey
 from app.schemas.api_key import ApiKeyCreate, ApiKeyUpdate, ApiKeyResponse, ApiKeyWithSecretResponse
 from app.core.cryptography import generate_api_key
 from app.schemas.common import Pagination
-from app.utils import setup_logger
+from app.utils import setup_logger, paginate_query
 from app.core.exceptions import (
     ApiKeyAlreadyExistsError,
     ApiKeyNotFoundError,
@@ -95,34 +95,15 @@ async def get_api_keys(
     Returns:
         tuple[list[ApiKeyResponse], Pagination]: A tuple containing the list of API keys and pagination info.
     """
-    # Count the total items
-    total_count = await db.scalar(
-        select(func.count()).select_from(ApiKey).where(ApiKey.user_id == user_id)
-    )
-
-    # Calculate pagination
-    total_pages = math.ceil(total_count / items_per_page)
-    offset = (page - 1) * items_per_page
-
-    # Fetch items
-    result = await db.execute(
-        select(ApiKey)
-        .where(ApiKey.user_id == user_id)
-        .offset(offset)
-        .limit(items_per_page)
-    )
-    api_keys = [ApiKeyResponse.from_orm(key) for key in result.scalars().all()]
-
-    # Create pagination object
-    pagination = Pagination(
-        total_pages=total_pages,
-        current_page=page,
-        items_per_page=items_per_page,
-    )
-
-    # Log and return api keys and pagination
+    # Construct the query
+    query = select(ApiKey).where(ApiKey.user_id == user_id)
+    # Paginate the query
+    api_keys, pagination = await paginate_query(db, query, page, items_per_page)
+    # Create response objects
+    api_key_responses = [ApiKeyResponse.from_orm(key) for key in api_keys]
+    # Log and return objects
     logger.info(f"Retrieved API keys for user: {user_id}, page: {page}")
-    return api_keys, pagination
+    return api_key_responses, pagination
 
 
 async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyResponse:
