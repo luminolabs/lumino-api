@@ -25,14 +25,37 @@ router = APIRouter(tags=["Users"])
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
+async def check_no_auth(
+        api_key: str | None = Depends(get_api_key),
+        token: str | None = Depends(oauth2_scheme)
+) -> None:
+    """
+    Check that the user is not authenticated. Raise an error if they are. Used for sign-up to prevent
+    signed-in users from creating new accounts.
+
+    Args:
+        api_key (str | None): The API key from the request header.
+        token (str | None): The bearer token from the request header.
+    Raises:
+        ForbiddenError: If the user is authenticated.
+    """
+    if api_key or token:
+        raise ForbiddenError("Remove the API key or bearer token to sign up for a new account", logger)
+
+
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def signup(user: UserCreate, db: AsyncSession = Depends(get_db)) -> UserResponse:
+async def signup(
+        user: UserCreate,
+        db: AsyncSession = Depends(get_db),
+        _: None = Depends(check_no_auth)
+) -> UserResponse:
     """
     Create a new user account.
 
     Args:
         user (UserCreate): The user creation data.
         db (AsyncSession): The database session.
+        _: None: A dependency to check that the user is not authenticated.
     """
     new_user = await create_user(db, user)
     return new_user
