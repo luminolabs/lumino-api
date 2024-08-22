@@ -12,10 +12,12 @@ def setup_logger(name: str,
     """
     Sets up a logger
 
-    :param name: The name of the logger
-    :param add_stdout: Whether to add the stdout logger or not
-    :param log_level: The log level to log at, ex. `logging.INFO`
-    :return: A logger instance
+    Args:
+        name (str): The name of the logger.
+        add_stdout (bool): Whether to log to stdout.
+        log_level (int): The logging level.
+    Returns:
+        logging.Logger: The logger instance.
     """
     log_level = log_level or config.log_level
     log_format = logging.Formatter(f'{config.env_name} - %(asctime)s - %(message)s')
