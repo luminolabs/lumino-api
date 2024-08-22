@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, DateTime, UUID, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.database import Base
+from app.core.database import Base
 
 
 class FineTunedModel(Base):

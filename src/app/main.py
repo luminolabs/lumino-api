@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.exceptions import (
     AppException,
     app_exception_handler,
@@ -14,7 +14,7 @@ from app.core.exceptions import (
     sqlalchemy_exception_handler,
     generic_exception_handler,
 )
-from app.database import engine, Base
+from app.core.database import engine, Base
 from app.routes import users, api_keys, datasets, fine_tuning, models, usage
 from app.tasks.api_key_cleanup import cleanup_expired_api_keys
 from app.tasks.token_cleanup import cleanup_expired_tokens

@@ -1,15 +1,15 @@
 from uuid import UUID
 import aiohttp
 
-from app.constants import FineTuningJobStatus
-from app.database import AsyncSessionLocal
+from app.core.constants import FineTuningJobStatus
+from app.core.database import AsyncSessionLocal
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.models.dataset import Dataset
 from app.models.base_model import BaseModel
 from sqlalchemy import select
-from app.config_manager import config
-from app.utils import setup_logger
+from app.core.config_manager import config
+from app.core.utils import setup_logger
 from app.core.exceptions import (
     FineTuningJobCreationError,
     FineTuningJobCancelError,

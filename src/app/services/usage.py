@@ -1,15 +1,14 @@
 from uuid import UUID
 from datetime import date
-import math
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.usage import Usage
 from app.schemas.common import Pagination
 from app.schemas.usage import UsageRecordResponse, TotalCostResponse
-from app.utils import setup_logger, paginate_query
+from app.core.utils import setup_logger, paginate_query
 from app.core.exceptions import BadRequestError
 
 # Set up logger

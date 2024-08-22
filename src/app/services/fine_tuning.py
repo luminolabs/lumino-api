@@ -2,10 +2,9 @@ import math
 from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
-from app.config_manager import config
-from app.constants import FineTuningJobStatus
+from app.core.config_manager import config
+from app.core.constants import FineTuningJobStatus
 from app.core.exceptions import (
     FineTuningJobCreationError,
     FineTuningJobNotFoundError,
@@ -19,8 +18,8 @@ from app.models.base_model import BaseModel
 from app.models.dataset import Dataset
 from app.schemas.common import Pagination
 from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobDetailResponse
-from app.core.fine_tuning import start_fine_tuning_job, cancel_fine_tuning_job_task, get_job_logs
-from app.utils import setup_logger
+from app.core.scheduler_client import start_fine_tuning_job, cancel_fine_tuning_job_task, get_job_logs
+from app.core.utils import setup_logger
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)

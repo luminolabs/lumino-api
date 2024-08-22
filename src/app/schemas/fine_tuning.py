@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 from typing import Dict, Any
 
-from app.constants import FineTuningJobStatus
+from app.core.constants import FineTuningJobStatus
 
 
 class FineTuningJobCreate(BaseModel):

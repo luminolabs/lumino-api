@@ -1,11 +1,10 @@
 from typing import Dict, Union, List
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
 from app.core.exceptions import (
     BadRequestError,
@@ -14,7 +13,7 @@ from app.core.exceptions import (
     FineTuningJobNotFoundError,
     FineTuningJobCancelError
 )
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.common import Pagination
 from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobDetailResponse
 from app.schemas.user import UserResponse
@@ -25,7 +24,7 @@ from app.services.fine_tuning import (
     cancel_fine_tuning_job,
     get_fine_tuning_job_logs,
 )
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 
 router = APIRouter(tags=["Fine-tuning Jobs"])
 

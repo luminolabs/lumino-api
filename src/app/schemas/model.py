@@ -1,9 +1,9 @@
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from uuid import UUID
 from typing import Dict, Any
 
-from app.constants import BaseModelStatus
+from app.core.constants import BaseModelStatus
 
 
 class BaseModelResponse(BaseModel):

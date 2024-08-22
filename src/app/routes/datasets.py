@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, status, UploadFile, File
 from fastapi.params import Query, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
-from app.database import get_db
+from app.core.database import get_db
 from app.models.user import User
 from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
 from app.schemas.common import Pagination
@@ -17,7 +17,7 @@ from app.services.dataset import (
     update_dataset,
     mark_dataset_deleted,
 )
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 
 # Set up API router
 router = APIRouter(tags=["Datasets"])

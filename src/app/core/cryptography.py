@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 from bcrypt import hashpw, checkpw, gensalt
 from jose import jwt, JWTError
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.exceptions import InvalidBearerTokenError
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)

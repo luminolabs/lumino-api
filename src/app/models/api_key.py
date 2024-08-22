@@ -2,9 +2,9 @@ from sqlalchemy import Column, String, DateTime, UUID, ForeignKey, UniqueConstra
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.constants import ApiKeyStatus
+from app.core.constants import ApiKeyStatus
 from app.core.cryptography import verify_password
-from app.database import Base
+from app.core.database import Base
 
 
 class ApiKey(Base):

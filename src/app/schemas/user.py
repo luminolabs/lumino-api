@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-from app.constants import UserStatus
+from app.core.constants import UserStatus
 
 class UserCreate(BaseModel):
     """

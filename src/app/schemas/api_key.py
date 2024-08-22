@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 from datetime import datetime, timezone
 from uuid import UUID
 
-from app.constants import ApiKeyStatus
+from app.core.constants import ApiKeyStatus
 from app.core.exceptions import BadRequestError
 
 

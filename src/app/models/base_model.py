@@ -2,8 +2,8 @@ from sqlalchemy import Column, String, UUID, JSON, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.constants import BaseModelStatus
-from app.database import Base
+from app.core.constants import BaseModelStatus
+from app.core.database import Base
 
 
 class BaseModel(Base):

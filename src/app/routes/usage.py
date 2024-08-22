@@ -5,14 +5,14 @@ from fastapi import APIRouter, Depends
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
-from app.database import get_db
+from app.core.database import get_db
 from app.models.user import User
 from app.schemas.usage import TotalCostResponse, UsageRecordResponse
 from app.schemas.common import Pagination
 from app.services.usage import get_total_cost, get_usage_records
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 from app.core.exceptions import BadRequestError
 
 # Set up API router

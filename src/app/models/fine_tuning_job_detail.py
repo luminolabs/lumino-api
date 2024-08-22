@@ -1,6 +1,6 @@
 from sqlalchemy import Column, JSON, UUID, ForeignKey
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.core.database import Base
 
 
 class FineTuningJobDetail(Base):

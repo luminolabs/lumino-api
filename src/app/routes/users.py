@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.authentication import get_current_active_user, oauth2_scheme, get_api_key, logout_bearer_token, \
     login_email_password
 from app.core.exceptions import (
-    BadRequestError,
     ForbiddenError,
 )
-from app.database import get_db
+from app.core.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, LoginRequest
 from app.services.user import (
@@ -16,7 +15,7 @@ from app.services.user import (
     update_user,
     deactivate_user,
 )
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 
 # Set up API router
 router = APIRouter(tags=["Users"])

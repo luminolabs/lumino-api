@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.common import Pagination
 from app.schemas.model import BaseModelResponse, FineTunedModelResponse
 from app.schemas.user import UserResponse
@@ -16,7 +16,7 @@ from app.services.model import (
     get_fine_tuned_models,
     get_fine_tuned_model,
 )
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 
 # Set up router
 router = APIRouter(tags=["Models"])

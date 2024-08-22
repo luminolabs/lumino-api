@@ -3,10 +3,10 @@ import os
 from uuid import UUID
 
 from fastapi import UploadFile
-from app.config_manager import config
+from app.core.config_manager import config
 from gcloud.aio.storage import Storage
 from aiohttp import ClientSession, ClientResponseError
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 from app.core.exceptions import ServerError
 
 # Set up logger

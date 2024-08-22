@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 from fastapi import UploadFile
 
-from app.constants import DatasetStatus
+from app.core.constants import DatasetStatus
 from app.core.exceptions import BadRequestError
 
 

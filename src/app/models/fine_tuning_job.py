@@ -2,8 +2,8 @@ from sqlalchemy import Column, String, DateTime, UUID, Integer, BigInteger, Fore
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.constants import FineTuningJobStatus
-from app.database import Base
+from app.core.constants import FineTuningJobStatus
+from app.core.database import Base
 
 
 class FineTuningJob(Base):

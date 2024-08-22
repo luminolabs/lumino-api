@@ -1,15 +1,14 @@
 from uuid import UUID
-import math
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.base_model import BaseModel
 from app.models.fine_tuned_model import FineTunedModel
 from app.schemas.common import Pagination
 from app.schemas.model import BaseModelResponse, FineTunedModelResponse
-from app.utils import setup_logger, paginate_query
+from app.core.utils import setup_logger, paginate_query
 from app.core.exceptions import (
     BaseModelNotFoundError,
     FineTunedModelNotFoundError

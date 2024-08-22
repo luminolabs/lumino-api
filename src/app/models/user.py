@@ -3,9 +3,9 @@ from sqlalchemy import Column, String, DateTime, UUID, Index, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.constants import UserStatus
+from app.core.constants import UserStatus
 from app.core.cryptography import verify_password
-from app.database import Base
+from app.core.database import Base
 
 
 class User(Base):

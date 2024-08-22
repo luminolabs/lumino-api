@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.schemas.common import Pagination
 
 T = TypeVar('T')

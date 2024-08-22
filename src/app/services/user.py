@@ -3,13 +3,13 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
-from app.constants import UserStatus
+from app.core.config_manager import config
+from app.core.constants import UserStatus
 from app.core.exceptions import UserNotFoundError, EmailAlreadyExistsError
 from app.core.cryptography import get_password_hash
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)

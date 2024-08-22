@@ -2,8 +2,8 @@ from sqlalchemy import Column, String, DateTime, UUID, BigInteger, JSON, Foreign
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.constants import DatasetStatus
-from app.database import Base
+from app.core.constants import DatasetStatus
+from app.core.database import Base
 
 
 class Dataset(Base):

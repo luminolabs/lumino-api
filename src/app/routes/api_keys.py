@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config_manager import config
+from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
-from app.database import get_db
+from app.core.database import get_db
 from app.models.user import User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse, ApiKeyUpdate, ApiKeyWithSecretResponse
 from app.schemas.common import Pagination
@@ -18,7 +18,7 @@ from app.services.api_key import (
     update_api_key,
     revoke_api_key,
 )
-from app.utils import setup_logger
+from app.core.utils import setup_logger
 
 # Set up API router
 router = APIRouter(tags=["API Keys"])
