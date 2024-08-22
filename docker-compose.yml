@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:13
@@ -19,7 +17,7 @@ services:
       - .secrets:/project/.secrets
       - .logs:/project/.logs
     ports:
-      - "5100:80"
+      - "5100:5100"
     environment:
       - CAPI_ENV=${CAPI_ENV}
       - CAPI_DB_NAME=${CAPI_DB_NAME}

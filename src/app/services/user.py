@@ -26,7 +26,7 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
         User | None: The user with the given email address, or None if not found.
     """
     logger.info(f"Attempting to retrieve user with email: {email}")
-    result = await db.execute(select(User).where(User.email == email, User.status == UserStatus.ACTIVE))
+    result = await db.execute(select(User).where(User.email == email))
     return result.scalar_one_or_none()
 
 
@@ -72,6 +72,12 @@ async def update_user(db: AsyncSession, user: User, user_update: UserUpdate) -> 
         UserResponse: The updated user.
     """
     logger.info(f"Attempting to update user: {user.id}")
+
+    # Check if a user with the same email already exists
+    if user_update.email and user.email != user_update.email:
+        is_existing_user = await get_user_by_email(db, user_update.email)
+        if is_existing_user:
+            raise EmailAlreadyExistsError(f"User with email {user_update.email} already exists", logger)
 
     # Update the user's information
     update_data = user_update.dict(exclude_unset=True)
