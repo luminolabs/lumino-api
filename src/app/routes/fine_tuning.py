@@ -94,12 +94,12 @@ async def get_fine_tuning_job_details(
     return job
 
 
-@router.post("/fine-tuning/{job_name}/cancel", response_model=FineTuningJobResponse)
+@router.post("/fine-tuning/{job_name}/cancel")
 async def cancel_fine_tuning_job_request(
         job_name: str,
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
-) -> FineTuningJobResponse:
+) -> str:
     """
     Cancel a fine-tuning job.
 
@@ -111,8 +111,9 @@ async def cancel_fine_tuning_job_request(
     Returns:
         FineTuningJobResponse: The updated fine-tuning job after cancellation.
     """
-    cancelled_job = await cancel_fine_tuning_job(db, current_user.id, job_name)
-    return cancelled_job
+    # cancelled_job = await cancel_fine_tuning_job(db, current_user.id, job_name)
+    # return cancelled_job
+    return "Not implemented"
 
 
 @router.get("/fine-tuning/{job_name}/logs")
@@ -132,5 +133,6 @@ async def get_fine_tuning_job_logs_request(
     Returns:
         str: The logs of the fine-tuning job.
     """
-    logs = await get_fine_tuning_job_logs(db, current_user.id, job_name)
-    return logs
+    # logs = await get_fine_tuning_job_logs(db, current_user.id, job_name)
+    # return logs
+    return "Not implemented"

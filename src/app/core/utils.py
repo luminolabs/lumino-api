@@ -4,7 +4,7 @@ import sys
 from logging.handlers import TimedRotatingFileHandler
 from typing import TypeVar, List, Tuple
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, Row
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
@@ -41,7 +41,10 @@ async def paginate_query(
 
     # Fetch items
     result = await db.execute(query.offset(offset).limit(items_per_page))
-    items = result.scalars().all()
+    items = result.all()
+
+    if items and isinstance(items[0], Row) and len(items[0]) == 1:
+        items = [item[0] for item in items]
 
     # Create pagination object
     pagination = Pagination(

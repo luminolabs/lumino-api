@@ -71,8 +71,13 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
     # TODO: Commented out since the scheduler client is not implemented yet
     # await start_fine_tuning_job(db_job.id)
 
+    # Prepare the response
+    db_job_dict = db_job.__dict__
+    db_job_dict['base_model_name'] = db_job.base_model.name
+    db_job_dict['dataset_name'] = db_job.dataset.name
+
     logger.info(f"Created fine-tuning job: {db_job.id} for user: {user_id}")
-    return FineTuningJobResponse.from_orm(db_job)
+    return FineTuningJobResponse(**db_job_dict)
 
 async def get_fine_tuning_jobs(
         db: AsyncSession,
