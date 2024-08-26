@@ -181,6 +181,12 @@ class FineTuningJobRefreshError(ServerError):
         super().__init__(detail, logger)
 
 
+class FineTuningJobCancellationError(ServerError):
+    """Exception raised when there's an error stopping a fine-tuning job."""
+    def __init__(self, detail: str, logger: Optional[Logger] = None):
+        super().__init__(detail, logger)
+
+
 # Exception handlers
 
 

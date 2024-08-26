@@ -13,7 +13,7 @@ from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, 
 from app.services.fine_tuning import (
     create_fine_tuning_job,
     get_fine_tuning_jobs,
-    get_fine_tuning_job,
+    get_fine_tuning_job, cancel_fine_tuning_job,
 )
 from app.core.utils import setup_logger
 
@@ -92,9 +92,25 @@ async def get_fine_tuning_job_details(
     return job
 
 
-@router.post("/fine-tuning/{job_name}/cancel", status_code=status.HTTP_501_NOT_IMPLEMENTED)
-async def cancel_fine_tuning_job_request() -> str:
-    return "Not implemented"
+@router.post("/fine-tuning/{job_name}/cancel", response_model=FineTuningJobDetailResponse)
+async def cancel_fine_tuning_job_request(
+        job_name: str,
+        current_user: User = Depends(get_current_active_user),
+        db: AsyncSession = Depends(get_db),
+) -> FineTuningJobDetailResponse:
+    """
+    Cancel a fine-tuning job.
+
+    Args:
+        job_name (str): The name of the fine-tuning job to cancel.
+        current_user (User): The current authenticated user.
+        db (AsyncSession): The database session.
+
+    Returns:
+        FineTuningJobDetailResponse: The updated fine-tuning job information.
+    """
+    cancelled_job = await cancel_fine_tuning_job(db, current_user.id, job_name)
+    return cancelled_job
 
 
 @router.get("/fine-tuning/{job_name}/logs", status_code=status.HTTP_501_NOT_IMPLEMENTED)

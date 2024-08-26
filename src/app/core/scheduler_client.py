@@ -11,7 +11,7 @@ from app.models.base_model import BaseModel
 from sqlalchemy import select
 from app.core.config_manager import config
 from app.core.utils import setup_logger
-from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError
+from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError, FineTuningJobCancellationError
 
 INTERNAL_API_URL = config.scheduler_zen_url
 
@@ -116,3 +116,25 @@ async def fetch_job_details(user_id: UUID, job_ids: List[UUID]) -> List[Dict[str
                 return await response.json()
             else:
                 raise FineTuningJobRefreshError(f"Error refreshing job statuses: {await response.text()}")
+
+
+async def stop_fine_tuning_job(job_id: UUID):
+    """
+    Stop a fine-tuning job asynchronously using the Scheduler API.
+
+    Args:
+        job_id (UUID): The ID of the fine-tuning job to stop.
+
+    Raises:
+        FineTuningJobCancellationError: If there's an error stopping the fine-tuning job.
+    """
+    # Send request to Scheduler API
+    async with aiohttp.ClientSession() as session:
+        async with session.post(f"{INTERNAL_API_URL}/jobs/{job_id}/stop") as response:
+            if response.status == 200:
+                logger.info(f"Successfully requested to stop fine-tuning job: {job_id}")
+                return await response.json()
+            elif response.status == 404:
+                raise FineTuningJobCancellationError(f"Job not found or not running: {job_id}", logger)
+            else:
+                raise FineTuningJobCancellationError(f"Failed to stop fine-tuning job: {job_id}: {await response.text()}", logger)
