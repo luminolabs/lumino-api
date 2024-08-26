@@ -22,7 +22,7 @@ db_port:
 
 # API configuration
 api_v1_prefix: /v1
-admin_user_id:
+admin_user_id:  # User ID of the admin user; TBD
 
 # JWT configuration
 bearer_token_secret_key: your_secret_key_here  # TODO: Create a GCP secret for this
@@ -30,4 +30,4 @@ bearer_token_algorithm: HS256  # Algorithm used to sign tokens
 bearer_token_expire_minutes: 1440  # 24 hours
 
 # Scheduler Zen URL
-scheduler_zen_url: http://localhost:8000
+scheduler_zen_url:  # URL to the Scheduler Zen API

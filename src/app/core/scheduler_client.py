@@ -10,11 +10,7 @@ from app.models.base_model import BaseModel
 from sqlalchemy import select
 from app.core.config_manager import config
 from app.core.utils import setup_logger
-from app.core.exceptions import (
-    FineTuningJobCreationError,
-    FineTuningJobCancelError,
-    FineTuningJobNotFoundError
-)
+from app.core.exceptions import FineTuningJobCreationError
 
 INTERNAL_API_URL = config.scheduler_zen_url
 
