@@ -181,8 +181,7 @@ async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str)
         FineTuningJobDetailResponse: The updated fine-tuning job information.
 
     Raises:
-        FineTuningJobNotFoundError: If the fine-tuning job is not found.
-        FineTuningJobCancellationError: If there's an error cancelling the job.
+        BadRequestError: If the fine-tuning job is not in a state that can be cancelled.
     """
     # Get the job from the database
     job = await get_fine_tuning_job(db, user_id, job_name)
