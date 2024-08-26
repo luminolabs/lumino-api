@@ -18,8 +18,10 @@ from app.core.database import engine, Base
 from app.routes import users, api_keys, datasets, fine_tuning, models, usage
 from app.tasks.api_key_cleanup import cleanup_expired_api_keys
 from app.tasks.token_cleanup import cleanup_expired_tokens
+from app.tasks.job_status_updater import update_job_statuses
 
-scheduler = AsyncIOScheduler()
+# Create the background task scheduler instance
+background_task_scheduler = AsyncIOScheduler()
 
 
 @asynccontextmanager
@@ -30,18 +32,20 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     # Add the token cleanup task to the background scheduler
-    scheduler.add_job(cleanup_expired_tokens, 'interval', minutes=1)
+    background_task_scheduler.add_job(cleanup_expired_tokens, 'interval', minutes=1)
     # Add the API key cleanup task to the background scheduler
-    scheduler.add_job(cleanup_expired_api_keys, 'interval', minutes=1)
+    background_task_scheduler.add_job(cleanup_expired_api_keys, 'interval', minutes=1)
+    # Add the job status updater task to the background scheduler
+    background_task_scheduler.add_job(update_job_statuses, 'interval', seconds=10)
     # Start the background scheduler
-    scheduler.start()
+    background_task_scheduler.start()
 
     yield
+
     # Shutdown
     # --------
     # Stop the background scheduler
-    scheduler.shutdown()
-
+    background_task_scheduler.shutdown()
 
 app = FastAPI(title="LLM Fine-tuning API", lifespan=lifespan)
 

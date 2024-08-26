@@ -1,3 +1,4 @@
+from typing import List, Dict, Any
 from uuid import UUID
 import aiohttp
 
@@ -10,7 +11,7 @@ from app.models.base_model import BaseModel
 from sqlalchemy import select
 from app.core.config_manager import config
 from app.core.utils import setup_logger
-from app.core.exceptions import FineTuningJobCreationError
+from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError
 
 INTERNAL_API_URL = config.scheduler_zen_url
 
@@ -90,3 +91,28 @@ async def start_fine_tuning_job(job_id: UUID):
             job.status = FineTuningJobStatus.FAILED
             await db.commit()
         raise FineTuningJobCreationError(f"Failed to start fine-tuning job: {job_id}: {e}", logger)
+
+
+async def fetch_job_details(user_id: UUID, job_ids: List[UUID]) -> List[Dict[str, Any]]:
+    """
+    Poll the Scheduler API for the status of multiple jobs.
+
+    Args:
+        user_id (UUID): The ID of the user.
+        job_ids (List[str]): A list of job IDs to poll.
+
+    Returns:
+        List[Dict[str, Any]]: A list of job details.
+    """
+    # Convert UUIDs to strings
+    user_id = str(user_id)
+    job_ids = [str(job_id) for job_id in job_ids]
+    # Send request to Scheduler API
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            f"{INTERNAL_API_URL}/jobs/get_by_user_and_ids", json={"user_id": user_id, "job_ids": job_ids}
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                raise FineTuningJobRefreshError(f"Error refreshing job statuses: {await response.text()}")

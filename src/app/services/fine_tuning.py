@@ -7,7 +7,7 @@ from app.core.constants import FineTuningJobStatus
 from app.core.exceptions import (
     FineTuningJobNotFoundError,
     BaseModelNotFoundError,
-    DatasetNotFoundError
+    DatasetNotFoundError, FineTuningJobAlreadyExistsError
 )
 from app.core.scheduler_client import start_fine_tuning_job
 from app.models.fine_tuning_job import FineTuningJob
@@ -50,6 +50,12 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
     if not dataset:
         raise DatasetNotFoundError(f"Dataset with name {job.dataset_name} not found, user: {user_id}", logger)
 
+    # Check if the job name is unique for the user
+    existing_job = await db.execute(select(FineTuningJob).where(FineTuningJob.user_id == user_id, FineTuningJob.name == job.name))
+    existing_job = existing_job.scalar_one_or_none()
+    if existing_job:
+        raise FineTuningJobAlreadyExistsError(f"Fine-tuning job with name {job.name} already exists for user: {user_id}", logger)
+
     # Create the main fine-tuning job record
     db_job = FineTuningJob(
         user_id=user_id,
@@ -65,6 +71,8 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
     )
     # Add the records to the database and commit the changes
     db.add(db_job)
+    await db.flush()  # Ensure the job ID is generated before adding the detail record
+    db_job_detail.fine_tuning_job_id = db_job.id
     db.add(db_job_detail)
     await db.commit()
 
