@@ -17,6 +17,7 @@ class BaseModel(Base):
         hf_url (str): The URL to the model on Hugging Face.
         status (BaseModelStatus): The current status of the base model.
         meta (JSON): Additional metadata stored as JSON.
+        cluster_config (JSON): The cluster configuration for the base model; not exposed to the API.
 
     Relationships:
         fine_tuning_jobs (relationship): One-to-many relationship with FineTuningJob.
@@ -30,6 +31,7 @@ class BaseModel(Base):
     hf_url = Column(String(255), nullable=False)
     status = Column(Enum(BaseModelStatus), nullable=False, default=BaseModelStatus.INACTIVE)
     meta = Column(JSON, nullable=True)
+    cluster_config = Column(JSON, nullable=True)
 
     # Relationships
     fine_tuning_jobs = relationship("FineTuningJob", back_populates="base_model")
