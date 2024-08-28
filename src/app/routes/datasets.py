@@ -1,58 +1,79 @@
 from typing import Dict, Union, List
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, status, UploadFile, File
 from fastapi.params import Query, Form
-from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
-from app.schemas.common import Pagination
+from app.core.config_manager import config
+from app.core.authentication import get_current_active_user
+from app.core.database import get_db
+from app.models.user import User
 from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
-from app.schemas.user import UserResponse
+from app.schemas.common import Pagination
 from app.services.dataset import (
     create_dataset,
     get_datasets,
     get_dataset,
     update_dataset,
-    delete_dataset,
-    download_dataset,
+    mark_dataset_deleted,
 )
-from app.core.authentication import get_current_active_user
+from app.core.utils import setup_logger
 
+# Set up API router
 router = APIRouter(tags=["Datasets"])
+
+# Set up logger
+logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
 @router.post("/datasets", response_model=DatasetResponse, status_code=status.HTTP_201_CREATED)
 async def upload_dataset(
         file: UploadFile = File(...),
-        name: str = Form(None),
+        name: str = Form(...),
         description: str = Form(None),
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:
     """
     Upload a new dataset file.
+
+    Args:
+        file (UploadFile): The dataset file to be uploaded.
+        name (str): The name of the dataset.
+        description (str, optional): A description of the dataset.
+        current_user (User): The current authenticated user.
+        db (AsyncSession): The database session.
+
+    Returns:
+        DatasetResponse: The created dataset information.
     """
-    try:
-        dataset_create = DatasetCreate(
-            name=name,
-            description=description,
-            file=file,
-        )
-        return await create_dataset(db, current_user.id, dataset_create)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    dataset_create = DatasetCreate(
+        name=name,
+        description=description,
+        file=file,
+    )
+    new_dataset = await create_dataset(db, current_user.id, dataset_create)
+    return new_dataset
 
 
 @router.get("/datasets", response_model=Dict[str, Union[List[DatasetResponse], Pagination]])
 async def list_datasets(
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
         page: int = Query(1, ge=1),
         items_per_page: int = Query(20, ge=1, le=100),
-) -> dict:
+) -> Dict[str, Union[List[DatasetResponse], Pagination]]:
     """
     List all datasets uploaded by the user.
+
+    Args:
+        current_user (User): The current authenticated user.
+        db (AsyncSession): The database session.
+        page (int): The page number for pagination.
+        items_per_page (int): The number of items per page.
+
+    Returns:
+        Dict[str, Union[List[DatasetResponse], Pagination]]: A dictionary containing the list of datasets and pagination info.
     """
     datasets, pagination = await get_datasets(db, current_user.id, page, items_per_page)
     return {
@@ -64,15 +85,21 @@ async def list_datasets(
 @router.get("/datasets/{dataset_name}", response_model=DatasetResponse)
 async def get_dataset_info(
         dataset_name: str,
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:
     """
     Get information about a specific dataset.
+
+    Args:
+        dataset_name (str): The name of the dataset.
+        current_user (User): The current authenticated user.
+        db (AsyncSession): The database session.
+
+    Returns:
+        DatasetResponse: The dataset information.
     """
     dataset = await get_dataset(db, current_user.id, dataset_name)
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
     return dataset
 
 
@@ -80,48 +107,37 @@ async def get_dataset_info(
 async def update_dataset_info(
         dataset_name: str,
         dataset_update: DatasetUpdate,
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:
     """
     Update a specific dataset's information.
+
+    Args:
+        dataset_name (str): The name of the dataset to update.
+        dataset_update (DatasetUpdate): The update data for the dataset.
+        current_user (User): The current authenticated user.
+        db (AsyncSession): The database session.
+
+    Returns:
+        DatasetResponse: The updated dataset information.
     """
-    try:
-        return await update_dataset(db, current_user.id, dataset_name, dataset_update)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    updated_dataset = await update_dataset(db, current_user.id, dataset_name, dataset_update)
+    return updated_dataset
 
 
 @router.delete("/datasets/{dataset_name}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_dataset_file(
         dataset_name: str,
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Delete a specific dataset file.
-    """
-    try:
-        await delete_dataset(db, current_user.id, dataset_name)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
 
-
-@router.get("/datasets/{dataset_name}/download")
-async def download_dataset_file(
-        dataset_name: str,
-        current_user: UserResponse = Depends(get_current_active_user),
-        db: AsyncSession = Depends(get_db),
-) -> StreamingResponse:
+    Args:
+        dataset_name (str): The name of the dataset to delete.
+        current_user (User): The current authenticated user.
+        db (AsyncSession): The database session.
     """
-    Download a specific dataset file.
-    """
-    try:
-        dataset, file_stream = await download_dataset(db, current_user.id, dataset_name)
-        return StreamingResponse(
-            file_stream,
-            media_type="application/jsonl",
-            headers={"Content-Disposition": f"attachment; filename={dataset.name}.jsonl"},
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    await mark_dataset_deleted(db, current_user.id, dataset_name)

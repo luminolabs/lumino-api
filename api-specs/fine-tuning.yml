@@ -56,7 +56,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/fine-tuning/{job_id}:
+  /v1/fine-tuning/{job_name}:
     get:
       summary: Get details of a specific fine-tuning job
       tags:
@@ -64,7 +64,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: job_id
+        - name: job_name
           in: path
           required: true
           schema:
@@ -81,7 +81,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v1/fine-tuning/{job_id}/cancel:
+  /v1/fine-tuning/{job_name}/cancel:
     post:
       summary: Cancel a fine-tuning job
       tags:
@@ -89,7 +89,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: job_id
+        - name: job_name
           in: path
           required: true
           schema:
@@ -106,7 +106,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v1/fine-tuning/{job_id}/logs:
+  /v1/fine-tuning/{job_name}/logs:
     get:
       summary: Get logs of a fine-tuning job
       tags:
@@ -114,7 +114,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: job_id
+        - name: job_name
           in: path
           required: true
           schema:
@@ -136,13 +136,13 @@ components:
     FineTuningJobCreate:
       type: object
       required:
-        - base_model_id
-        - dataset_id
+        - base_model_name
+        - dataset_name
         - parameters
       properties:
-        base_model_id:
+        base_model_name:
           type: string
-        dataset_id:
+        dataset_name:
           type: string
         parameters:
           type: object
@@ -170,9 +170,9 @@ components:
         status:
           type: string
           enum: [new, pending, running, succeeded, failed, stopped]
-        base_model_id:
+        base_model_name:
           type: string
-        dataset_id:
+        dataset_name:
           type: string
         current_step:
           type: integer
@@ -239,12 +239,12 @@ components:
       type: object
       required:
         - code
-        - message
+        - detail
       properties:
         code:
           type: string
           description: A unique error code that identifies the type of error
-        message:
+        detail:
           type: string
           description: A human-readable error message
         details:
@@ -260,7 +260,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 

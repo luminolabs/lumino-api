@@ -66,7 +66,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v1/datasets/{dataset_id}:
+  /v1/datasets/{dataset_name}:
     get:
       summary: Get information about a specific dataset
       tags:
@@ -74,7 +74,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: dataset_id
+        - name: dataset_name
           in: path
           required: true
           schema:
@@ -98,7 +98,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: dataset_id
+        - name: dataset_name
           in: path
           required: true
           schema:
@@ -107,32 +107,6 @@ paths:
       responses:
         '204':
           description: Successfully deleted dataset
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /v1/datasets/{dataset_id}/download:
-    get:
-      summary: Download a specific dataset file
-      tags:
-        - Datasets
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: dataset_id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/jsonl:
-              schema:
-                type: string
-                format: binary
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -184,12 +158,12 @@ components:
       type: object
       required:
         - code
-        - message
+        - detail
       properties:
         code:
           type: string
           description: A unique error code that identifies the type of error
-        message:
+        detail:
           type: string
           description: A human-readable error message
         details:
@@ -205,7 +179,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Error'
-        request_id:
+        request_name:
           type: string
           description: A unique identifier for the request, useful for debugging and support
 
