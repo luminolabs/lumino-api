@@ -51,8 +51,8 @@ def prefix_filename_with_datetime(filename: str) -> str:
     # Get the current datetime
     current_datetime = datetime.datetime.now()
 
-    # Format the datetime as a string
-    datetime_str = current_datetime.strftime("%Y%m%d%H%M%S")
+    # Format the datetime as a string with separators
+    datetime_str = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
 
     # Concatenate the datetime string with the filename
     new_filename = f"{datetime_str}_{filename}"
