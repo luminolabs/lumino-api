@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
 from app.core.config_manager import config
+from app.core.exceptions import BadRequestError
 from app.schemas.common import Pagination
 
 T = TypeVar('T')
@@ -31,12 +32,18 @@ async def paginate_query(
     Returns:
         Tuple[List[T], Pagination]: A tuple of the items and pagination object.
     """
+    # Validate inputs
+    if page < 1 or items_per_page < 1:
+        raise BadRequestError("`page` and `items_per_page` must be positive integers")
+
     # Count total items
     count_query = select(func.count()).select_from(query.subquery())
     total_count = await db.scalar(count_query)
 
-    # Calculate pagination
+    # Calculate total pages and validate if page is out of range
     total_pages = (total_count + items_per_page - 1) // items_per_page
+    if page > total_pages:
+        raise BadRequestError(f"Page {page} is out of range; there are only {total_pages} pages")
     offset = (page - 1) * items_per_page
 
     # Fetch items

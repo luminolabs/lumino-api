@@ -1,3 +1,4 @@
+import re
 from uuid import UUID
 
 from sqlalchemy import select
@@ -8,7 +9,7 @@ from app.core.config_manager import config
 from app.core.constants import DatasetStatus
 from app.core.exceptions import (
     DatasetAlreadyExistsError,
-    DatasetNotFoundError,
+    DatasetNotFoundError, BadRequestError,
 )
 from app.models.dataset import Dataset
 from app.schemas.common import Pagination
@@ -18,6 +19,26 @@ from app.core.utils import setup_logger, paginate_query
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
+
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitize the filename to use only lowercase letters, numbers, hyphens, and underscores.
+    Args:
+        filename (str): The original filename.
+    Returns:
+        str: The sanitized filename.
+    """
+    # Convert to lowercase
+    sanitized = filename.lower()
+    # Replace spaces with underscores
+    sanitized = sanitized.replace(' ', '_')
+    # Remove any characters that are not a-z, 0-9, hyphen, or underscore
+    sanitized = re.sub(r'[^a-z0-9\-_]', '', sanitized)
+    # If the filename ends up empty, raise an error
+    if not sanitized:
+        raise BadRequestError(f"Filename must only contain letters, numbers, hyphens, and underscores; got {filename}")
+    return sanitized
 
 
 async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate) -> DatasetResponse:
@@ -45,6 +66,11 @@ async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate
     if dataset_exists:
         raise DatasetAlreadyExistsError(f"A dataset with the name '{dataset.name}' already "
                                         f"exists for user {user_id}", logger)
+
+    # Sanitize the filename and replace it in the upload object for use downstream
+    original_filename = dataset.file.filename
+    sanitized_filename = sanitize_filename(original_filename)
+    dataset.file.filename = sanitized_filename
 
     # Upload the dataset file to storage
     file_name = await upload_file(config.gcs_datasets_path, dataset.file, user_id)
