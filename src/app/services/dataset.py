@@ -24,8 +24,10 @@ logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.l
 def sanitize_filename(filename: str) -> str:
     """
     Sanitize the filename to use only lowercase letters, numbers, hyphens, and underscores.
+
     Args:
         filename (str): The original filename.
+
     Returns:
         str: The sanitized filename.
     """
