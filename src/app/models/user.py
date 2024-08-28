@@ -4,7 +4,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.core.constants import UserStatus
-from app.core.cryptography import verify_password
 from app.core.database import Base
 
 
@@ -37,7 +36,6 @@ class User(Base):
     status = Column(Enum(UserStatus), nullable=False, default=UserStatus.ACTIVE)
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
-    password_hash = Column(String(255), nullable=False)
 
     # Relationships
     datasets = relationship("Dataset", back_populates="user")
@@ -50,17 +48,6 @@ class User(Base):
     __table_args__ = (
         Index('idx_users_email', email, unique=True),
     )
-
-    def verify_password(self, password: str) -> bool:
-        """
-        Verify the provided password the stored hashed password.
-
-        Args:
-            password (str): The password to verify.
-        Returns:
-            bool: True if the password is valid, False otherwise.
-        """
-        return verify_password(password, self.password_hash)
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, name={self.name}, email={self.email})>"
