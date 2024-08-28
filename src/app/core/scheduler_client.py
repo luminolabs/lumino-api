@@ -44,7 +44,13 @@ async def start_fine_tuning_job(job_id: UUID):
     # we would want to enforce certain cluster configurations on the Customer API, based
     # on our pricing plans and strategy
     use_lora = job_detail.parameters.get("use_lora", True)
-    cluster_config = base_model.cluster_config.get("lora" if use_lora else "full")
+    use_qlora = job_detail.parameters.get("use_qlora", False)
+    if not use_lora:
+        use_qlora = False
+    # "qlora" or "lora" or "full"
+    cluster_config_name = f"{'q' if use_qlora else ''}{'lora' if use_lora else 'full'}"
+
+    cluster_config = base_model.cluster_config.get(cluster_config_name)
     num_gpus = cluster_config.get("num_gpus")  # ex: 4
     gpu_type = cluster_config.get("gpu_type")  # ex: "a100-40gb"
 
