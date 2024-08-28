@@ -84,7 +84,7 @@ async def auth0_callback(request: Request, db: AsyncSession = Depends(get_db)) -
     }
 
     logger.info(f"User {email} successfully authenticated")
-    return RedirectResponse(url=request.url_for("logged_in"))
+    return RedirectResponse(url=request.base_url)
 
 
 @router.get("/auth0/logout")
@@ -105,34 +105,10 @@ async def logout(request: Request, response: Response) -> RedirectResponse:
 
     logout_url = f"https://{config.auth0_domain}/v2/logout?" + urlencode(
         {
-            "returnTo": request.url_for("logged_out"),
+            "returnTo": request.base_url,
             "client_id": config.auth0_client_id,
         },
         quote_via=quote_plus,
     )
     logger.info(f"Redirecting to Auth0 logout URL: {logout_url}")
     return RedirectResponse(url=logout_url)
-
-
-@router.get("/auth0/logged-out")
-async def logged_out() -> dict:
-    """
-    Handle the logged-out state after successful logout.
-
-    Returns:
-        dict: A message indicating successful logout.
-    """
-    logger.info("User successfully logged out")
-    return {"message": "You have been logged out."}
-
-
-@router.get("/auth0/logged-in")
-async def logged_in() -> dict:
-    """
-    Handle the logged-in state after successful authentication.
-
-    Returns:
-        dict: A message indicating successful login.
-    """
-    logger.info("User successfully logged in")
-    return {"message": "You have been logged in."}

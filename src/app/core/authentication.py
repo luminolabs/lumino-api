@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import Depends, Header, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config_manager import config
 from app.core.constants import UserStatus
@@ -42,13 +43,14 @@ async def get_user_from_api_key(db: AsyncSession, api_key: str) -> User:
         InvalidApiKeyError: If the API key is invalid or the user can't be found
     """
     # Get the API key from the database
-    db_api_key = (await db.execute(
-        select(ApiKey).where(
+    db_api_key = await db.execute(
+        select(ApiKey).options(selectinload(ApiKey.user)).where(
             ApiKey.prefix == api_key[:8],
             ApiKey.status == 'ACTIVE',
             ApiKey.expires_at > datetime.utcnow()
         )
-    )).scalar_one_or_none()
+    )
+    db_api_key = db_api_key.scalar_one_or_none()
     # Raise an error if the API key is not found
     if not db_api_key:
         raise InvalidApiKeyError(f"API key not found, expired, or revoked: {api_key[:8]}...", logger)

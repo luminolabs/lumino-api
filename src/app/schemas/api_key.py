@@ -17,7 +17,7 @@ class ApiKeyCreate(BaseModel):
     Schema for creating a new API key.
     """
     name: str = Field(..., min_length=1, max_length=255, description="The name of the API key")
-    expires_at: datetime = Field(None, description="The expiration date and time of the API key")
+    expires_at: datetime = Field(..., description="The expiration date and time of the API key")
 
     @field_validator('expires_at')
     def expiration_must_be_future(cls, v: datetime) -> datetime:
