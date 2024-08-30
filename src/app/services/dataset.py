@@ -20,6 +20,7 @@ from app.core.utils import setup_logger, paginate_query
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
+
 def sanitize_filename(filename: str) -> str:
     """
     Sanitize the filename to use only lowercase letters, numbers, hyphens, and underscores.

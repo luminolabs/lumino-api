@@ -13,9 +13,7 @@ from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, 
 from app.services.fine_tuning import (
     create_fine_tuning_job,
     get_fine_tuning_jobs,
-    get_fine_tuning_job,
-    cancel_fine_tuning_job,
-    get_fine_tuning_job_logs,
+    get_fine_tuning_job, cancel_fine_tuning_job,
 )
 from app.core.utils import setup_logger
 
@@ -94,12 +92,12 @@ async def get_fine_tuning_job_details(
     return job
 
 
-@router.post("/fine-tuning/{job_name}/cancel")
+@router.post("/fine-tuning/{job_name}/cancel", response_model=FineTuningJobDetailResponse)
 async def cancel_fine_tuning_job_request(
         job_name: str,
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
-) -> str:
+) -> FineTuningJobDetailResponse:
     """
     Cancel a fine-tuning job.
 
@@ -109,30 +107,12 @@ async def cancel_fine_tuning_job_request(
         db (AsyncSession): The database session.
 
     Returns:
-        FineTuningJobResponse: The updated fine-tuning job after cancellation.
+        FineTuningJobDetailResponse: The updated fine-tuning job information.
     """
-    # cancelled_job = await cancel_fine_tuning_job(db, current_user.id, job_name)
-    # return cancelled_job
-    return "Not implemented"
+    cancelled_job = await cancel_fine_tuning_job(db, current_user.id, job_name)
+    return cancelled_job
 
 
-@router.get("/fine-tuning/{job_name}/logs")
-async def get_fine_tuning_job_logs_request(
-        job_name: str,
-        current_user: User = Depends(get_current_active_user),
-        db: AsyncSession = Depends(get_db),
-) -> str:
-    """
-    Get logs of a fine-tuning job.
-
-    Args:
-        job_name (str): The name of the fine-tuning job.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        str: The logs of the fine-tuning job.
-    """
-    # logs = await get_fine_tuning_job_logs(db, current_user.id, job_name)
-    # return logs
+@router.get("/fine-tuning/{job_name}/logs", status_code=status.HTTP_501_NOT_IMPLEMENTED)
+async def get_fine_tuning_job_logs_request() -> str:
     return "Not implemented"

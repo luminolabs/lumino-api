@@ -88,7 +88,7 @@ class InvalidApiKeyError(UnauthorizedError):
         super().__init__(detail, logger)
 
 
-class InvalidBearerTokenError(UnauthorizedError):
+class InvalidUserSessionError(UnauthorizedError):
     """Exception raised when an invalid token is provided."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
@@ -163,14 +163,26 @@ class FineTuningJobNotFoundError(NotFoundError):
         super().__init__(detail, logger)
 
 
-class FineTuningJobCreationError(BadRequestError):
+class FineTuningJobAlreadyExistsError(BadRequestError):
+    """Exception raised when a fine-tuning job with the same name already exists."""
+    def __init__(self, detail: str, logger: Optional[Logger] = None):
+        super().__init__(detail, logger)
+
+
+class FineTuningJobCreationError(ServerError):
     """Exception raised when there's an error creating a fine-tuning job."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
-class FineTuningJobCancelError(BadRequestError):
-    """Exception raised when there's an error cancelling a fine-tuning job."""
+class FineTuningJobRefreshError(ServerError):
+    """Exception raised when there's an error refreshing fine-tuning job details."""
+    def __init__(self, detail: str, logger: Optional[Logger] = None):
+        super().__init__(detail, logger)
+
+
+class FineTuningJobCancellationError(ServerError):
+    """Exception raised when there's an error stopping a fine-tuning job."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 

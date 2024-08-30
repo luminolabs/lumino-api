@@ -10,7 +10,6 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.api_key import ApiKeyCreate, ApiKeyResponse, ApiKeyUpdate, ApiKeyWithSecretResponse
 from app.schemas.common import Pagination
-from app.schemas.user import UserResponse
 from app.services.api_key import (
     create_api_key,
     get_api_keys,
@@ -59,7 +58,7 @@ async def list_api_keys(
     List all API keys for the current user.
 
     Args:
-        current_user (UserResponse): The current authenticated user.
+        current_user (User): The current authenticated user.
         db (AsyncSession): The database session.
         page (int): The page number for pagination.
         items_per_page (int): The number of items per page.
@@ -85,7 +84,7 @@ async def get_api_key_details(
 
     Args:
         key_name (str): The name of the API key.
-        current_user (UserResponse): The current authenticated user.
+        current_user (User): The current authenticated user.
         db (AsyncSession): The database session.
 
     Returns:
@@ -99,7 +98,7 @@ async def get_api_key_details(
 async def update_api_key_details(
         key_name: str,
         api_key_update: ApiKeyUpdate,
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> ApiKeyResponse:
     """
@@ -108,7 +107,7 @@ async def update_api_key_details(
     Args:
         key_name (str): The name of the API key to update.
         api_key_update (ApiKeyUpdate): The update data for the API key.
-        current_user (UserResponse): The current authenticated user.
+        current_user (User): The current authenticated user.
         db (AsyncSession): The database session.
 
     Returns:
@@ -121,7 +120,7 @@ async def update_api_key_details(
 @router.delete("/api-keys/{key_name}", response_model=ApiKeyResponse)
 async def revoke_api_key_route(
         key_name: str,
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> ApiKeyResponse:
     """
@@ -129,7 +128,7 @@ async def revoke_api_key_route(
 
     Args:
         key_name (str): The name of the API key to revoke.
-        current_user (UUID): The UUID of the current authenticated user.
+        current_user (User): The current authenticated user.
         db (AsyncSession): The database session.
 
     Returns:
