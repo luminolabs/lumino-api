@@ -4,8 +4,11 @@ import uvicorn
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
 
 from app.core.config_manager import config
 from app.core.exceptions import (
@@ -66,10 +69,12 @@ app.include_router(models.router, prefix=api_prefix)
 app.include_router(usage.router, prefix=api_prefix)
 app.include_router(auth0.router, prefix=api_prefix)
 
+# Set up Jinja2 HTML templates
+templates = Jinja2Templates(directory="html")
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the LLM Fine-tuning API"}
+@app.get("/", response_class=HTMLResponse)
+async def web_console(request: Request):
+    return templates.TemplateResponse("console.html", {"request": request})
 
 
 if __name__ == "__main__":

@@ -18,3 +18,4 @@ apscheduler
 authlib
 itsdangerous
 httpx
+jinja2
