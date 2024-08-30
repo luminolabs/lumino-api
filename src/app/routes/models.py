@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
 from app.core.database import get_db
+from app.models.user import User
 from app.schemas.common import Pagination
 from app.schemas.model import BaseModelResponse, FineTunedModelResponse
-from app.schemas.user import UserResponse
 from app.services.model import (
     get_base_models,
     get_base_model,
@@ -72,7 +72,7 @@ async def get_base_model_details(
 
 @router.get("/models/fine-tuned", response_model=Dict[str, Union[List[FineTunedModelResponse], Pagination]])
 async def list_fine_tuned_models(
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
         page: int = Query(1, ge=1, description="Page number"),
         items_per_page: int = Query(20, ge=1, le=100, description="Number of items per page")
@@ -81,7 +81,7 @@ async def list_fine_tuned_models(
     List all fine-tuned models for the current user.
 
     Args:
-        current_user (UserResponse): The current authenticated user.
+        current_user (User): The current authenticated user.
         db (AsyncSession): The database session.
         page (int): The page number for pagination.
         items_per_page (int): The number of items per page.
@@ -100,7 +100,7 @@ async def list_fine_tuned_models(
 @router.get("/models/fine-tuned/{model_name}", response_model=FineTunedModelResponse)
 async def get_fine_tuned_model_details(
         model_name: str,
-        current_user: UserResponse = Depends(get_current_active_user),
+        current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> FineTunedModelResponse:
     """
@@ -108,7 +108,7 @@ async def get_fine_tuned_model_details(
 
     Args:
         model_name (str): The name of the fine-tuned model.
-        current_user (UserResponse): The current authenticated user.
+        current_user (User): The current authenticated user.
         db (AsyncSession): The database session.
 
     Returns:

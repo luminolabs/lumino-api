@@ -11,7 +11,7 @@ from app.models.base_model import BaseModel
 from sqlalchemy import select
 from app.core.config_manager import config
 from app.core.utils import setup_logger
-from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError
+from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError, FineTuningJobCancellationError
 
 INTERNAL_API_URL = config.scheduler_zen_url
 
@@ -45,7 +45,13 @@ async def start_fine_tuning_job(job_id: UUID):
     # we would want to enforce certain cluster configurations on the Customer API, based
     # on our pricing plans and strategy
     use_lora = job_detail.parameters.get("use_lora", True)
-    cluster_config = base_model.cluster_config.get("lora" if use_lora else "full")
+    use_qlora = job_detail.parameters.get("use_qlora", False)
+    if not use_lora:
+        use_qlora = False
+    # "qlora" or "lora" or "full"
+    cluster_config_name = f"{'q' if use_qlora else ''}{'lora' if use_lora else 'full'}"
+
+    cluster_config = base_model.cluster_config.get(cluster_config_name)
     num_gpus = cluster_config.get("num_gpus")  # ex: 4
     gpu_type = cluster_config.get("gpu_type")  # ex: "a100-40gb"
 
@@ -116,3 +122,25 @@ async def fetch_job_details(user_id: UUID, job_ids: List[UUID]) -> List[Dict[str
                 return await response.json()
             else:
                 raise FineTuningJobRefreshError(f"Error refreshing job statuses: {await response.text()}")
+
+
+async def stop_fine_tuning_job(job_id: UUID):
+    """
+    Stop a fine-tuning job asynchronously using the Scheduler API.
+
+    Args:
+        job_id (UUID): The ID of the fine-tuning job to stop.
+
+    Raises:
+        FineTuningJobCancellationError: If there's an error stopping the fine-tuning job.
+    """
+    # Send request to Scheduler API
+    async with aiohttp.ClientSession() as session:
+        async with session.post(f"{INTERNAL_API_URL}/jobs/{job_id}/stop") as response:
+            if response.status == 200:
+                logger.info(f"Successfully requested to stop fine-tuning job: {job_id}")
+                return await response.json()
+            elif response.status == 404:
+                raise FineTuningJobCancellationError(f"Job not found or not running: {job_id}", logger)
+            else:
+                raise FineTuningJobCancellationError(f"Failed to stop fine-tuning job: {job_id}: {await response.text()}", logger)

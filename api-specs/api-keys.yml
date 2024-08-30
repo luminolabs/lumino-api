@@ -6,38 +6,12 @@ info:
 
 paths:
   /v1/api-keys:
-    get:
-      summary: List all API keys for the current user
-      tags:
-        - API Keys
-      security:
-        - BearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/ItemsPerPageParam'
-      responses:
-        '200':
-          description: API keys retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ApiKey'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
     post:
-      summary: Create a new API key for the current user
+      summary: Create a new API key
       tags:
         - API Keys
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -50,11 +24,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKeyWithSecret'
+                $ref: '#/components/schemas/ApiKeyWithSecretResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common-structures.yml#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
+
+    get:
+      summary: List all API keys for the current user
+      tags:
+        - API Keys
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: 'common-structures.yml#/components/parameters/PageParam'
+        - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
+      responses:
+        '200':
+          description: API keys retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKeyResponse'
+                  pagination:
+                    $ref: 'common-structures.yml#/components/schemas/Pagination'
+        '401':
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
 
   /v1/api-keys/{key_name}:
     get:
@@ -62,7 +62,7 @@ paths:
       tags:
         - API Keys
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: key_name
@@ -75,18 +75,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKey'
+                $ref: '#/components/schemas/ApiKeyResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
     patch:
       summary: Update a specific API key
       tags:
         - API Keys
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: key_name
@@ -105,42 +105,71 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiKey'
+                $ref: '#/components/schemas/ApiKeyResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common-structures.yml#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
     delete:
-      summary: Delete a specific API key
+      summary: Revoke a specific API key
       tags:
         - API Keys
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: key_name
           required: true
           schema:
             type: string
-            format: uuid
       responses:
-        '204':
-          description: API key deleted successfully
+        '200':
+          description: API key revoked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
 components:
   schemas:
-    ApiKey:
+    ApiKeyCreate:
+      type: object
+      required:
+        - name
+        - expires_at
+      properties:
+        name:
+          type: string
+          description: The name of the API key
+        expires_at:
+          type: string
+          format: date-time
+          description: The expiration date and time of the API key
+
+    ApiKeyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The new name for the API key
+        expires_at:
+          type: string
+          format: date-time
+          description: The new expiration date and time for the API key
+
+    ApiKeyResponse:
       type: object
       properties:
         id:
           type: string
+          format: uuid
         created_at:
           type: string
           format: date-time
@@ -152,137 +181,23 @@ components:
           format: date-time
         status:
           type: string
-          enum: [active, expired, revoked]
-          description: Current status of the API key
+          enum: [ACTIVE, EXPIRED, REVOKED]
         name:
           type: string
-          description: A descriptive name for the API key
         prefix:
           type: string
-          description: First few characters of the API key
 
-    ApiKeyWithSecret:
+    ApiKeyWithSecretResponse:
       allOf:
-        - $ref: '#/components/schemas/ApiKey'
+        - $ref: '#/components/schemas/ApiKeyResponse'
         - type: object
           properties:
             secret:
               type: string
-              description: Full API key secret (only returned on creation)
-
-    ApiKeyCreate:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          description: A descriptive name for the API key
-        expires_at:
-          type: string
-          format: date-time
-          description: Optional expiration date for the API key
-
-    ApiKeyUpdate:
-      type: object
-      properties:
-        expires_at:
-          type: string
-          format: date-time
-          description: New expiration date for the API key
-
-    Pagination:
-      type: object
-      properties:
-        total_pages:
-          type: integer
-          description: Total number of pages
-        current_page:
-          type: integer
-          description: Current page number
-        items_per_page:
-          type: integer
-          description: Number of items per page
-        next_page:
-          type: integer
-          nullable: true
-          description: Next page number (null if there is no next page)
-        previous_page:
-          type: integer
-          nullable: true
-          description: Previous page number (null if there is no previous page)
-
-    Error:
-      type: object
-      required:
-        - code
-        - detail
-      properties:
-        code:
-          type: string
-          description: A unique error code that identifies the type of error
-        detail:
-          type: string
-          description: A human-readable error message
-        details:
-          type: object
-          description: Additional details about the error, if any
-
-    ErrorResponse:
-      type: object
-      required:
-        - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-        request_name:
-          type: string
-          description: A unique identifier for the request, useful for debugging and support
-
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-  parameters:
-    PageParam:
-      in: query
-      name: page
-      schema:
-        type: integer
-        default: 1
-        minimum: 1
-      description: Page number to retrieve
-    ItemsPerPageParam:
-      in: query
-      name: items_per_page
-      schema:
-        type: integer
-        default: 20
-        minimum: 1
-        maximum: 100
-      description: Number of items to return per page
+              description: The full API key secret (only returned on creation)
 
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key

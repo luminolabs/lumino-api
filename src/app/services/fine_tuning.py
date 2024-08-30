@@ -7,9 +7,9 @@ from app.core.constants import FineTuningJobStatus
 from app.core.exceptions import (
     FineTuningJobNotFoundError,
     BaseModelNotFoundError,
-    DatasetNotFoundError, FineTuningJobAlreadyExistsError
+    DatasetNotFoundError, FineTuningJobAlreadyExistsError, BadRequestError
 )
-from app.core.scheduler_client import start_fine_tuning_job
+from app.core.scheduler_client import start_fine_tuning_job, stop_fine_tuning_job
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.models.base_model import BaseModel
@@ -166,3 +166,38 @@ async def get_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) ->
     # Log the result and return it
     logger.info(f"Retrieved fine-tuning job: {job_name} for user: {user_id}")
     return FineTuningJobDetailResponse(**job_dict)
+
+
+async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) -> FineTuningJobDetailResponse:
+    """
+    Cancel a specific fine-tuning job.
+
+    Args:
+        db (AsyncSession): The database session.
+        user_id (UUID): The ID of the user.
+        job_name (str): The name of the fine-tuning job.
+
+    Returns:
+        FineTuningJobDetailResponse: The updated fine-tuning job information.
+
+    Raises:
+        BadRequestError: If the fine-tuning job is not in a state that can be cancelled.
+    """
+    # Get the job from the database
+    job = await get_fine_tuning_job(db, user_id, job_name)
+
+    # Check if the job is in a state that can be cancelled
+    if job.status != FineTuningJobStatus.RUNNING:
+        raise BadRequestError(f"Job {job_name} cannot be cancelled in its current state: {job.status.value}", logger)
+
+    # Request job cancellation from the scheduler
+    await stop_fine_tuning_job(job.id)
+
+    # Update the job status in our database
+    db_job = await db.get(FineTuningJob, job.id)
+    db_job.status = FineTuningJobStatus.STOPPING
+    await db.commit()
+    await db.refresh(db_job)
+
+    logger.info(f"Stopping fine-tuning job: {job_name} for user: {user_id}")
+    return await get_fine_tuning_job(db, user_id, job_name)

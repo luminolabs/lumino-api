@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Fine-tune-jobs API
+  title: Fine-tuning Jobs API
   version: 1.0.0
   description: API for managing fine-tuning jobs for language models
 
@@ -11,7 +11,7 @@ paths:
       tags:
         - Fine-tuning Jobs
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -24,21 +24,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FineTuningJobDetail'
+                $ref: '#/components/schemas/FineTuningJobResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common-structures.yml#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
 
     get:
       summary: List all fine-tuning jobs
       tags:
         - Fine-tuning Jobs
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/ItemsPerPageParam'
+        - $ref: 'common-structures.yml#/components/parameters/PageParam'
+        - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
       responses:
         '200':
           description: Successful response
@@ -50,11 +50,11 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/FineTuningJobSummary'
+                      $ref: '#/components/schemas/FineTuningJobResponse'
                   pagination:
-                    $ref: '#/components/schemas/Pagination'
+                    $ref: 'common-structures.yml#/components/schemas/Pagination'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
 
   /v1/fine-tuning/{job_name}:
     get:
@@ -62,7 +62,7 @@ paths:
       tags:
         - Fine-tuning Jobs
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
         - name: job_name
           in: path
@@ -75,11 +75,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FineTuningJobDetail'
+                $ref: '#/components/schemas/FineTuningJobDetailResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
   /v1/fine-tuning/{job_name}/cancel:
     post:
@@ -87,7 +87,7 @@ paths:
       tags:
         - Fine-tuning Jobs
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
         - name: job_name
           in: path
@@ -100,36 +100,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FineTuningJobDetail'
+                $ref: '#/components/schemas/FineTuningJobDetailResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /v1/fine-tuning/{job_name}/logs:
-    get:
-      summary: Get logs of a fine-tuning job
-      tags:
-        - Fine-tuning Jobs
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: job_name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successful response
-          content:
-            text/plain:
-              schema:
-                type: string
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
 components:
   schemas:
@@ -139,6 +114,7 @@ components:
         - base_model_name
         - dataset_name
         - parameters
+        - name
       properties:
         base_model_name:
           type: string
@@ -155,12 +131,16 @@ components:
               format: float
               example: 0.00002
           additionalProperties: true
+        name:
+          type: string
+          description: The name of the fine-tuning job
 
-    FineTuningJobSummary:
+    FineTuningJobResponse:
       type: object
       properties:
         id:
           type: string
+          format: uuid
         created_at:
           type: string
           format: date-time
@@ -169,10 +149,12 @@ components:
           format: date-time
         status:
           type: string
-          enum: [new, pending, running, succeeded, failed, stopped]
+          enum: [NEW, PENDING, RUNNING, COMPLETED, FAILED, STOPPING, STOPPED]
         base_model_name:
           type: string
         dataset_name:
+          type: string
+        name:
           type: string
         current_step:
           type: integer
@@ -186,9 +168,9 @@ components:
           type: integer
           description: Number of tokens processed in the fine-tuning job
 
-    FineTuningJobDetail:
+    FineTuningJobDetailResponse:
       allOf:
-        - $ref: '#/components/schemas/FineTuningJobSummary'
+        - $ref: '#/components/schemas/FineTuningJobResponse'
         - type: object
           properties:
             parameters:
@@ -204,108 +186,10 @@ components:
               additionalProperties: true
             metrics:
               type: object
-              properties:
-                loss:
-                  type: number
-                  format: float
-                  example: 0.1234
               additionalProperties: true
 
-    Pagination:
-      type: object
-      properties:
-        total_items:
-          type: integer
-          description: Total number of items
-        total_pages:
-          type: integer
-          description: Total number of pages
-        current_page:
-          type: integer
-          description: Current page number
-        items_per_page:
-          type: integer
-          description: Number of items per page
-        next_page:
-          type: integer
-          nullable: true
-          description: Next page number (null if there is no next page)
-        previous_page:
-          type: integer
-          nullable: true
-          description: Previous page number (null if there is no previous page)
-
-    Error:
-      type: object
-      required:
-        - code
-        - detail
-      properties:
-        code:
-          type: string
-          description: A unique error code that identifies the type of error
-        detail:
-          type: string
-          description: A human-readable error message
-        details:
-          type: object
-          description: Additional details about the error, if any
-
-    ErrorResponse:
-      type: object
-      required:
-        - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-        request_name:
-          type: string
-          description: A unique identifier for the request, useful for debugging and support
-
-  parameters:
-    PageParam:
-      in: query
-      name: page
-      schema:
-        type: integer
-        default: 1
-        minimum: 1
-      description: Page number to retrieve
-    ItemsPerPageParam:
-      in: query
-      name: items_per_page
-      schema:
-        type: integer
-        default: 20
-        minimum: 1
-        maximum: 100
-      description: Number of items to return per page
-
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key

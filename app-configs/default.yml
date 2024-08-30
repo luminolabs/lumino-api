@@ -31,3 +31,11 @@ bearer_token_expire_minutes: 1440  # 24 hours
 
 # Scheduler Zen URL
 scheduler_zen_url:  # URL to the Scheduler Zen API
+
+# Auth0 configuration
+# Set these in your .env file when running on a local env
+# On non-local envs, we store these in a GCP secret
+auth0_client_id:
+auth0_client_secret:
+auth0_domain:
+app_secret_key:

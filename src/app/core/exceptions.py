@@ -88,7 +88,7 @@ class InvalidApiKeyError(UnauthorizedError):
         super().__init__(detail, logger)
 
 
-class InvalidBearerTokenError(UnauthorizedError):
+class InvalidUserSessionError(UnauthorizedError):
     """Exception raised when an invalid token is provided."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
@@ -177,6 +177,12 @@ class FineTuningJobCreationError(ServerError):
 
 class FineTuningJobRefreshError(ServerError):
     """Exception raised when there's an error refreshing fine-tuning job details."""
+    def __init__(self, detail: str, logger: Optional[Logger] = None):
+        super().__init__(detail, logger)
+
+
+class FineTuningJobCancellationError(ServerError):
+    """Exception raised when there's an error stopping a fine-tuning job."""
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
