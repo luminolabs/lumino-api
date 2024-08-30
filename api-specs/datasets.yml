@@ -11,7 +11,7 @@ paths:
       tags:
         - Datasets
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       requestBody:
         content:
           multipart/form-data:
@@ -22,7 +22,7 @@ paths:
                   type: string
                   format: binary
                   description: JSONL file in OpenAI format
-                id:
+                name:
                   type: string
                   description: User-assigned name for the dataset
                 description:
@@ -34,21 +34,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dataset'
+                $ref: '#/components/schemas/DatasetResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common-structures.yml#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
 
     get:
       summary: List all datasets uploaded by the user
       tags:
         - Datasets
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/ItemsPerPageParam'
+        - $ref: 'common-structures.yml#/components/parameters/PageParam'
+        - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
       responses:
         '200':
           description: Successful response
@@ -60,11 +60,11 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Dataset'
+                      $ref: '#/components/schemas/DatasetResponse'
                   pagination:
-                    $ref: '#/components/schemas/Pagination'
+                    $ref: 'common-structures.yml#/components/schemas/Pagination'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
 
   /v1/datasets/{dataset_name}:
     get:
@@ -72,7 +72,7 @@ paths:
       tags:
         - Datasets
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
         - name: dataset_name
           in: path
@@ -85,146 +85,104 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dataset'
+                $ref: '#/components/schemas/DatasetResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
-    delete:
-      summary: Delete a specific dataset file
+    patch:
+      summary: Update a specific dataset's information
       tags:
         - Datasets
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       parameters:
         - name: dataset_name
           in: path
           required: true
           schema:
             type: string
-            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetUpdate'
+      responses:
+        '200':
+          description: Dataset updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponse'
+        '400':
+          $ref: 'common-structures.yml#/components/responses/BadRequest'
+        '401':
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: 'common-structures.yml#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a specific dataset file
+      tags:
+        - Datasets
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: dataset_name
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '204':
-          description: Successfully deleted dataset
+          description: Dataset deleted successfully
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
 components:
   schemas:
-    Dataset:
+    DatasetResponse:
       type: object
       properties:
         id:
           type: string
+          format: uuid
         created_at:
+          type: string
+          format: date-time
+        updated_at:
           type: string
           format: date-time
         status:
           type: string
-          enum: [uploaded, validated, error]
+          enum: [UPLOADED, VALIDATED, ERROR, DELETED]
+        name:
+          type: string
         description:
+          type: string
+        file_name:
           type: string
         file_size:
           type: integer
         errors:
           type: object
-          nullable: true
 
-    Pagination:
+    DatasetUpdate:
       type: object
       properties:
-        total_pages:
-          type: integer
-          description: Total number of pages
-        current_page:
-          type: integer
-          description: Current page number
-        items_per_page:
-          type: integer
-          description: Number of items per page
-        next_page:
-          type: integer
-          nullable: true
-          description: Next page number (null if there is no next page)
-        previous_page:
-          type: integer
-          nullable: true
-          description: Previous page number (null if there is no previous page)
-
-    Error:
-      type: object
-      required:
-        - code
-        - detail
-      properties:
-        code:
+        name:
           type: string
-          description: A unique error code that identifies the type of error
-        detail:
+          description: The new name for the dataset
+        description:
           type: string
-          description: A human-readable error message
-        details:
-          type: object
-          description: Additional details about the error, if any
-
-    ErrorResponse:
-      type: object
-      required:
-        - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-        request_name:
-          type: string
-          description: A unique identifier for the request, useful for debugging and support
-
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-  parameters:
-    PageParam:
-      in: query
-      name: page
-      schema:
-        type: integer
-        default: 1
-        minimum: 1
-      description: Page number to retrieve
-    ItemsPerPageParam:
-      in: query
-      name: items_per_page
-      schema:
-        type: integer
-        default: 20
-        minimum: 1
-        maximum: 100
-      description: Number of items to return per page
+          description: The new description for the dataset
 
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key

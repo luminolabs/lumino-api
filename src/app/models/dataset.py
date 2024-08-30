@@ -17,7 +17,7 @@ class Dataset(Base):
         status (DatasetStatus): The current status of the dataset.
         name (str): The name of the dataset.
         description (str | None): An optional description of the dataset.
-        file_name (str): The URL where the dataset file is stored.
+        file_name (str): The file name of the dataset; we prefix with a timestamp and user ID to ensure uniqueness.
         file_size (int): The size of the dataset file in bytes.
         errors (dict | None): Any errors encountered during dataset processing.
 
@@ -30,6 +30,7 @@ class Dataset(Base):
     # Columns
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
     status = Column(Enum(DatasetStatus), nullable=False, default=DatasetStatus.UPLOADED)
     name = Column(String(255), nullable=False)

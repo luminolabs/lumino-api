@@ -5,71 +5,29 @@ info:
   description: API for user management and authentication
 
 paths:
-  /v1/users:
-    post:
-      summary: Create a new user account (Sign up)
-      tags:
-        - Users
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserSignup'
-      responses:
-        '201':
-          description: User created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /v1/users/login:
-    post:
-      summary: User login (Sign in)
-      tags:
-        - Users
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserLogin'
-      responses:
-        '200':
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
   /v1/users/me:
     get:
       summary: Get current user information
       tags:
         - Users
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       responses:
         '200':
           description: User information retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
 
     patch:
       summary: Update current user information
       tags:
         - Users
       security:
-        - BearerAuth: []
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
@@ -82,11 +40,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common-structures.yml#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
 
   /v1/users/{user_id}:
     delete:
@@ -96,7 +54,7 @@ paths:
         - Users
         - Internal
       security:
-        - InternalApiKey: []
+        - ApiKeyAuth: []
       parameters:
         - in: path
           name: user_id
@@ -107,245 +65,50 @@ paths:
         '204':
           description: User account deleted successfully
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: 'common-structures.yml#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
+        '403':
+          $ref: 'common-structures.yml#/components/responses/Forbidden'
         '404':
-          $ref: '#/components/responses/NotFound'
-
-  /v1/users/logout:
-    post:
-      summary: User logout
-      tags:
-        - Users
-      security:
-        - BearerAuth: []
-      responses:
-        '204':
-          description: Logout successful
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /v1/users/password-reset:
-    post:
-      summary: Request password reset
-      tags:
-        - Users
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-      responses:
-        '204':
-          description: Password reset email sent successfully
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /v1/users/password-reset/{token}:
-    post:
-      summary: Reset password with token
-      tags:
-        - Users
-      parameters:
-        - in: path
-          name: token
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                new_password:
-                  type: string
-                  format: password
-      responses:
-        '204':
-          description: Password reset successful
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: 'common-structures.yml#/components/responses/NotFound'
 
 components:
   schemas:
-    UserSignup:
-      type: object
-      required:
-        - name
-        - email
-        - password
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-
-    UserLogin:
-      type: object
-      required:
-        - email
-        - password
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-        status:
-          type: string
-          enum: [active, disabled]
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-
     UserUpdate:
       type: object
       properties:
         name:
           type: string
+          description: The updated name of the user
+        email:
+          type: string
+          format: email
+          description: The updated email address of the user
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        name:
+          type: string
         email:
           type: string
           format: email
 
-    LoginResponse:
-      type: object
-      properties:
-        access_token:
-          type: string
-        token_type:
-          type: string
-          example: "Bearer"
-        expires_in:
-          type: integer
-          description: Token expiration time in seconds
-
-    Error:
-      type: object
-      required:
-        - code
-        - detail
-      properties:
-        code:
-          type: string
-          description: A unique error code that identifies the type of error
-        detail:
-          type: string
-          description: A human-readable error message
-        details:
-          type: object
-          description: Additional details about the error, if any
-
-    ErrorResponse:
-      type: object
-      required:
-        - errors
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Error'
-        request_name:
-          type: string
-          description: A unique identifier for the request, useful for debugging and support
-
-    Pagination:
-      type: object
-      properties:
-        total_pages:
-          type: integer
-          description: Total number of pages
-        current_page:
-          type: integer
-          description: Current page number
-        items_per_page:
-          type: integer
-          description: Number of items per page
-        next_page:
-          type: integer
-          nullable: true
-          description: Next page number (null if there is no next page)
-        previous_page:
-          type: integer
-          nullable: true
-          description: Previous page number (null if there is no previous page)
-
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-  parameters:
-    PageParam:
-      in: query
-      name: page
-      schema:
-        type: integer
-        default: 1
-        minimum: 1
-      description: Page number to retrieve
-    ItemsPerPageParam:
-      in: query
-      name: items_per_page
-      schema:
-        type: integer
-        default: 20
-        minimum: 1
-        maximum: 100
-      description: Number of items to return per page
-
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-    InternalApiKey:
+    ApiKeyAuth:
       type: apiKey
       in: header
-      name: X-Internal-API-Key
+      name: x-api-key
