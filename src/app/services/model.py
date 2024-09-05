@@ -8,7 +8,8 @@ from app.models.base_model import BaseModel
 from app.models.fine_tuned_model import FineTunedModel
 from app.schemas.common import Pagination
 from app.schemas.model import BaseModelResponse, FineTunedModelResponse
-from app.core.utils import setup_logger, paginate_query
+from app.core.utils import setup_logger
+from app.core.common import paginate_query
 from app.core.exceptions import (
     BaseModelNotFoundError,
     FineTunedModelNotFoundError

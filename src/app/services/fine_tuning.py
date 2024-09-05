@@ -16,7 +16,8 @@ from app.models.base_model import BaseModel
 from app.models.dataset import Dataset
 from app.schemas.common import Pagination
 from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobDetailResponse
-from app.core.utils import setup_logger, paginate_query
+from app.core.utils import setup_logger
+from app.core.common import paginate_query
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)

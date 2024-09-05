@@ -41,9 +41,13 @@ async def login(request: Request) -> RedirectResponse:
     Returns:
         RedirectResponse: Redirect to Auth0 login page.
     """
-    redirect_uri = request.url_for("auth0_callback")
-    logger.info(f"Initiating Auth0 login for redirect URI: {redirect_uri}")
-    return await oauth.auth0.authorize_redirect(request, redirect_uri)
+    try:
+        redirect_uri = request.url_for("auth0_callback")
+        logger.info(f"Initiating Auth0 login for redirect URI: {redirect_uri}")
+        return await oauth.auth0.authorize_redirect(request, redirect_uri)
+    except Exception as e:
+        logger.error(f"Error initiating Auth0 login: {str(e)}")
+        return {"error": "Authorization failed"}
 
 
 @router.get("/auth0/callback")

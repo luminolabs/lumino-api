@@ -9,7 +9,8 @@ from app.models.api_key import ApiKey
 from app.schemas.api_key import ApiKeyCreate, ApiKeyUpdate, ApiKeyResponse, ApiKeyWithSecretResponse
 from app.core.cryptography import generate_api_key
 from app.schemas.common import Pagination
-from app.core.utils import setup_logger, paginate_query
+from app.core.utils import setup_logger
+from app.core.common import paginate_query
 from app.core.exceptions import (
     ApiKeyAlreadyExistsError,
     ApiKeyNotFoundError,

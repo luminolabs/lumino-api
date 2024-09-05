@@ -23,6 +23,9 @@ RUN pip install -r requirements.txt
 # Copy app configs
 COPY app-configs app-configs
 
+# Copy html templates
+COPY html html
+
 # Copy src files
 COPY src .
 
