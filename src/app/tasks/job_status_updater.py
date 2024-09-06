@@ -9,6 +9,13 @@ from app.core.utils import setup_logger
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
+# Map the job status from the Scheduler API to our internal status
+STATUS_MAPPING = {
+    "WAIT_FOR_VM": FineTuningJobStatus.QUEUED,
+    "FOUND_VM": FineTuningJobStatus.QUEUED,
+    "DETACHED_VM": FineTuningJobStatus.QUEUED,
+}
+
 async def update_job_statuses():
     """
     Update the status of all non-terminal fine-tuning jobs.
@@ -19,7 +26,7 @@ async def update_job_statuses():
         # Excluded statuses: SUCCEEDED, FAILED, STOPPED
         non_terminal_statuses = [
             FineTuningJobStatus.NEW,
-            FineTuningJobStatus.PENDING,
+            FineTuningJobStatus.QUEUED,
             FineTuningJobStatus.RUNNING,
             FineTuningJobStatus.STOPPING
         ]
@@ -50,7 +57,8 @@ async def update_job_statuses():
             # Update the statuses in the database
             for status in updated_statuses:
                 job_id = status['job_id']
-                new_status = FineTuningJobStatus(status['status'])
+                # Map the status from the Scheduler API to our internal status
+                new_status = STATUS_MAPPING.get(status['status']) or status['status']
                 # Find the job in the list of jobs that we already fetched from the database
                 job = job_ids_to_jobs.get(job_id)
                 if job and job.status != new_status:

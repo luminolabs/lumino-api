@@ -30,6 +30,7 @@ bearer_token_algorithm: HS256  # Algorithm used to sign tokens
 bearer_token_expire_minutes: 1440  # 24 hours
 
 # Scheduler Zen URL
+run_with_scheduler: True  # Set to False to run jobs without the Scheduler Zen API (for local testing)
 scheduler_zen_url:  # URL to the Scheduler Zen API
 
 # Auth0 configuration

@@ -1,2 +1,3 @@
 # Scheduler Zen URL
+run_with_scheduler: False
 scheduler_zen_url: http://localhost:5200

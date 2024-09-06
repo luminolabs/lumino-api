@@ -21,6 +21,22 @@ Get the `CAPI_AUTH0_*` values from 1password. Look for `Auth0 creds`.
 docker compose up -d --build
 ```
 
-3. To access the UI and generate API keys, navigate to `http://localhost:5100/` in your browser.
+3. Connect to the database and add this record to the `base_models` table:
+```sql
+INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
+VALUES (
+    'llama-3-1-8b',
+    'The Llama 3.1 8B model',
+    'meta-llama/Meta-Llama-3.1-8B-Instruct',
+    'ACTIVE',
+    NULL,
+    '{
+        "lora": {"gpu_type": "a100-40gb", "num_gpus": 1},
+        "full": {"gpu_type": "a100-40gb", "num_gpus": 4}
+    }'
+);
+```
 
-4. To access the API, set the `api_key` in Postman's environment variables to the value generated in the UI.
+4. To access the UI and generate API keys, navigate to `http://localhost:5100/` in your browser.
+
+5. To access the API, set the `api_key` in Postman's environment variables to the value generated in the UI.

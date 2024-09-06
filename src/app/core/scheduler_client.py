@@ -29,6 +29,10 @@ async def start_fine_tuning_job(job_id: UUID):
     Raises:
         FineTuningJobCreationError: If there's an error starting the fine-tuning job.
     """
+    if not config.run_with_scheduler:
+        logger.info("Scheduler API is disabled; `run_with_scheduler` is set to False.")
+        return
+
     async with AsyncSessionLocal() as db:
         # Fetch job details
         result = await db.execute(
@@ -110,6 +114,10 @@ async def fetch_job_details(user_id: UUID, job_ids: List[UUID]) -> List[Dict[str
     Returns:
         List[Dict[str, Any]]: A list of job details.
     """
+    if not config.run_with_scheduler:
+        logger.info("Scheduler API is disabled; `run_with_scheduler` is set to False.")
+        return []
+
     # Convert UUIDs to strings
     user_id = str(user_id)
     job_ids = [str(job_id) for job_id in job_ids]
@@ -134,6 +142,10 @@ async def stop_fine_tuning_job(job_id: UUID):
     Raises:
         FineTuningJobCancellationError: If there's an error stopping the fine-tuning job.
     """
+    if not config.run_with_scheduler:
+        logger.info("Scheduler API is disabled; `run_with_scheduler` is set to False.")
+        return
+
     # Send request to Scheduler API
     async with aiohttp.ClientSession() as session:
         async with session.post(f"{INTERNAL_API_URL}/jobs/{job_id}/stop") as response:

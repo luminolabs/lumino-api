@@ -164,9 +164,10 @@ async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key
 
     # Ensure the expires_at field is stored as timezone-naive UTC datetime
     expires_at = api_key_update.expires_at
-    expires_at = expires_at.astimezone(timezone.utc)
-    expires_at = expires_at.replace(tzinfo=None)  # TODO: We get a db error here if we don't do this; figure out why
-    api_key_update.expires_at = expires_at
+    if expires_at:
+        expires_at = expires_at.astimezone(timezone.utc)
+        expires_at = expires_at.replace(tzinfo=None)  # TODO: We get a db error here if we don't do this; figure out why
+        api_key_update.expires_at = expires_at
 
     # Update the API key fields with the new data from the request
     update_data = api_key_update.dict(exclude_unset=True)

@@ -126,6 +126,7 @@ async def create_user(db: AsyncSession, name: str, email: str):
     await db.commit()
     # Log and return the user
     logger.info(f"Successfully created new user with ID: {db_user.id}")
+    return db_user
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
