@@ -13,12 +13,21 @@ RUN apt update \
 # Upgrade pip
 RUN python -m pip install --upgrade pip
 
+# Install npm, nodejs, and dependencies for serving the api-specs
+RUN apt install -y npm nodejs
+RUN npm init -y
+RUN npm install express swagger-ui-express yamljs
+
 # Work in this folder
 WORKDIR /project
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+
+# Copy api-specs and service
+COPY api-specs api-specs
+COPY api-specs.js .
 
 # Copy app configs
 COPY app-configs app-configs

@@ -32,5 +32,11 @@ services:
     depends_on:
       - db
 
+  api-specs:
+    build: .
+    command: node api-specs.js
+    ports:
+      - "5110:5110"
+
 volumes:
   postgres_data:
