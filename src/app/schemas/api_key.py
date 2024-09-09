@@ -17,7 +17,7 @@ class ApiKeyCreate(BaseModel):
     """
     Schema for creating a new API key.
     """
-    name: str = NameField(description="The name of the API key")
+    name: str = NameField(..., description="The name of the API key")
     expires_at: datetime = Field(..., description="The expiration date and time of the API key")
 
     @field_validator('expires_at')
@@ -29,7 +29,7 @@ class ApiKeyUpdate(BaseModel):
     """
     Schema for updating an existing API key.
     """
-    name: str | None = NameField(description="The new name for the API key")
+    name: str | None = NameField(None, description="The new name for the API key")
     expires_at: datetime | None = Field(None, description="The new expiration date and time for the API key")
 
     @field_validator('expires_at')

@@ -12,6 +12,6 @@ class Pagination(BaseModel):
     items_per_page: int
 
 
-NameField = partial(Field, ...,
+NameField = partial(Field,
                     min_length=1, max_length=255,
                     pattern="^[a-z0-9-]+$")

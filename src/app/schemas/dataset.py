@@ -12,7 +12,7 @@ class DatasetCreate(BaseModel):
     """
     Schema for creating a new dataset.
     """
-    name: str = NameField(description="The name of the dataset")
+    name: str = NameField(..., description="The name of the dataset")
     description: str | None = Field(None, max_length=1000, description="A description of the dataset")
     file: UploadFile = Field(..., description="The uploaded dataset file")
 
@@ -42,5 +42,5 @@ class DatasetUpdate(BaseModel):
     """
     Schema for updating an existing dataset.
     """
-    name: str | None = NameField(description="The new name for the dataset")
+    name: str | None = NameField(None, description="The new name for the dataset")
     description: str | None = Field(None, max_length=1000, description="The new description for the dataset")

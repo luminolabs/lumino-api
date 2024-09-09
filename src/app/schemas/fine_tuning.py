@@ -14,7 +14,7 @@ class FineTuningJobCreate(BaseModel):
     base_model_name: str = Field(..., description="The name of the base model to use for fine-tuning")
     dataset_name: str = Field(..., description="The name of the dataset to use for fine-tuning")
     parameters: Dict[str, Any] = Field(..., description="The parameters for the fine-tuning job")
-    name: str = NameField(description="The name of the fine-tuning job")
+    name: str = NameField(..., description="The name of the fine-tuning job")
 
 
 class FineTuningJobResponse(BaseModel):
