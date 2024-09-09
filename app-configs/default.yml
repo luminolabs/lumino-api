@@ -22,7 +22,6 @@ db_port:
 
 # API configuration
 api_v1_prefix: /v1
-admin_user_id:  # User ID of the admin user; TBD
 
 # JWT configuration
 bearer_token_secret_key: your_secret_key_here  # TODO: Create a GCP secret for this
