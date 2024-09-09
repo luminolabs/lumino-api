@@ -1,3 +1,8 @@
+// Purpose: A simple Node.js server to serve multiple OpenAPI specs using Swagger UI.
+// Usage: Run the server using `node api-specs.js` and visit http://localhost:5110 to view the API specs.
+// Note: This script requires the `express`, `swagger-ui-express`, `yamljs` packages.
+//       You can install them using `npm install express swagger-ui-express yamljs`.
+
 const express = require('express');
 const path = require('path');
 const YAML = require('yamljs');
@@ -59,5 +64,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is listening on port ${PORT}. Visit http://localhost:${PORT}/docs to view the API specs.`);
+    console.log(`Server is listening on port ${PORT}. Visit http://localhost:${PORT} to view the API specs.`);
 });
