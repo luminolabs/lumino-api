@@ -10,6 +10,9 @@ RUN apt update \
 		libssl-dev \
 		software-properties-common
 
+# Work in this folder
+WORKDIR /project
+
 # Upgrade pip
 RUN python -m pip install --upgrade pip
 
@@ -17,9 +20,6 @@ RUN python -m pip install --upgrade pip
 RUN apt install -y npm nodejs
 RUN npm init -y
 RUN npm install express swagger-ui-express yamljs
-
-# Work in this folder
-WORKDIR /project
 
 # Install Python dependencies
 COPY requirements.txt .
