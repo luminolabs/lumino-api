@@ -15,7 +15,7 @@ const port = 5110;
 app.use('/api-specs', swaggerUi.serve);
 
 // Define the specs directory
-const specsDir = path.join(__dirname, 'open-api');
+const specsDir = path.join(__dirname, 'api-specs');
 
 // Check if specs directory exists
 let specs = [];
