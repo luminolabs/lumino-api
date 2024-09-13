@@ -12,6 +12,7 @@ from sqlalchemy import select
 from app.core.config_manager import config
 from app.core.utils import setup_logger
 from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError, FineTuningJobCancellationError
+from app.models.user import User
 
 INTERNAL_API_URL = config.scheduler_zen_url
 
@@ -36,13 +37,14 @@ async def start_fine_tuning_job(job_id: UUID):
     async with AsyncSessionLocal() as db:
         # Fetch job details
         result = await db.execute(
-            select(FineTuningJob, Dataset, BaseModel, FineTuningJobDetail)
+            select(FineTuningJob, Dataset, BaseModel, FineTuningJobDetail, User)
             .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
             .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
             .join(FineTuningJobDetail, FineTuningJob.id == FineTuningJobDetail.fine_tuning_job_id)
+            .join(User, FineTuningJob.user_id == User.id)
             .where(FineTuningJob.id == job_id)
         )
-        job, dataset, base_model, job_detail = result.first()
+        job, dataset, base_model, job_detail, user = result.first()
 
     # Extract cluster configuration for requested model and fine-tuning type (LoRA or full)
     # While we can use arbitrary cluster configurations internally,
@@ -65,7 +67,7 @@ async def start_fine_tuning_job(job_id: UUID):
         "workflow": "torchtunewrapper",
         "args": {
             "job_config_name": base_model.name,
-            "dataset_id": dataset.file_name,
+            "dataset_id": f"gs://{config.gcs_bucket}/datasets/{user.id}/" + dataset.file_name,
             "batch_size": job_detail.parameters.get("batch_size", 2),
             "shuffle": job_detail.parameters.get("shuffle", True),
             "num_epochs": job_detail.parameters.get("num_epochs", 1),
