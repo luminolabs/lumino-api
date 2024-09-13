@@ -25,13 +25,12 @@ class DatasetStatus(str, Enum):
 # Enumeration for fine-tuning job statuses
 class FineTuningJobStatus(str, Enum):
     NEW = "NEW"  # Job has been created but not yet started
-    PENDING = "PENDING"  # Job is queued and waiting to start
+    QUEUED = "QUEUED"  # Job is queued and waiting to start
     RUNNING = "RUNNING"  # Job is currently running
-    COMPLETED = "COMPLETED"  # Job has completed successfully
-    FAILED = "FAILED"  # Job has failed to complete
     STOPPING = "STOPPING"  # Job is in the process of being stopped
     STOPPED = "STOPPED"  # Job has been stopped by the user or system
-
+    COMPLETED = "COMPLETED"  # Job has completed successfully
+    FAILED = "FAILED"  # Job has failed to complete
 
 # Enumeration for base model statuses
 class BaseModelStatus(str, Enum):

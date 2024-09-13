@@ -193,6 +193,7 @@ async def update_dataset(db: AsyncSession, user_id: UUID, dataset_name: str, dat
     
     # Store the updated dataset in the database
     await db.commit()
+    await db.refresh(db_dataset)
     
     # Log and return the updated dataset
     logger.info(f"Successfully updated dataset: {dataset_name} for user: {user_id}")

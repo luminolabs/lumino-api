@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import Depends, Header, Request
 from sqlalchemy import select
@@ -7,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config_manager import config
 from app.core.constants import UserStatus
-from app.core.exceptions import InvalidApiKeyError, UnauthorizedError, InvalidUserSessionError
+from app.core.exceptions import InvalidApiKeyError, UnauthorizedError, InvalidUserSessionError, ForbiddenError
 from app.core.database import get_db
 from app.models.api_key import ApiKey
 from app.models.user import User
@@ -126,6 +127,7 @@ async def create_user(db: AsyncSession, name: str, email: str):
     await db.commit()
     # Log and return the user
     logger.info(f"Successfully created new user with ID: {db_user.id}")
+    return db_user
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
@@ -140,3 +142,9 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """
     result = await db.execute(select(User).where(User.email == email))
     return result.scalar_one_or_none()
+
+
+def admin_required(user: User = Depends(get_current_active_user)):
+    if not user.is_admin:
+        raise ForbiddenError("Admin access required to perform this action", logger)
+    return user

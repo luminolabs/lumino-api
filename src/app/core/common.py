@@ -36,7 +36,12 @@ async def paginate_query(
     # Calculate total pages and validate if page is out of range
     total_pages = (total_count + items_per_page - 1) // items_per_page
     if page > total_pages:
-        raise BadRequestError(f"Page {page} is out of range; there are only {total_pages} pages")
+        return [], Pagination(
+            total_pages=total_pages,
+            current_page=page,
+            items_per_page=items_per_page,
+        )
+
     offset = (page - 1) * items_per_page
 
     # Fetch items
