@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.core.constants import ApiKeyStatus
 from app.core.exceptions import BadRequestError
+from app.schemas.common import NameField
 
 
 def _expiration_must_be_future(v: datetime) -> datetime:
@@ -16,7 +17,7 @@ class ApiKeyCreate(BaseModel):
     """
     Schema for creating a new API key.
     """
-    name: str = Field(..., min_length=1, max_length=255, description="The name of the API key")
+    name: str = NameField(..., description="The name of the API key")
     expires_at: datetime = Field(..., description="The expiration date and time of the API key")
 
     @field_validator('expires_at')
@@ -28,7 +29,7 @@ class ApiKeyUpdate(BaseModel):
     """
     Schema for updating an existing API key.
     """
-    name: str | None = Field(None, min_length=1, max_length=255, description="The new name for the API key")
+    name: str | None = NameField(None, description="The new name for the API key")
     expires_at: datetime | None = Field(None, description="The new expiration date and time for the API key")
 
     @field_validator('expires_at')

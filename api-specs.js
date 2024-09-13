@@ -1,87 +1,68 @@
-// Usage: node api-specs.js
-
-// This script serves multiple OpenAPI specs read from the 'api-specs' directory.
+// Purpose: A simple Node.js server to serve multiple OpenAPI specs using Swagger UI.
+// Usage: Run the server using `node api-specs.js` and visit http://localhost:5110 to view the API specs.
+// Note: This script requires the `express`, `swagger-ui-express`, `yamljs` packages.
+//       You can install them using `npm install express swagger-ui-express yamljs`.
 
 const express = require('express');
-const swaggerUi = require('swagger-ui-express');
-const YAML = require('yamljs');
 const path = require('path');
+const YAML = require('yamljs');
+const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
 
 const app = express();
-const port = 5110;
+const PORT = 5110;
+const apiSpecsPath = path.join(__dirname, 'api-specs');
+
+// Middleware to serve static YAML files from the api-specs folder
+app.use(express.static(apiSpecsPath));
 
 // Serve Swagger UI assets
-app.use('/api-specs', swaggerUi.serve);
+app.use('/', swaggerUi.serve);
 
-// Define the specs directory
-const specsDir = path.join(__dirname, 'api-specs');
+// Helper function to load all YAML files from api-specs
+const loadApiSpecs = () => {
+    const specs = {};
+    const files = fs.readdirSync(apiSpecsPath).filter(file => file.endsWith('.yml'));
 
-// Check if specs directory exists
-let specs = [];
-if (fs.existsSync(specsDir)) {
-    // Load all YML files from the api-specs directory
-    specs = fs.readdirSync(specsDir)
-        .filter(file => file.endsWith('.yml'))
-        .map(file => {
-            const name = path.basename(file, '.yml');
-            const filePath = path.join(specsDir, file);
-            return { name, filePath };
-        });
-} else {
-    console.warn(`Warning: The directory ${specsDir} does not exist. No API specs will be served.`);
-}
-
-// Create a route for each spec
-specs.forEach(({ name, filePath }) => {
-    app.get(`/api-specs/${name}`, (req, res, next) => {
-        try {
-            const spec = YAML.load(filePath);
-            swaggerUi.setup(spec)(req, res, next);
-        } catch (error) {
-            console.error(`Error loading spec ${name}:`, error);
-            res.status(500).send(`Error loading API spec: ${error.message}`);
+    files.forEach(file => {
+        const filePath = path.join(apiSpecsPath, file);
+        const yamlContent = YAML.load(filePath);
+        if (file != "common-structures.yml") {
+            specs[file] = yamlContent;
         }
     });
+
+    return specs;
+};
+
+// Dynamic Swagger UI setup to load and visualize the YAML files
+app.get('/:file', (req, res, next) => {
+    const fileName = req.params.file;
+
+    const filePath = path.join(apiSpecsPath, `${fileName}.yml`);
+    if (fs.existsSync(filePath)) {
+        const swaggerDocument = YAML.load(filePath);
+        res.send(swaggerUi.generateHTML(swaggerDocument));
+    } else {
+        res.status(404).json({ error: 'Spec file not found' });
+    }
 });
 
-// Serve an index page with links to all specs
+// Serve the Swagger UI for visualizing the OpenAPI specs dynamically
 app.get('/', (req, res) => {
-    if (specs.length === 0) {
-        res.send(`
-      <html>
-        <head><title>API Documentation</title></head>
-        <body>
-          <h1>No API Specifications Available</h1>
-          <p>The api-specs directory is empty or does not exist. Please add your OpenAPI YML files to the 'api-specs' directory.</p>
-        </body>
-      </html>
-    `);
-    } else {
-        const links = specs.map(({ name }) =>
-            `<li><a href="/api-specs/${name}">${name} API</a></li>`
-        ).join('');
-
-        res.send(`
-      <html>
-        <head><title>API Documentation</title></head>
-        <body>
-          <h1>Available API Documentations:</h1>
-          <ul>${links}</ul>
-        </body>
-      </html>
-    `);
-    }
+    const specs = loadApiSpecs();
+    res.send(`
+    <html>
+      <body>
+        <h1>API Specs</h1>
+        <ul>
+          ${Object.keys(specs).map(file => `<li><a href="/${file.replace('.yml', '')}">${file}</a></li>`).join('')}
+        </ul>
+      </body>
+    </html>
+  `);
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    if (specs.length > 0) {
-        console.log('Available API docs:');
-        specs.forEach(({ name }) => {
-            console.log(`- http://localhost:${port}/api-specs/${name}`);
-        });
-    } else {
-        console.log('No API specs available. Add YML files to the "api-specs" directory to serve them.');
-    }
+app.listen(PORT, () => {
+    console.log(`Server is listening on port ${PORT}. Visit http://localhost:${PORT} to view the API specs.`);
 });
