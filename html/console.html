@@ -121,6 +121,21 @@
         }
     }
 
+    async function handleApiError(response) {
+        const errorData = await response.json();
+        let errorMessage = '';
+
+        if (Array.isArray(errorData.message)) {
+            errorMessage = errorData.message.map(error => {
+                return `${error.msg} (${error.loc.join('.')})`;
+            }).join('\n');
+        } else {
+            errorMessage = errorData.message || 'An unexpected error occurred';
+        }
+
+        alert(errorMessage);
+    }
+
     async function createApiKey() {
         const name = document.getElementById('newKeyName').value;
         const expires_at = document.getElementById('newKeyExpiration').value;
@@ -142,8 +157,7 @@
                 document.getElementById('newApiKeySection').classList.remove('hidden');
                 listApiKeys();
             } else {
-                const errorData = await response.json();
-                alert(`Error creating API key: ${errorData.message}`);
+                await handleApiError(response);
             }
         } catch (error) {
             console.error('Error creating API key:', error);
@@ -183,8 +197,7 @@
                 alert('API key updated successfully.');
                 listApiKeys();
             } else {
-                const errorData = await response.json();
-                alert(`Error updating API key: ${errorData.message}`);
+                await handleApiError(response);
             }
         } catch (error) {
             console.error('Error updating API key:', error);
@@ -198,8 +211,7 @@
             if (response.ok) {
                 listApiKeys();
             } else {
-                const errorData = await response.json();
-                alert(`Error revoking API key: ${errorData.message}`);
+                await handleApiError(response);
             }
         } catch (error) {
             console.error('Error revoking API key:', error);

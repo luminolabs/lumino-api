@@ -12,6 +12,9 @@ __pycache__/
 # Logs folder
 .logs/
 
+# Secret files
+.secrets/
+
 # This is the repopack genared file that
 # is contains the whole repo content for
 # submitting to AIs, like Claude

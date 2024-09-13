@@ -10,7 +10,6 @@ class UserUpdate(BaseModel):
     Schema for updating user information.
     """
     name: str | None = Field(None, min_length=1, max_length=255, description="The updated name of the user")
-    email: EmailStr | None = Field(None, description="The updated email address of the user")
 
 
 class UserResponse(BaseModel):
