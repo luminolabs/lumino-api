@@ -4,6 +4,7 @@ from uuid import UUID
 from typing import Dict, Any
 
 from app.core.constants import FineTuningJobStatus
+from app.schemas.common import NameField
 
 
 class FineTuningJobCreate(BaseModel):
@@ -13,7 +14,7 @@ class FineTuningJobCreate(BaseModel):
     base_model_name: str = Field(..., description="The name of the base model to use for fine-tuning")
     dataset_name: str = Field(..., description="The name of the dataset to use for fine-tuning")
     parameters: Dict[str, Any] = Field(..., description="The parameters for the fine-tuning job")
-    name: str = Field(..., min_length=1, max_length=255, description="The name of the fine-tuning job")
+    name: str = NameField(..., description="The name of the fine-tuning job")
 
 
 class FineTuningJobResponse(BaseModel):
