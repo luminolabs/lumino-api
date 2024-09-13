@@ -70,6 +70,7 @@ async def start_fine_tuning_job(job_id: UUID):
             "shuffle": job_detail.parameters.get("shuffle", True),
             "num_epochs": job_detail.parameters.get("num_epochs", 1),
             "use_lora": use_lora,
+            "use_qlora": use_qlora,
             "num_gpus": num_gpus,
         },
         "gpu_type": gpu_type,
