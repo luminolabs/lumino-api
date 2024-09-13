@@ -34,10 +34,12 @@ VALUES (
     'meta-llama/Meta-Llama-3.1-8B-Instruct',
     'ACTIVE',
     NULL,
-    '{
-        "lora": {"gpu_type": "a100-40gb", "num_gpus": 1},
-        "full": {"gpu_type": "a100-40gb", "num_gpus": 4}
-    }'
+    '{"lora": 
+       {"gpu_type": "a100-40gb", "num_gpus": 1}, 
+      "qlora": 
+       {"gpu_type": "a100-40gb", "num_gpus": 1}, 
+      "full": 
+       {"gpu_type": "a100-80gb", "num_gpus": 2}}'
 );
 ```
 
