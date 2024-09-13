@@ -29,7 +29,7 @@ docker compose up -d --build
 ```sql
 INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
 VALUES (
-    'llama-3-1-8b',
+    'llm_llama3_1_8b',
     'The Llama 3.1 8B model',
     'meta-llama/Meta-Llama-3.1-8B-Instruct',
     'ACTIVE',
