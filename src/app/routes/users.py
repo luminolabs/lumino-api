@@ -2,10 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config_manager import config
-from app.core.authentication import get_current_active_user
-from app.core.exceptions import (
-    ForbiddenError,
-)
+from app.core.authentication import get_current_active_user, admin_required
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.user import UserUpdate, UserResponse
@@ -54,7 +51,8 @@ async def update_current_user(
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deactivate_user_route(
         user_id: str,
-        current_user: User = Depends(get_current_active_user),
+        # This is an admin only action, don't remove the `admin_required` dependency
+        current_user: User = Depends(admin_required),
         db: AsyncSession = Depends(get_db)
 ) -> None:
     """
@@ -67,7 +65,4 @@ async def deactivate_user_route(
     Raises:
         ForbiddenError: If the current user is not an admin.
     """
-    if str(current_user.id) != config.admin_user_id:
-        raise ForbiddenError(f"Unauthorized deactivation attempt of user {user_id} "
-                             f"by user {current_user.id}", logger)
     await deactivate_user(db, user_id)

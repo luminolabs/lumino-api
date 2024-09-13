@@ -1,5 +1,5 @@
 from uuid import uuid4
-from sqlalchemy import Column, String, DateTime, UUID, Index, Enum
+from sqlalchemy import Column, String, DateTime, UUID, Index, Enum, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -18,7 +18,7 @@ class User(Base):
         status (UserStatus): The current status of the user.
         name (str): The name of the user.
         email (str): The email address of the user.
-        password_hash (str): The hashed password of the user.
+        is_admin (bool): Whether the user is an admin or not.
 
     Relationships:
         datasets (List[Dataset]): The datasets created by the user.
@@ -36,6 +36,7 @@ class User(Base):
     status = Column(Enum(UserStatus), nullable=False, default=UserStatus.ACTIVE)
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     datasets = relationship("Dataset", back_populates="user")
@@ -50,4 +51,4 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, name={self.name}, email={self.email})>"
+        return f"<User(id={self.id}, name={self.name}, email={self.email}, is_admin={self.is_admin})>"
