@@ -2,5 +2,8 @@
 run_with_scheduler: False
 scheduler_zen_url: http://localhost:5200
 
+# UI
+ui_url: http://localhost:3000
+
 # GCP service account creds key
 GOOGLE_APPLICATION_CREDENTIALS: .secrets/gcp_key.json

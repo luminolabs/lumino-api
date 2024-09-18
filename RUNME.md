@@ -12,7 +12,8 @@ CAPI_APP_SECRET_KEY=ALongRandomlyGeneratedString%
 CAPI_AUTH0_CLIENT_ID=
 CAPI_AUTH0_CLIENT_SECRET=
 CAPI_AUTH0_DOMAIN=
-PZ_STRIPE_SECRET_KEY=
+CAPI_STRIPE_SECRET_KEY=
+CAPI_STRIPE_WEBHOOK_SECRET=
 ```
 Get the `CAPI_AUTH0_*` values from 1password. Look for `Auth0 creds`.
 
@@ -47,3 +48,11 @@ VALUES (
 5. To access the UI and generate API keys, navigate to `http://localhost:5100/` in your browser.
 
 6. To access the API, set the `api_key` in Postman's environment variables to the value generated in the UI.
+
+7. To enable Stripe payments locally:
+```
+Populate `CAPI_STRIPE_SECRET_KEY` and `CAPI_STRIPE_WEBHOOK_SECRET` in the `.env` file with the values from 1password. Look for `Stripe creds`.
+brew install stripe/stripe-cli/stripe
+stripe login
+stripe listen --forward-to localhost:5100/v1/billing/stripe-success-callback
+```

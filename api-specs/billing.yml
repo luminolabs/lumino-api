@@ -10,6 +10,12 @@ paths:
       summary: Redirect to Stripe for adding credits
       tags:
         - Billing
+      parameters:
+        - in: query
+          name: amount_dollars
+          schema:
+            type: integer
+          required: true
       responses:
         '302':
           description: Redirect to Stripe payment page

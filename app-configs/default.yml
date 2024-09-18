@@ -28,6 +28,10 @@ bearer_token_secret_key: your_secret_key_here  # TODO: Create a GCP secret for t
 bearer_token_algorithm: HS256  # Algorithm used to sign tokens
 bearer_token_expire_minutes: 1440  # 24 hours
 
+# UI
+ui_url:  # URL to the UI, ex: https://app.luminolabs.ai
+ui_url_settings:  /settings  # URL to the UI settings page
+
 # Scheduler Zen URL
 run_with_scheduler: True  # Set to False in order to run jobs without the Scheduler Zen API (for local testing)
 scheduler_zen_url:  # URL to the Scheduler Zen API
@@ -41,7 +45,8 @@ auth0_domain:
 app_secret_key:
 
 # Stripe configuration
-stripe_secret_key:  # Set this in your .env file: `PZ_STRIPE_SECRET_KEY=.....`
+stripe_secret_key:  # Set this in your .env file: `CAPI_STRIPE_SECRET_KEY=.....`
+stripe_webhook_secret:  # Set this in your .env file: `CAPI_STRIPE_WEBHOOK_SECRET=.....`
 
 # Billing
 fine_tuning_job_min_credits: 10  # Minimum credits required to run a fine-tuning job

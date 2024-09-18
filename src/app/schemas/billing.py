@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.core.constants import UsageUnit, ServiceName
 
 
-class CreditCommitRequest(BaseModel):
+class CreditDeductRequest(BaseModel):
     """
     Schema for committing credits for a job.
     """
@@ -18,7 +18,7 @@ class CreditCommitRequest(BaseModel):
     fine_tuning_job_id: UUID = Field(..., description="The ID of the job")
 
 
-class CreditCommitResponse(BaseModel):
+class CreditDeductResponse(BaseModel):
     """
     Schema for the response from committing credits for a job.
     """
