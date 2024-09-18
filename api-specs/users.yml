@@ -106,6 +106,9 @@ components:
         email:
           type: string
           format: email
+        credits:
+          type: integer
+          description: The user's current credit balance
 
   securitySchemes:
     ApiKeyAuth:

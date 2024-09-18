@@ -1,0 +1,84 @@
+openapi: 3.0.0
+info:
+  title: Billing API
+  version: 1.0.0
+  description: API for managing billing and credits
+
+paths:
+  /v1/billing/credits-add:
+    get:
+      summary: Redirect to Stripe for adding credits
+      tags:
+        - Billing
+      responses:
+        '302':
+          description: Redirect to Stripe payment page
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the Stripe payment page
+      security:
+        - ApiKeyAuth: [ ]
+
+  /v1/billing/credits-commit:
+    post:
+      summary: Check if user has enough credits for a job (Internal endpoint)
+      tags:
+        - Billing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditCommitRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCommitResponse'
+      security:
+        - ApiKeyAuth: [ ]
+
+components:
+  schemas:
+    CreditCommitRequest:
+      type: object
+      required:
+        - job_id
+        - user_id
+        - usage_amount
+        - usage_unit
+        - service_name
+      properties:
+        job_id:
+          type: string
+          description: The ID of the job
+        user_id:
+          type: string
+          description: The ID of the user
+        usage_amount:
+          type: integer
+          description: The amount of usage
+        usage_unit:
+          type: string
+          enum: [ token ]
+          description: The unit of usage
+        service_name:
+          type: string
+          description: The name of the service
+
+    CreditCommitResponse:
+      type: object
+      properties:
+        has_enough_credits:
+          type: boolean
+          description: Whether the user has enough credits for the job
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
