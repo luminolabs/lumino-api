@@ -42,6 +42,45 @@ paths:
       security:
         - ApiKeyAuth: [ ]
 
+  /v1/billing/credit-history:
+    get:
+      summary: Get credit history for the current user
+      tags:
+        - Billing
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+          required: true
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+          required: true
+        - $ref: 'common-structures.yml#/components/parameters/PageParam'
+        - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CreditHistoryResponse'
+                  pagination:
+                    $ref: 'common-structures.yml#/components/schemas/Pagination'
+        '401':
+          $ref: 'common-structures.yml#/components/responses/Unauthorized'
+      security:
+        - ApiKeyAuth: [ ]
+
 components:
   schemas:
     CreditCommitRequest:
@@ -55,9 +94,11 @@ components:
       properties:
         job_id:
           type: string
+          format: uuid
           description: The ID of the job
         user_id:
           type: string
+          format: uuid
           description: The ID of the user
         usage_amount:
           type: integer
@@ -76,6 +117,22 @@ components:
         has_enough_credits:
           type: boolean
           description: Whether the user has enough credits for the job
+
+    CreditHistoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier of the credit record
+        created_at:
+          type: string
+          format: date-time
+          description: The timestamp when the credit record was created
+        credits:
+          type: number
+          format: float
+          description: The amount of credits added or deducted
 
   securitySchemes:
     ApiKeyAuth:

@@ -187,6 +187,14 @@ class FineTuningJobCancellationError(ServerError):
         super().__init__(detail, logger)
 
 
+# Billing exceptions
+
+class StripeCheckoutSessionCreationError(ServerError):
+    """Exception raised when there's an error creating a Stripe checkout session."""
+    def __init__(self, detail: str, logger: Optional[Logger] = None):
+        super().__init__(detail, logger)
+
+
 # Exception handlers
 
 

@@ -103,7 +103,7 @@ async def start_fine_tuning_job(job_id: UUID):
             job = await db.get(FineTuningJob, job_id)
             job.status = FineTuningJobStatus.FAILED
             await db.commit()
-        raise FineTuningJobCreationError(f"Failed to start fine-tuning job: {job_id}: {e}", logger)
+        raise FineTuningJobCreationError(f"Failed to start fine-tuning job: {job_id}: {str(e)}", logger)
 
 
 async def fetch_job_details(user_id: UUID, job_ids: List[UUID]) -> List[Dict[str, Any]]:

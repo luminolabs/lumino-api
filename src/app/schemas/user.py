@@ -1,9 +1,11 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from app.core.constants import UserStatus
+
 
 class UserUpdate(BaseModel):
     """
@@ -22,4 +24,5 @@ class UserResponse(BaseModel):
     status: UserStatus = Field(..., description="The current status of the user")
     name: str = Field(..., description="The name of the user")
     email: EmailStr = Field(..., description="The email address of the user")
+    credits_balance: Decimal = Field(..., description="The current credit balance of the user")
     model_config = ConfigDict(from_attributes=True)

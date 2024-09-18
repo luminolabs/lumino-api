@@ -1,7 +1,9 @@
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.common import paginate_query
 from app.core.config_manager import config
 from app.core.constants import FineTuningJobStatus
 from app.core.exceptions import (
@@ -10,26 +12,26 @@ from app.core.exceptions import (
     DatasetNotFoundError, FineTuningJobAlreadyExistsError, BadRequestError
 )
 from app.core.scheduler_client import start_fine_tuning_job, stop_fine_tuning_job
-from app.models.fine_tuning_job import FineTuningJob
-from app.models.fine_tuning_job_detail import FineTuningJobDetail
+from app.core.utils import setup_logger
 from app.models.base_model import BaseModel
 from app.models.dataset import Dataset
+from app.models.fine_tuning_job import FineTuningJob
+from app.models.fine_tuning_job_detail import FineTuningJobDetail
+from app.models.user import User
 from app.schemas.common import Pagination
 from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobDetailResponse
-from app.core.utils import setup_logger
-from app.core.common import paginate_query
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
-async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTuningJobCreate) -> FineTuningJobResponse:
+async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJobCreate) -> FineTuningJobResponse:
     """
     Create a new fine-tuning job.
 
     Args:
         db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user creating the job.
+        user (User): The user creating the fine-tuning job.
         job (FineTuningJobCreate): The fine-tuning job creation data.
 
     Returns:
@@ -39,27 +41,32 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
         BaseModelNotFoundError: If the specified base model is not found.
         DatasetNotFoundError: If the specified dataset is not found.
     """
+    # Check if the user has minimum required credits
+    if user.credits_balance < config.fine_tuning_job_min_credits:
+        raise BadRequestError(f"User {user.id} does not have enough credits "
+                              f"to start a fine tuning job", logger)
+    
     # Check if base model exists
     base_model = await db.execute(select(BaseModel).where(BaseModel.name == job.base_model_name))
     base_model = base_model.scalar_one_or_none()
     if not base_model:
-        raise BaseModelNotFoundError(f"Base model with name {job.base_model_name} not found, user: {user_id}", logger)
+        raise BaseModelNotFoundError(f"Base model with name {job.base_model_name} not found, user: {user.id}", logger)
 
     # Check if dataset exists and belongs to the user
-    dataset = await db.execute(select(Dataset).where(Dataset.name == job.dataset_name, Dataset.user_id == user_id))
+    dataset = await db.execute(select(Dataset).where(Dataset.name == job.dataset_name, Dataset.user_id == user.id))
     dataset = dataset.scalar_one_or_none()
     if not dataset:
-        raise DatasetNotFoundError(f"Dataset with name {job.dataset_name} not found, user: {user_id}", logger)
+        raise DatasetNotFoundError(f"Dataset with name {job.dataset_name} not found, user: {user.id}", logger)
 
     # Check if the job name is unique for the user
-    existing_job = await db.execute(select(FineTuningJob).where(FineTuningJob.user_id == user_id, FineTuningJob.name == job.name))
+    existing_job = await db.execute(select(FineTuningJob).where(FineTuningJob.user_id == user.id, FineTuningJob.name == job.name))
     existing_job = existing_job.scalar_one_or_none()
     if existing_job:
-        raise FineTuningJobAlreadyExistsError(f"Fine-tuning job with name {job.name} already exists for user: {user_id}", logger)
+        raise FineTuningJobAlreadyExistsError(f"Fine-tuning job with name {job.name} already exists for user: {user.id}", logger)
 
     # Create the main fine-tuning job record
     db_job = FineTuningJob(
-        user_id=user_id,
+        user_id=user.id,
         name=job.name,
         base_model_id=base_model.id,
         dataset_id=dataset.id,
@@ -85,7 +92,7 @@ async def create_fine_tuning_job(db: AsyncSession, user_id: UUID, job: FineTunin
     db_job_dict['base_model_name'] = db_job.base_model.name
     db_job_dict['dataset_name'] = db_job.dataset.name
 
-    logger.info(f"Created fine-tuning job: {db_job.id} for user: {user_id}")
+    logger.info(f"Created fine-tuning job: {db_job.id} for user: {user.id}")
     return FineTuningJobResponse(**db_job_dict)
 
 

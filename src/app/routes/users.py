@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config_manager import config
 from app.core.authentication import get_current_active_user, admin_required
+from app.core.config_manager import config
 from app.core.database import get_db
+from app.core.utils import setup_logger
 from app.models.user import User
 from app.schemas.user import UserUpdate, UserResponse
 from app.services.user import update_user, deactivate_user
-from app.core.utils import setup_logger
 
 # Set up API router
 router = APIRouter(tags=["Users"])

@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from typing import Tuple, List
 
 from sqlalchemy import Select, select, func, Row
@@ -60,3 +61,18 @@ async def paginate_query(
 
     # Return items and pagination
     return items, pagination
+
+
+def parse_date(date_str: str) -> date:
+    """
+    Parse a date string in the format YYYY-MM-DD.
+
+    Args:
+        date_str (str): The date string to parse.
+    Returns:
+        date: The parsed date.
+    """
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise BadRequestError(f"Invalid date format, use YYYY-MM-DD. Example: 2022-12-29; got: {date_str}")

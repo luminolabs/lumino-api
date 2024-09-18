@@ -4,11 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config_manager import config
 from app.core.constants import UserStatus
-from app.core.exceptions import UserNotFoundError, EmailAlreadyExistsError
+from app.core.exceptions import UserNotFoundError
+from app.core.utils import setup_logger
 from app.models.user import User
 from app.schemas.user import UserUpdate
-from app.core.utils import setup_logger
-from app.core.authentication import get_user_by_email
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
