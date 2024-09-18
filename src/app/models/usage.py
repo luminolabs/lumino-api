@@ -33,7 +33,7 @@ class Usage(Base):
     usage_amount = Column(Integer, nullable=False)
     usage_unit = Column(Enum(UsageUnit), nullable=False, default=UsageUnit.TOKEN)
     cost = Column(Numeric(precision=6, scale=2), nullable=False)
-    service_name = Column(Enum(ServiceName), nullable=False, default=ServiceName.FINE_TUNING)
+    service_name = Column(Enum(ServiceName), nullable=False, default=ServiceName.FINE_TUNING_JOB)
     fine_tuning_job_id = Column(UUID, ForeignKey("fine_tuning_jobs.id"), nullable=False, unique=True)
 
     # Relationships

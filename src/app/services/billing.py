@@ -148,7 +148,7 @@ def calculate_required_credits(usage_amount: int, usage_unit: str, service_name:
     Calculate the required credits based on usage amount, unit, and service.
     This is a placeholder function and should be replaced with actual pricing logic.
     """
-    if service_name == ServiceName.FINE_TUNING and usage_unit == UsageUnit.TOKEN:
+    if service_name == ServiceName.FINE_TUNING_JOB and usage_unit == UsageUnit.TOKEN:
         # 3 credits per 1mil tokens
         return Decimal(3 * usage_amount / 1000000)
 

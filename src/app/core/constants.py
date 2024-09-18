@@ -50,4 +50,4 @@ class ServiceName(str, Enum):
     """
     Enum for the name of the available services.
     """
-    FINE_TUNING = "FINE_TUNING_JOB"
+    FINE_TUNING_JOB = "FINE_TUNING_JOB"
