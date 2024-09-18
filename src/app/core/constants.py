@@ -37,3 +37,17 @@ class BaseModelStatus(str, Enum):
     ACTIVE = "ACTIVE"  # Base model is available for use
     INACTIVE = "INACTIVE"  # Base model is deactivated and cannot be used
     DEPRECATED = "DEPRECATED"  # Base model is no longer supported or recommended for use
+
+
+class UsageUnit(str, Enum):
+    """
+    Enum for the unit of the available usage units.
+    """
+    TOKEN = "token"
+
+
+class ServiceName(str, Enum):
+    """
+    Enum for the name of the available services.
+    """
+    FINE_TUNING = "fine_tuning_job"

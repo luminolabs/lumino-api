@@ -19,3 +19,4 @@ authlib
 itsdangerous
 httpx
 jinja2
+stripe

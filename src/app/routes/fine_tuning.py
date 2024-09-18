@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, status
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
+from app.core.config_manager import config
 from app.core.database import get_db
+from app.core.utils import setup_logger
 from app.models.user import User
 from app.schemas.common import Pagination
 from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobDetailResponse
@@ -15,7 +16,6 @@ from app.services.fine_tuning import (
     get_fine_tuning_jobs,
     get_fine_tuning_job, cancel_fine_tuning_job,
 )
-from app.core.utils import setup_logger
 
 # Set up API router
 router = APIRouter(tags=["Fine-tuning Jobs"])
@@ -41,7 +41,7 @@ async def create_new_fine_tuning_job(
     Returns:
         FineTuningJobResponse: The created fine-tuning job.
     """
-    new_job = await create_fine_tuning_job(db, current_user.id, job)
+    new_job = await create_fine_tuning_job(db, current_user, job)
     return new_job
 
 

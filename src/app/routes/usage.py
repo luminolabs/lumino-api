@@ -1,40 +1,24 @@
 from typing import Dict, Union, List
-from datetime import datetime, date
 
 from fastapi import APIRouter, Depends
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config_manager import config
 from app.core.authentication import get_current_active_user
+from app.core.config_manager import config
 from app.core.database import get_db
-from app.models.user import User
-from app.schemas.usage import TotalCostResponse, UsageRecordResponse
-from app.schemas.common import Pagination
-from app.services.usage import get_total_cost, get_usage_records
 from app.core.utils import setup_logger
-from app.core.exceptions import BadRequestError
+from app.core.common import parse_date
+from app.models.user import User
+from app.schemas.common import Pagination
+from app.schemas.usage import TotalCostResponse, UsageRecordResponse
+from app.services.usage import get_total_cost, get_usage_records
 
 # Set up API router
 router = APIRouter(tags=["Usage"])
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
-
-
-def parse_date(date_str: str) -> date:
-    """
-    Parse a date string in the format YYYY-MM-DD.
-
-    Args:
-        date_str (str): The date string to parse.
-    Returns:
-        date: The parsed date.
-    """
-    try:
-        return datetime.strptime(date_str, "%Y-%m-%d").date()
-    except ValueError:
-        raise BadRequestError(f"Invalid date format, use YYYY-MM-DD. Example: 2022-12-29; got: {date_str}")
 
 
 @router.get("/usage/total-cost", response_model=TotalCostResponse)

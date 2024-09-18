@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from uuid import UUID
 from typing import Dict, Any
+from uuid import UUID
+
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.core.constants import FineTuningJobStatus
 from app.schemas.common import NameField

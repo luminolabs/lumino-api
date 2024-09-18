@@ -1,5 +1,6 @@
 from uuid import uuid4
-from sqlalchemy import Column, String, DateTime, UUID, Index, Enum, Boolean
+
+from sqlalchemy import Column, String, DateTime, UUID, Index, Enum, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -19,13 +20,15 @@ class User(Base):
         name (str): The name of the user.
         email (str): The email address of the user.
         is_admin (bool): Whether the user is an admin or not.
+        credits_balance (Numeric): The current credit balance of the user.
 
     Relationships:
         datasets (List[Dataset]): The datasets created by the user.
         fine_tuning_jobs (List[FineTuningJob]): The fine-tuning jobs created by the user.
         fine_tuned_models (List[FineTunedModel]): The fine-tuned models created by the user.
         api_keys (List[ApiKey]): The API keys owned by the user.
-        usage_records (List[Usage]): The usage records for the user
+        usage_records (List[Usage]): The usage records for the user.
+        billing_credits (List[BillingCredit]): The billing credits records for the user.
     """
     __tablename__ = "users"
 
@@ -37,6 +40,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
+    credits_balance = Column(Numeric(precision=6, scale=2), nullable=False, default=0)
 
     # Relationships
     datasets = relationship("Dataset", back_populates="user")
@@ -44,6 +48,7 @@ class User(Base):
     fine_tuned_models = relationship("FineTunedModel", back_populates="user")
     api_keys = relationship("ApiKey", back_populates="user")
     usage_records = relationship("Usage", back_populates="user")
+    billing_credits = relationship("BillingCredit", back_populates="user")
 
     # Indexes
     __table_args__ = (
@@ -51,4 +56,4 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, name={self.name}, email={self.email}, is_admin={self.is_admin})>"
+        return f"<User(id={self.id}, name={self.name}, email={self.email}, is_admin={self.is_admin}, credits_balance={self.credits_balance})>"

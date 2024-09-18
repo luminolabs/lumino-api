@@ -4,13 +4,14 @@ import uvicorn
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 
 from app.core.config_manager import config
+from app.core.database import engine, Base
 from app.core.exceptions import (
     AppException,
     app_exception_handler,
@@ -18,8 +19,7 @@ from app.core.exceptions import (
     sqlalchemy_exception_handler,
     generic_exception_handler,
 )
-from app.core.database import engine, Base
-from app.routes import users, api_keys, datasets, fine_tuning, models, usage, auth0
+from app.routes import users, api_keys, datasets, fine_tuning, models, usage, auth0, billing
 from app.tasks.api_key_cleanup import cleanup_expired_api_keys
 from app.tasks.job_status_updater import update_job_statuses
 
@@ -69,6 +69,7 @@ app.include_router(fine_tuning.router, prefix=api_prefix)
 app.include_router(models.router, prefix=api_prefix)
 app.include_router(usage.router, prefix=api_prefix)
 app.include_router(auth0.router, prefix=api_prefix)
+app.include_router(billing.router, prefix=api_prefix)
 
 # Set up Jinja2 HTML templates
 templates = Jinja2Templates(directory="html")
@@ -76,7 +77,6 @@ templates = Jinja2Templates(directory="html")
 @app.get("/", response_class=HTMLResponse)
 async def web_console(request: Request):
     return templates.TemplateResponse("console.html", {"request": request})
-
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=5100, reload=True)
