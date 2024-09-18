@@ -1,2 +1,5 @@
 # Scheduler Zen URL
 scheduler_zen_url: http://scheduler-zen:5200
+
+# UI
+ui_url: http://localhost:3000

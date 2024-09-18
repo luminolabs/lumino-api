@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import stripe
 import uvicorn
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
@@ -31,6 +32,8 @@ background_task_scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI):
     # Startup
     # -------
+    # Initialize Stripe
+    stripe.api_key = config.stripe_secret_key
     # Run database migrations
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -8,53 +8,83 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.common import paginate_query
 from app.core.config_manager import config
+from app.core.constants import UsageUnit, ServiceName
 from app.core.exceptions import ServerError, BadRequestError
 from app.core.utils import setup_logger
 from app.models.billing_credit import BillingCredit
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.usage import Usage
 from app.models.user import User
-from app.schemas.billing import CreditCommitRequest, CreditHistoryResponse
-from app.core.constants import UsageUnit, ServiceName
+from app.schemas.billing import CreditDeductRequest, CreditHistoryResponse
 from app.schemas.common import Pagination
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
-# Initialize Stripe
-stripe.api_key = config.stripe_secret_key
 
-
-async def create_stripe_checkout_session(user_id: UUID):
+async def create_stripe_checkout_session(
+        user_id: UUID, amount_dollars: int,
+        success_url: str,
+        cancel_url: str
+) -> stripe.checkout.Session:
     """
     Create a Stripe Checkout Session for adding credits.
     """
     try:
-        checkout_session = stripe.checkout.Session.create(
+        # Create the Checkout Session
+        session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
                 'price_data': {
                     'currency': 'usd',
                     'product_data': {
-                        'name': 'Credits',
+                        'name': 'Purchase Credits',
                     },
-                    'unit_amount': 1000,  # $10.00
+                    'unit_amount': amount_dollars * 100,  # Convert dollars to cents
                 },
                 'quantity': 1,
             }],
             mode='payment',
-            success_url=f'{config.api_base_url}/billing/success',
-            cancel_url=f'{config.api_base_url}/billing/cancel',
-            client_reference_id=str(user_id),
+            success_url=success_url,
+            cancel_url=cancel_url,
+            client_reference_id=user_id,
         )
-        return checkout_session
+        return session
     except Exception as e:
         raise ServerError(f"Error creating Stripe checkout session: {str(e)}", logger)
 
 
-async def commit_credits(request: CreditCommitRequest, db: AsyncSession) -> bool:
+async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: int):
     """
-    Check if a user has enough credits for a job, commit them if so, and log the usage.
+    Add credits to a user's account and log the addition in the billing_credits table.
+    """
+    try:
+        # Get the user from the database
+        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+        # If user not found, log error and return
+        if not user:
+            logger.error(f"User not found: {user_id}")
+            return
+
+        # Add credits to user's balance (this will commit to the users table)
+        user.credits_balance += Decimal(amount_dollars)
+        # Log the credit addition in billing_credits table
+        await db.execute(
+            insert(BillingCredit).values(
+                user_id=user.id,
+                credits=Decimal(amount_dollars)
+            )
+        )
+        await db.commit()
+        logger.info(f"Added {amount_dollars} credits to user {user_id}")
+    except Exception as e:
+        await db.rollback()
+        raise ServerError(f"Error adding credits to user {user_id}: {str(e)}", logger)
+
+
+async def deduct_credits(request: CreditDeductRequest, db: AsyncSession) -> bool:
+    """
+    Check if a user has enough credits for a job, deduct them if so, and log the usage.
     """
     # Get the user from the database
     user = (await db.execute(select(User).where(User.id == request.user_id))).scalar_one_or_none()
@@ -67,12 +97,12 @@ async def commit_credits(request: CreditCommitRequest, db: AsyncSession) -> bool
         FineTuningJob.user_id == request.user_id))).scalar_one_or_none()
     if not job:
         raise BadRequestError(f"Fine-tuning job not found: {request.fine_tuning_job_id}")
-    # Check if the job is already committed
+    # Check if the job is already deducted
     usage = (await db.execute(select(Usage).where(
         Usage.fine_tuning_job_id == request.fine_tuning_job_id,
         Usage.user_id == request.user_id))).scalar_one_or_none()
     if usage:
-        logger.info(f"Fine-tuning job {request.fine_tuning_job_id} already committed")
+        logger.info(f"Fine-tuning job {request.fine_tuning_job_id} already deductted")
         # We already charged the user for this job, allow the request to proceed
         return True
 
@@ -81,7 +111,7 @@ async def commit_credits(request: CreditCommitRequest, db: AsyncSession) -> bool
         required_credits = calculate_required_credits(request.usage_amount, request.usage_unit, request.service_name)
 
         if user.credits_balance >= required_credits:
-            # Subtract credits from user's balance (this will commit to the users table)
+            # Subtract credits from user's balance (this will deduct to the users table)
             user.credits_balance -= required_credits
             # Log the credit deduction in billing_credits table
             await db.execute(
@@ -102,7 +132,7 @@ async def commit_credits(request: CreditCommitRequest, db: AsyncSession) -> bool
                 )
             )
             await db.commit()
-            logger.info(f"Committed {required_credits} credits for user {request.user_id}")
+            logger.info(f"Deducted {required_credits} credits for user {request.user_id}")
             return True
         else:
             logger.info(f"Insufficient credits for user {request.user_id}. Required: {required_credits}, "
@@ -110,7 +140,7 @@ async def commit_credits(request: CreditCommitRequest, db: AsyncSession) -> bool
             return False
     except Exception as e:
         await db.rollback()
-        raise ServerError(f"Error committing credits for user {request.user_id}: {str(e)}", logger)
+        raise ServerError(f"Error deducting credits for user {request.user_id}: {str(e)}", logger)
 
 
 def calculate_required_credits(usage_amount: int, usage_unit: str, service_name: str) -> Decimal:
@@ -124,34 +154,6 @@ def calculate_required_credits(usage_amount: int, usage_unit: str, service_name:
 
     # Return 422 if pricing logic not implemented for the requested service and unit
     raise BadRequestError(f"Pricing logic not implemented for service: {service_name} and unit: {usage_unit}")
-
-
-async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount: Decimal):
-    """
-    Add credits to a user's account and log the addition in the billing_credits table.
-    """
-    try:
-        # Get the user from the database
-        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
-        # If user not found, log error and return
-        if not user:
-            logger.error(f"User not found: {user_id}")
-            return
-
-        # Add credits to user's balance (this will commit to the users table)
-        user.credits_balance += amount
-        # Log the credit addition in billing_credits table
-        await db.execute(
-            insert(BillingCredit).values(
-                user_id=user.id,
-                credits=amount
-            )
-        )
-        await db.commit()
-        logger.info(f"Added {amount} credits to user {user_id}")
-    except Exception as e:
-        await db.rollback()
-        raise ServerError(f"Error adding credits to user {user_id}: {str(e)}", logger)
 
 
 async def get_credit_history(

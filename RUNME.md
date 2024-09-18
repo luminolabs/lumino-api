@@ -12,7 +12,7 @@ CAPI_APP_SECRET_KEY=ALongRandomlyGeneratedString%
 CAPI_AUTH0_CLIENT_ID=
 CAPI_AUTH0_CLIENT_SECRET=
 CAPI_AUTH0_DOMAIN=
-PZ_STRIPE_SECRET_KEY=
+CAPI_STRIPE_SECRET_KEY=
 ```
 Get the `CAPI_AUTH0_*` values from 1password. Look for `Auth0 creds`.
 
