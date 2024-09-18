@@ -11,6 +11,7 @@ from app.core.config_manager import config
 from app.core.exceptions import ServerError, BadRequestError
 from app.core.utils import setup_logger
 from app.models.billing_credit import BillingCredit
+from app.models.fine_tuning_job import FineTuningJob
 from app.models.usage import Usage
 from app.models.user import User
 from app.schemas.billing import CreditCommitRequest, CreditHistoryResponse
@@ -60,6 +61,20 @@ async def commit_credits(request: CreditCommitRequest, db: AsyncSession) -> bool
     # If user not found, log error and return
     if not user:
         raise BadRequestError(f"User not found: {request.user_id}")
+    # If job not found, log error and return
+    job = (await db.execute(select(FineTuningJob).where(
+        FineTuningJob.id == request.fine_tuning_job_id,
+        FineTuningJob.user_id == request.user_id))).scalar_one_or_none()
+    if not job:
+        raise BadRequestError(f"Fine-tuning job not found: {request.fine_tuning_job_id}")
+    # Check if the job is already committed
+    usage = (await db.execute(select(Usage).where(
+        Usage.fine_tuning_job_id == request.fine_tuning_job_id,
+        Usage.user_id == request.user_id))).scalar_one_or_none()
+    if usage:
+        logger.info(f"Fine-tuning job {request.fine_tuning_job_id} already committed")
+        # We already charged the user for this job, allow the request to proceed
+        return True
 
     try:
         # Calculate the required credits based on usage amount, unit, and service

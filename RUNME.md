@@ -8,10 +8,11 @@ CAPI_DB_USER=user123
 CAPI_DB_PASS=pass123
 CAPI_DB_HOST=localhost
 CAPI_DB_PORT=35100
+CAPI_APP_SECRET_KEY=ALongRandomlyGeneratedString%
 CAPI_AUTH0_CLIENT_ID=
 CAPI_AUTH0_CLIENT_SECRET=
 CAPI_AUTH0_DOMAIN=
-CAPI_APP_SECRET_KEY=ALongRandomlyGeneratedString%
+PZ_STRIPE_SECRET_KEY=
 ```
 Get the `CAPI_AUTH0_*` values from 1password. Look for `Auth0 creds`.
 
