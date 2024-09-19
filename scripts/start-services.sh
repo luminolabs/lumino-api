@@ -44,6 +44,9 @@ export CAPI_APP_SECRET_KEY
 export CAPI_STRIPE_SECRET_KEY
 export CAPI_STRIPE_WEBHOOK_SECRET
 
+# Configure docker to use gcloud as a credential helper
+gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
 echo "Pull the latest image"
 docker pull us-central1-docker.pkg.dev/neat-airport-407301/lum-docker-images/lumino-api:latest
 echo "Starting services with docker-compose"
