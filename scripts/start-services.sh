@@ -6,7 +6,7 @@
 set -e
 
 # Inputs
-SERVICES_TO_START=$1  # e.g., "api", or leave empty to start all services
+COMPOSE_OPTS=$1  # Additional options to pass to docker compose
 
 LOCAL_ENV="local"
 PROJECT_ID="neat-airport-407301"
@@ -41,8 +41,9 @@ export CAPI_APP_SECRET_KEY
 export CAPI_STRIPE_SECRET_KEY
 export CAPI_STRIPE_WEBHOOK_SECRET
 
-# Start the services using docker-compose
+echo "Pull the latest image"
+docker pull us-central1-docker.pkg.dev/neat-airport-407301/lum-docker-images/lumino-api:latest
 echo "Starting services with docker-compose"
-docker compose up --build -d $SERVICES_TO_START
+docker compose up -d $COMPOSE_OPTS
 
 echo "API services started successfully"

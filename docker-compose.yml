@@ -12,6 +12,7 @@ services:
       - "${CAPI_DB_PORT}:${CAPI_DB_PORT}"
 
   api:
+    image: us-central1-docker.pkg.dev/neat-airport-407301/lum-docker-images/lumino-api:latest
     build: .
     command: python /project/app/main.py
     volumes:
