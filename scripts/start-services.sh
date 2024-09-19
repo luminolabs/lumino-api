@@ -5,12 +5,26 @@
 # Exit on errors
 set -e
 
-# Set variables
+# Inputs
+SERVICES_TO_START=$1  # e.g., "api", or leave empty to start all services
+
+LOCAL_ENV="local"
 PROJECT_ID="neat-airport-407301"
-SECRET_NAME="lumino-api-config"
+SECRET_NAME_PREFIX="lumino-api-config"
+
+if [[ "$PZ_ENV" == "" ]]; then
+  PZ_ENV="$LOCAL_ENV"
+fi
+
+# Export .env environment variables; note, we aren't aware of which environment
+# we're running on before importing PZ_ENV from .env,
+# so we can't cd to /pipeline-zen-jobs conditionally above
+eval $(cat ./.env | grep -v '^#' | tr -d '\r')
+echo "PZ_ENV set to $PZ_ENV"
 
 # Fetch the secret
 echo "Fetching secrets (db, auth0, stripe creds, etc) from Secret Manager"
+SECRET_NAME="$SECRET_NAME_PREFIX-$PZ_ENV"
 SECRET_PAYLOAD=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID)
 
 # Parse the secret payload and set environment variables
@@ -29,6 +43,6 @@ export CAPI_STRIPE_WEBHOOK_SECRET
 
 # Start the services using docker-compose
 echo "Starting services with docker-compose"
-docker compose up --build -d
+docker compose up --build -d $SERVICES_TO_START
 
 echo "API services started successfully"
