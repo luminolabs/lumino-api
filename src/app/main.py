@@ -81,5 +81,9 @@ templates = Jinja2Templates(directory="html")
 async def web_console(request: Request):
     return templates.TemplateResponse("console.html", {"request": request})
 
+@app.get(api_prefix + "/health")
+async def health():
+    return {"does it work?": "yes it does"}
+
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=5100, reload=True)
