@@ -10,7 +10,7 @@ PROJECT_ID="neat-airport-407301"
 SECRET_NAME="lumino-api-config"
 
 # Fetch the secret
-echo "Fetching secrets (db, auth0 creds, etc) from Secret Manager"
+echo "Fetching secrets (db, auth0, stripe creds, etc) from Secret Manager"
 SECRET_PAYLOAD=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID)
 
 # Parse the secret payload and set environment variables
@@ -24,6 +24,8 @@ export CAPI_AUTH0_CLIENT_ID
 export CAPI_AUTH0_CLIENT_SECRET
 export CAPI_AUTH0_DOMAIN
 export CAPI_APP_SECRET_KEY
+export CAPI_STRIPE_SECRET_KEY
+export CAPI_STRIPE_WEBHOOK_SECRET
 
 # Start the services using docker-compose
 echo "Starting services with docker-compose"
