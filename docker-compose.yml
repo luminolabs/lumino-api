@@ -5,7 +5,6 @@ services:
       POSTGRES_DB: ${CAPI_DB_NAME}
       POSTGRES_USER: ${CAPI_DB_USER}
       POSTGRES_PASSWORD: ${CAPI_DB_PASS}
-      POSTGRES_PORT: ${CAPI_DB_PORT}
       PGPORT: ${CAPI_DB_PORT}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -25,7 +24,7 @@ services:
       - CAPI_DB_NAME=${CAPI_DB_NAME}
       - CAPI_DB_USER=${CAPI_DB_USER}
       - CAPI_DB_PASS=${CAPI_DB_PASS}
-      - CAPI_DB_HOST=db
+      - CAPI_DB_HOST=${CAPI_DB_HOST}
       - CAPI_DB_PORT=${CAPI_DB_PORT}
       - CAPI_AUTH0_CLIENT_ID=${CAPI_AUTH0_CLIENT_ID}
       - CAPI_AUTH0_CLIENT_SECRET=${CAPI_AUTH0_CLIENT_SECRET}
