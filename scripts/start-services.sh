@@ -5,6 +5,9 @@
 # Exit on errors
 set -e
 
+# Go to the /lumino-api directory, where we've loaded all necessary files to run the API
+cd /lumino-api
+
 # Inputs
 COMPOSE_OPTS=$1  # Additional options to pass to docker compose
 
