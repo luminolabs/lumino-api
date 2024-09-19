@@ -7,8 +7,6 @@ services:
       POSTGRES_PASSWORD: ${CAPI_DB_PASS}
       POSTGRES_PORT: ${CAPI_DB_PORT}
       PGPORT: ${CAPI_DB_PORT}
-    networks:
-      - lumino-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -35,23 +33,14 @@ services:
       - CAPI_APP_SECRET_KEY=${CAPI_APP_SECRET_KEY}
       - CAPI_STRIPE_SECRET_KEY=${CAPI_STRIPE_SECRET_KEY}
       - CAPI_STRIPE_WEBHOOK_SECRET=${CAPI_STRIPE_WEBHOOK_SECRET}
-    networks:
-      - lumino-network
     depends_on:
       - db
 
   api-specs:
     build: .
     command: node api-specs.js
-    networks:
-      - lumino-network
     ports:
       - "5110:5110"
 
 volumes:
   postgres_data:
-
-networks:
-  lumino-network:
-    driver: macvlan
-    name: lumino-network
