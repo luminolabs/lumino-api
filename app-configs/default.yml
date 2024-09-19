@@ -23,11 +23,6 @@ db_port:
 # API configuration
 api_v1_prefix: /v1
 
-# JWT configuration
-bearer_token_secret_key: your_secret_key_here  # TODO: Create a GCP secret for this
-bearer_token_algorithm: HS256  # Algorithm used to sign tokens
-bearer_token_expire_minutes: 1440  # 24 hours
-
 # UI
 ui_url:  # URL to the UI, ex: https://app.luminolabs.ai
 ui_url_settings:  /settings  # URL to the UI settings page
