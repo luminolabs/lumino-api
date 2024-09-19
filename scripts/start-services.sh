@@ -12,19 +12,19 @@ LOCAL_ENV="local"
 PROJECT_ID="neat-airport-407301"
 SECRET_NAME_PREFIX="lumino-api-config"
 
-if [[ "$PZ_ENV" == "" ]]; then
-  PZ_ENV="$LOCAL_ENV"
+if [[ "$CAPI_ENV" == "" ]]; then
+  CAPI_ENV="$LOCAL_ENV"
 fi
 
 # Export .env environment variables; note, we aren't aware of which environment
-# we're running on before importing PZ_ENV from .env,
+# we're running on before importing CAPI_ENV from .env,
 # so we can't cd to /pipeline-zen-jobs conditionally above
 eval $(cat ./.env | grep -v '^#' | tr -d '\r')
-echo "PZ_ENV set to $PZ_ENV"
+echo "CAPI_ENV set to $CAPI_ENV"
 
 # Fetch the secret
 echo "Fetching secrets (db, auth0, stripe creds, etc) from Secret Manager"
-SECRET_NAME="$SECRET_NAME_PREFIX-$PZ_ENV"
+SECRET_NAME="$SECRET_NAME_PREFIX-$CAPI_ENV"
 SECRET_PAYLOAD=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID)
 
 # Parse the secret payload and set environment variables
