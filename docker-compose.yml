@@ -22,6 +22,7 @@ services:
       - "5100:5100"
     environment:
       - CAPI_ENV=${CAPI_ENV}
+      - CAPI_USE_API_UI=${CAPI_USE_API_UI}
       - CAPI_DB_NAME=${CAPI_DB_NAME}
       - CAPI_DB_USER=${CAPI_DB_USER}
       - CAPI_DB_PASS=${CAPI_DB_PASS}

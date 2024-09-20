@@ -26,6 +26,7 @@ api_v1_prefix: /v1
 # UI
 ui_url:  # URL to the UI, ex: https://app.luminolabs.ai
 ui_url_settings:  /settings  # URL to the UI settings page
+use_api_ui: False  # Set to True to use the API UI
 
 # Scheduler Zen URL
 run_with_scheduler: True  # Set to False in order to run jobs without the Scheduler Zen API (for local testing)

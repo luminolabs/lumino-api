@@ -8,16 +8,18 @@ from fastapi.params import Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
+from urllib3 import request
 
 from app.core.authentication import get_current_active_user, admin_required
 from app.core.common import parse_date
 from app.core.config_manager import config
+from app.core.constants import BillingTransactionType
 from app.core.database import get_db
 from app.core.utils import setup_logger
 from app.models.user import User
 from app.schemas.billing import CreditDeductRequest, CreditDeductResponse, CreditHistoryResponse
 from app.schemas.common import Pagination
-from app.services.billing import create_stripe_checkout_session, deduct_credits, add_credits_to_user, get_credit_history
+from app.services.billing import create_stripe_checkout_session, deduct_credits_for_fine_tuning_job, add_credits_to_user, get_credit_history
 
 # Set up API router
 router = APIRouter(tags=["Billing"])
@@ -36,7 +38,7 @@ async def deduct_and_approve_credits(
     """
     Check if user has enough credits for a job and commit them if so (Internal endpoint).
     """
-    has_enough_credits = await deduct_credits(request, db)
+    has_enough_credits = await deduct_credits_for_fine_tuning_job(request, db)
     return CreditDeductResponse(has_enough_credits=has_enough_credits)
 
 
@@ -65,16 +67,17 @@ async def get_credit_history_route(
 
 @router.get("/billing/credits-add")
 async def stripe_redirect(
+        request: Request,
         amount_dollars: int = Query(..., description="The amount of credits to add, in dollars"),
-        current_user: User = Depends(get_current_active_user)
+        current_user: User = Depends(get_current_active_user),
 ):
     """
     Redirect to Stripe for adding credits.
     """
     checkout_session = await create_stripe_checkout_session(
         current_user.id, amount_dollars,
-        config.ui_url + config.ui_url_settings + "?stripe_success=1",
-        config.ui_url + config.ui_url_settings + "?stripe_error=user_cancelled")
+        config.ui_url + config.ui_url_settings + "?stripe_success=1" if not config.use_api_ui else request.base_url,
+        config.ui_url + config.ui_url_settings + "?stripe_error=user_cancelled" if not config.use_api_ui else request.base_url)
     return RedirectResponse(url=checkout_session.url, status_code=302)
 
 
@@ -107,8 +110,10 @@ async def stripe_success_callback(
         session = event["data"]["object"]
         user_id = UUID(session["client_reference_id"])
         amount_dollars = session["amount_total"] / 100  # Convert cents to dollars
+        transaction_id = session["payment_intent"]
         # Add credits to user's account
-        await add_credits_to_user(db, user_id, amount_dollars)
+        await add_credits_to_user(db, user_id, amount_dollars,
+                                  transaction_id, BillingTransactionType.STRIPE_CHECKOUT)
         logger.info(f"Added {amount_dollars} credits to user {user_id}")
 
     # Return success to Stripe

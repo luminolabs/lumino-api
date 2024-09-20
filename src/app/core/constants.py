@@ -51,3 +51,12 @@ class ServiceName(str, Enum):
     Enum for the name of the available services.
     """
     FINE_TUNING_JOB = "FINE_TUNING_JOB"
+
+
+class BillingTransactionType(str, Enum):
+    """
+    Enum for the type of billing transaction.
+    """
+    NEW_USER_CREDIT = "NEW_USER_CREDIT"
+    FINE_TUNING_JOB = "FINE_TUNING_JOB"
+    STRIPE_CHECKOUT = "STRIPE_CHECKOUT"

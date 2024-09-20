@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.common import paginate_query
 from app.core.config_manager import config
-from app.core.constants import UsageUnit, ServiceName
+from app.core.constants import UsageUnit, ServiceName, BillingTransactionType
 from app.core.exceptions import ServerError, BadRequestError
 from app.core.utils import setup_logger
 from app.models.billing_credit import BillingCredit
@@ -54,7 +54,8 @@ async def create_stripe_checkout_session(
         raise ServerError(f"Error creating Stripe checkout session: {str(e)}", logger)
 
 
-async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: int):
+async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: float,
+                              transaction_id: str, transaction_type: BillingTransactionType) -> None:
     """
     Add credits to a user's account and log the addition in the billing_credits table.
     """
@@ -72,7 +73,9 @@ async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: i
         await db.execute(
             insert(BillingCredit).values(
                 user_id=user.id,
-                credits=Decimal(amount_dollars)
+                credits=Decimal(amount_dollars),
+                transaction_id=transaction_id,
+                transaction_type=transaction_type
             )
         )
         await db.commit()
@@ -82,9 +85,10 @@ async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: i
         raise ServerError(f"Error adding credits to user {user_id}: {str(e)}", logger)
 
 
-async def deduct_credits(request: CreditDeductRequest, db: AsyncSession) -> bool:
+async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: AsyncSession) -> bool:
     """
     Check if a user has enough credits for a job, deduct them if so, and log the usage.
+    TODO: Make this function more generic to handle other services and units in the future.
     """
     # Get the user from the database
     user = (await db.execute(select(User).where(User.id == request.user_id))).scalar_one_or_none()
@@ -97,12 +101,14 @@ async def deduct_credits(request: CreditDeductRequest, db: AsyncSession) -> bool
         FineTuningJob.user_id == request.user_id))).scalar_one_or_none()
     if not job:
         raise BadRequestError(f"Fine-tuning job not found: {request.fine_tuning_job_id}")
+
     # Check if the job is already deducted
-    usage = (await db.execute(select(Usage).where(
-        Usage.fine_tuning_job_id == request.fine_tuning_job_id,
-        Usage.user_id == request.user_id))).scalar_one_or_none()
-    if usage:
-        logger.info(f"Fine-tuning job {request.fine_tuning_job_id} already deductted")
+    billing_credit = (await db.execute(select(BillingCredit).where(
+        BillingCredit.user_id == request.user_id,
+        BillingCredit.transaction_id == str(job.id),
+        BillingCredit.transaction_type == BillingTransactionType.FINE_TUNING_JOB))).scalar_one_or_none()
+    if billing_credit:
+        logger.info(f"Fine-tuning job {request.fine_tuning_job_id} already deducted")
         # We already charged the user for this job, allow the request to proceed
         return True
 
@@ -117,7 +123,9 @@ async def deduct_credits(request: CreditDeductRequest, db: AsyncSession) -> bool
             await db.execute(
                 insert(BillingCredit).values(
                     user_id=user.id,
-                    credits=-required_credits
+                    credits=-required_credits,
+                    transaction_id=str(job.id),
+                    transaction_type=BillingTransactionType.FINE_TUNING_JOB
                 )
             )
             # Log the usage in the usage table
@@ -128,7 +136,7 @@ async def deduct_credits(request: CreditDeductRequest, db: AsyncSession) -> bool
                     usage_unit=request.usage_unit,
                     cost=required_credits,
                     service_name=request.service_name,
-                    fine_tuning_job_id=request.fine_tuning_job_id
+                    fine_tuning_job_id=str(job.id)
                 )
             )
             await db.commit()

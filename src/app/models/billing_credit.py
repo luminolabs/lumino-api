@@ -1,7 +1,8 @@
-from sqlalchemy import Column, DateTime, UUID, ForeignKey, Numeric, Index
+from sqlalchemy import Column, DateTime, UUID, ForeignKey, Numeric, Index, String, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
+from app.core.constants import BillingTransactionType
 from app.core.database import Base
 
 
@@ -24,10 +25,18 @@ class BillingCredit(Base):
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
-    credits = Column(Numeric(precision=12, scale=3), nullable=False)
+    credits = Column(Numeric(precision=6, scale=2), nullable=False)
+    transaction_id = Column(String(255), nullable=False)
+    transaction_type = Column(Enum(BillingTransactionType), nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="billing_credits")
+
+    # Constraints
+    __table_args__ = (
+        UniqueConstraint("user_id", "transaction_id", "transaction_type",
+                         name="uq_billing_credit_user_transaction"),
+    )
 
     def __repr__(self) -> str:
         return f"<BillingCredit(id={self.id}, user_id={self.user_id}, credits={self.credits})>"

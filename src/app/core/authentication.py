@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import UUID
 
 from fastapi import Depends, Header, Request
 from sqlalchemy import select
@@ -7,12 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config_manager import config
-from app.core.constants import UserStatus
-from app.core.exceptions import InvalidApiKeyError, UnauthorizedError, InvalidUserSessionError, ForbiddenError
+from app.core.constants import UserStatus, BillingTransactionType
 from app.core.database import get_db
+from app.core.exceptions import InvalidApiKeyError, UnauthorizedError, InvalidUserSessionError, ForbiddenError
+from app.core.utils import setup_logger
 from app.models.api_key import ApiKey
 from app.models.user import User
-from app.core.utils import setup_logger
+from app.services.billing import add_credits_to_user
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
@@ -121,10 +121,14 @@ async def create_user(db: AsyncSession, name: str, email: str):
     Returns:
         UserResponse: The newly created user.
     """
-    # Create the new user
-    db_user = User(email=email, name=name, credits_balance=config.new_user_credits)
+    # Create the new user and give them some credits
+    db_user = User(email=email, name=name)
     db.add(db_user)
     await db.commit()
+    if config.new_user_credits:
+        await add_credits_to_user(
+            db, db_user.id, float(config.new_user_credits),
+            "NEW_USER_CREDIT", BillingTransactionType.NEW_USER_CREDIT)
     # Log and return the user
     logger.info(f"Successfully created new user with ID: {db_user.id}")
     return db_user
