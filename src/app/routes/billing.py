@@ -99,11 +99,11 @@ async def stripe_success_callback(
             payload, sig_header, config.stripe_webhook_secret
         )
     except ValueError as e:
-        # Invalid payload
-        raise e
+        logger.error(f"Invalid Stripe payload: {str(e)}")
+        return {"status": "error"}
     except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        raise e
+        logger.error(f"Invalid Stripe signature: {str(e)}")
+        return {"status": "error"}
 
     # Handle the event
     if event["type"] == "checkout.session.completed":
