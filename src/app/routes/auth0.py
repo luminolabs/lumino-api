@@ -88,7 +88,7 @@ async def auth0_callback(request: Request, db: AsyncSession = Depends(get_db)) -
     }
 
     logger.info(f"User {email} successfully authenticated")
-    return RedirectResponse(url=request.base_url)
+    return RedirectResponse(url=config.ui_url)
 
 
 @router.get("/auth0/logout")
@@ -109,7 +109,7 @@ async def logout(request: Request, response: Response) -> RedirectResponse:
 
     logout_url = f"https://{config.auth0_domain}/v2/logout?" + urlencode(
         {
-            "returnTo": request.base_url,
+            "returnTo": config.ui_url,
             "client_id": config.auth0_client_id,
         },
         quote_via=quote_plus,
