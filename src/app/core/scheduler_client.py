@@ -79,6 +79,11 @@ async def start_fine_tuning_job(job_id: UUID):
         "user_id": str(job.user_id),
         "keep_alive": False,
     }
+    # Add environment name to payload if it's not "local"
+    # This allows the pipeline to override the dev environment settings
+    # This will not be necessary once we have a separate dev and prod environments
+    if config.env_name in ("dev", "prod"):
+        payload["args"]["override_env"] = config.env_name
 
     try:
         # Send request to Scheduler API
