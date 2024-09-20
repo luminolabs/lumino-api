@@ -11,6 +11,7 @@ cd /lumino-api
 # Inputs
 COMPOSE_OPTS=$1  # Additional options to pass to docker compose
 
+# Constants
 LOCAL_ENV="local"
 PROJECT_ID="neat-airport-407301"
 SECRET_NAME_PREFIX="lumino-api-config"
