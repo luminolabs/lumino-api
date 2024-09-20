@@ -45,3 +45,4 @@ stripe_webhook_secret:  # Set this in your .env file: `CAPI_STRIPE_WEBHOOK_SECRE
 
 # Billing
 fine_tuning_job_min_credits: 10  # Minimum credits required to run a fine-tuning job
+new_user_credits: 5  # Credits given to a new user

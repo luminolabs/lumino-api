@@ -122,7 +122,7 @@ async def create_user(db: AsyncSession, name: str, email: str):
         UserResponse: The newly created user.
     """
     # Create the new user
-    db_user = User(email=email, name=name)
+    db_user = User(email=email, name=name, credits_balance=config.new_user_credits)
     db.add(db_user)
     await db.commit()
     # Log and return the user

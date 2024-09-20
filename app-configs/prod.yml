@@ -1,5 +1,3 @@
-# Scheduler Zen URL
 scheduler_zen_url: http://scheduler-zen:5200
-
-# UI
 ui_url: https://app.luminolabs.ai
+new_user_credits: 5
