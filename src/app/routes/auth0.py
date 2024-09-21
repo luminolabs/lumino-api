@@ -71,13 +71,21 @@ async def auth0_callback(request: Request, db: AsyncSession = Depends(get_db)) -
 
     email = user_info['email']
     name = user_info['name']
+    auth0_user_id = user_info['sub']
+    email_verified = user_info['email_verified']
+
 
     # Check if user exists, if not, create a new user
     db_user = await get_user_by_email(db, email)
     if not db_user:
         logger.info(f"Creating new user with email: {email}")
-        db_user = await create_user(db, name, email)
+        db_user = await create_user(db, name, email, auth0_user_id, email_verified)
     else:
+        # Update email verification status if it has changed
+        if db_user.email_verified != email_verified:
+            db_user.email_verified = email_verified
+            await db.commit()
+            logger.info(f"Updated email verification status for user: {email}")
         logger.info(f"Existing user logged in with email: {email}")
 
     # Store user information in the session

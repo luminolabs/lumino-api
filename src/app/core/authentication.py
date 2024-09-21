@@ -110,7 +110,8 @@ async def get_current_active_user(
     return user
 
 
-async def create_user(db: AsyncSession, name: str, email: str):
+async def create_user(db: AsyncSession, name: str, email: str,
+                      auth0_user_id: str, email_verified: bool) -> User:
     """
     Create a new user.
 
@@ -118,11 +119,13 @@ async def create_user(db: AsyncSession, name: str, email: str):
         db (AsyncSession): The database session.
         name (str): The user's name.
         email (str): The user's email.
+        auth0_user_id (str): The Auth0 user ID.
+        email_verified (bool): Whether the user's email is verified.
     Returns:
         UserResponse: The newly created user.
     """
     # Create the new user and give them some credits
-    db_user = User(email=email, name=name)
+    db_user = User(email=email, name=name, auth0_user_id=auth0_user_id, email_verified=email_verified)
     db.add(db_user)
     await db.commit()
     if config.new_user_credits:

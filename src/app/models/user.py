@@ -19,6 +19,8 @@ class User(Base):
         status (UserStatus): The current status of the user.
         name (str): The name of the user.
         email (str): The email address of the user.
+        auth0_user_id (str): The Auth0 user ID.
+        email_verified (bool): Whether the user's email is verified or not.
         is_admin (bool): Whether the user is an admin or not.
         credits_balance (Numeric): The current credit balance of the user.
 
@@ -39,6 +41,8 @@ class User(Base):
     status = Column(Enum(UserStatus), nullable=False, default=UserStatus.ACTIVE)
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
+    auth0_user_id = Column(String(255), nullable=False)
+    email_verified = Column(Boolean, nullable=False, default=False)
     is_admin = Column(Boolean, default=False, nullable=False)
     credits_balance = Column(Numeric(precision=6, scale=2), nullable=False, default=0)
 

@@ -41,6 +41,11 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
         BaseModelNotFoundError: If the specified base model is not found.
         DatasetNotFoundError: If the specified dataset is not found.
     """
+    # Check if user has verified their email
+    if not user.email_verified:
+        raise BadRequestError(f"User {user.id} has not verified their email - "
+                              f"please verify your email logout and login again", logger)
+
     # Check if the user has minimum required credits
     if user.credits_balance < config.fine_tuning_job_min_credits:
         raise BadRequestError(f"User {user.id} does not have enough credits "
