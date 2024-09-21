@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="LLM Fine-tuning API", lifespan=lifespan)
 
 # Add SessionMiddleware for user authentication
-app.add_middleware(SessionMiddleware, secret_key=config.app_secret_key)
+app.add_middleware(SessionMiddleware, secret_key=config.app_secret_key, domain=config.base_domain_name)
 
 # Add exception handlers
 app.add_exception_handler(AppException, app_exception_handler)
