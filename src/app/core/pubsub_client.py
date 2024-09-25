@@ -15,14 +15,15 @@ from app.services.fine_tuned_model import create_fine_tuned_model
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
-async def _handle_job_artifacts(db: AsyncSession, job_id: str, user_id: str, data: dict):
+async def _handle_job_artifacts(db: AsyncSession, job_id: str, user_id: str, data: dict) -> bool:
     """Handle job artifacts received from Pub/Sub."""
     artifacts = {
         "base_url": data["base_url"],
         "weight_files": data["weight_files"],
         "other_files": data["other_files"]
     }
-    await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
+    model = await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
+    return model is not None
 
 
 class PubSubClient:
@@ -72,12 +73,12 @@ class PubSubClient:
 
             async with AsyncSessionLocal() as db:
                 if action == 'job_artifacts':
-                    await _handle_job_artifacts(db, job_id, user_id, data)
+                    ack = await _handle_job_artifacts(db, job_id, user_id, data)
                 else:
                     logger.warning(f"Received unexpected action: {action}")
 
-
-            message.ack()
+            if ack:
+                message.ack()
 
     async def listen_for_messages(self, subscription_name: str) -> None:
         """

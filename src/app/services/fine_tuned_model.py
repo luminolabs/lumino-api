@@ -12,7 +12,8 @@ from app.models.fine_tuning_job import FineTuningJob
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
-async def create_fine_tuned_model(db: AsyncSession, job_id: UUID, user_id: UUID, artifacts: dict):
+async def create_fine_tuned_model(db: AsyncSession,
+                                  job_id: UUID, user_id: UUID, artifacts: dict) -> FineTunedModel | None:
     """Update the fine_tuned_models table with the new artifacts."""
     try:
         # First, confirm that the FineTuningJob exists
@@ -21,7 +22,7 @@ async def create_fine_tuned_model(db: AsyncSession, job_id: UUID, user_id: UUID,
         job_result = await db.execute(job_query)
         job = job_result.scalar_one_or_none()
         if not job:
-            logger.error(f"No FineTuningJob found for job_id: {job_id} and user_id: {user_id}")
+            logger.warning(f"No FineTuningJob found for job_id: {job_id} and user_id: {user_id}")
             return
 
         # Check if a FineTunedModel already exists for this job
@@ -44,7 +45,7 @@ async def create_fine_tuned_model(db: AsyncSession, job_id: UUID, user_id: UUID,
         await db.commit()
         logger.info(f"Successfully created FineTunedModel: {model.id} "
                     f"for job_id: {job_id} and user_id: {user_id}")
-
+        return model
     except Exception as e:
         logger.error(f"Error updating FineTunedModel: {str(e)}; job_id: {job_id}; user_id: {user_id}")
         await db.rollback()
