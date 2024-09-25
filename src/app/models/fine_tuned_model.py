@@ -15,7 +15,6 @@ class FineTunedModel(Base):
         user_id (UUID): The ID of the user who created this fine-tuned model.
         fine_tuning_job_id (UUID): The ID of the fine-tuning job that created this model.
         name (str): The name of the fine-tuned model.
-        description (str): A description of the fine-tuned model.
         artifacts (JSON): Information about model artifacts, stored as JSON.
 
     Relationships:
@@ -30,7 +29,6 @@ class FineTunedModel(Base):
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
     fine_tuning_job_id = Column(UUID, ForeignKey("fine_tuning_jobs.id"), nullable=False)
     name = Column(String(255), nullable=False)
-    description = Column(String, nullable=True)
     artifacts = Column(JSON, nullable=False)
 
     # Relationships

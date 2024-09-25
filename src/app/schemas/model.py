@@ -28,6 +28,5 @@ class FineTunedModelResponse(BaseModel):
     created_at: datetime = Field(..., description="The timestamp when the fine-tuned model was created")
     fine_tuning_job_name: str = Field(..., description="The name of the associated fine-tuning job")
     name: str = Field(..., description="The name of the fine-tuned model")
-    description: str | None = Field(None, description="A description of the fine-tuned model")
     artifacts: Dict[str, Any] | None = Field(None, description="Additional artifacts associated with the fine-tuned model")
     model_config = ConfigDict(from_attributes=True)
