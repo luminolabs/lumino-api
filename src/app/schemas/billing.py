@@ -30,4 +30,6 @@ class CreditHistoryResponse(BaseModel):
     id: UUID = Field(..., description="The unique identifier for the credit record")
     created_at: datetime = Field(..., description="The timestamp when the credit record was created")
     credits: Decimal = Field(..., description="The amount of credits added or deducted")
+    transaction_id: str = Field(..., description="The transaction ID")
+    transaction_type: str = Field(..., description="The type of transaction")
     model_config = ConfigDict(from_attributes=True)
