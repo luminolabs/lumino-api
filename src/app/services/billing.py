@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 
 import stripe
+from asyncpg import UniqueViolationError
 from sqlalchemy import select, insert, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -80,6 +81,10 @@ async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: f
         )
         await db.commit()
         logger.info(f"Added {amount_dollars} credits to user {user_id}")
+    except UniqueViolationError:
+        # We already added credits for this transaction, log warning and return
+        logger.warning(f"Transaction ID already exists: {transaction_id}")
+        return
     except Exception as e:
         await db.rollback()
         raise ServerError(f"Error adding credits to user {user_id}: {str(e)}", logger)

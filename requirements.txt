@@ -10,6 +10,7 @@ passlib[bcrypt]
 python-multipart
 pyyaml
 gcloud-aio-storage
+google-cloud-pubsub
 aiohttp
 asyncpg
 greenlet

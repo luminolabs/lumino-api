@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 import stripe
@@ -20,6 +21,7 @@ from app.core.exceptions import (
     sqlalchemy_exception_handler,
     generic_exception_handler,
 )
+from app.core.pubsub_client import PubSubClient
 from app.routes import users, api_keys, datasets, fine_tuning, models, usage, auth0, billing
 from app.tasks.api_key_cleanup import cleanup_expired_api_keys
 from app.tasks.job_status_updater import update_job_statuses
@@ -44,6 +46,12 @@ async def lifespan(app: FastAPI):
         background_task_scheduler.add_job(update_job_statuses, 'interval', seconds=10)
     # Start the background scheduler
     background_task_scheduler.start()
+    # Initialize the PubSub client
+    pubsub = PubSubClient(config.gcp_project)
+    asyncio.create_task(pubsub.start())
+    # Listen for job metadata messages
+    asyncio.create_task(
+        pubsub.listen_for_messages(config.jobs_meta_subscription))
 
     yield
 
@@ -51,6 +59,8 @@ async def lifespan(app: FastAPI):
     # --------
     # Stop the background scheduler
     background_task_scheduler.shutdown()
+    # Stop the PubSub client
+    await pubsub.stop()
 
 app = FastAPI(title="LLM Fine-tuning API", lifespan=lifespan)
 
