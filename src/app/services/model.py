@@ -37,7 +37,7 @@ async def get_base_models(
         tuple[list[BaseModelResponse], Pagination]: A tuple containing the list of base models and pagination info.
     """
     # Construct the query
-    query = select(BaseModel)
+    query = select(BaseModel).order_by(BaseModel.name.desc())
     # Paginate the query
     models, pagination = await paginate_query(db, query, page, items_per_page)
     # Create response objects
@@ -98,7 +98,7 @@ async def get_fine_tuned_models(
     query = (
         select(FineTunedModel, FineTuningJob.name.label('job_name'))
         .join(FineTuningJob, FineTunedModel.fine_tuning_job_id == FineTuningJob.id)
-        .where(FineTunedModel.user_id == user_id)
+        .where(FineTunedModel.user_id == user_id).order_by(FineTunedModel.created_at.desc())
     )
     # Paginate the query
     results, pagination = await paginate_query(db, query, page, items_per_page)

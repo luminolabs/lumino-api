@@ -1,10 +1,10 @@
-from datetime import datetime
 from typing import Dict, Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.core.constants import BaseModelStatus
+from app.schemas.common import DateTime
 
 
 class BaseModelResponse(BaseModel):
@@ -25,7 +25,7 @@ class FineTunedModelResponse(BaseModel):
     Schema for fine-tuned model response data.
     """
     id: UUID = Field(..., description="The unique identifier of the fine-tuned model")
-    created_at: datetime = Field(..., description="The timestamp when the fine-tuned model was created")
+    created_at: DateTime = Field(..., description="The timestamp when the fine-tuned model was created")
     fine_tuning_job_name: str = Field(..., description="The name of the associated fine-tuning job")
     name: str = Field(..., description="The name of the fine-tuned model")
     artifacts: Dict[str, Any] | None = Field(None, description="Additional artifacts associated with the fine-tuned model")

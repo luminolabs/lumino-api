@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 from app.core.constants import ApiKeyStatus
 from app.core.exceptions import BadRequestError
-from app.schemas.common import NameField
+from app.schemas.common import NameField, DateTime
 
 
 def _expiration_must_be_future(v: datetime) -> datetime:
@@ -19,7 +19,7 @@ class ApiKeyCreate(BaseModel):
     Schema for creating a new API key.
     """
     name: str = NameField(..., description="The name of the API key")
-    expires_at: datetime = Field(..., description="The expiration date and time of the API key")
+    expires_at: DateTime = Field(..., description="The expiration date and time of the API key")
 
     @field_validator('expires_at')
     def expiration_must_be_future(cls, v: datetime) -> datetime:
@@ -43,9 +43,9 @@ class ApiKeyResponse(BaseModel):
     Schema for API key response data.
     """
     id: UUID = Field(..., description="The unique identifier of the API key")
-    created_at: datetime = Field(..., description="The creation date and time of the API key")
+    created_at: DateTime = Field(..., description="The creation date and time of the API key")
     last_used_at: datetime | None = Field(None, description="The last usage date and time of the API key")
-    expires_at: datetime = Field(..., description="The expiration date and time of the API key")
+    expires_at: DateTime = Field(..., description="The expiration date and time of the API key")
     status: ApiKeyStatus = Field(..., description="The current status of the API key")
     name: str = Field(..., description="The name of the API key")
     prefix: str = Field(..., description="The prefix of the API key (first few characters)")

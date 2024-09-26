@@ -1,11 +1,10 @@
-from datetime import datetime
 from typing import Dict, Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.core.constants import FineTuningJobStatus
-from app.schemas.common import NameField
+from app.schemas.common import NameField, DateTime
 
 
 class FineTuningJobCreate(BaseModel):
@@ -23,8 +22,8 @@ class FineTuningJobResponse(BaseModel):
     Schema for fine-tuning job response data.
     """
     id: UUID = Field(..., description="The unique identifier of the fine-tuning job")
-    created_at: datetime = Field(..., description="The creation date and time of the fine-tuning job")
-    updated_at: datetime = Field(..., description="The last update date and time of the fine-tuning job")
+    created_at: DateTime = Field(..., description="The creation date and time of the fine-tuning job")
+    updated_at: DateTime = Field(..., description="The last update date and time of the fine-tuning job")
     base_model_name: str = Field(..., description="The name of the base model used for fine-tuning")
     dataset_name: str = Field(..., description="The name of the dataset used for fine-tuning")
     status: FineTuningJobStatus = Field(..., description="The current status of the fine-tuning job")

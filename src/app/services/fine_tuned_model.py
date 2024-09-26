@@ -26,7 +26,11 @@ async def create_fine_tuned_model(db: AsyncSession,
             return
 
         # Check if a FineTunedModel already exists for this job
-        model_query = select(FineTunedModel).where(FineTunedModel.fine_tuning_job_id == job_id)
+        model_query = (
+            select(FineTunedModel)
+            .where(FineTunedModel.fine_tuning_job_id == job_id)
+            .order_by(FineTunedModel.created_at.desc())
+        )
         model_result = await db.execute(model_query)
         model = model_result.scalar_one_or_none()
         if model:

@@ -9,7 +9,7 @@ from app.core.constants import FineTuningJobStatus
 from app.core.exceptions import (
     FineTuningJobNotFoundError,
     BaseModelNotFoundError,
-    DatasetNotFoundError, FineTuningJobAlreadyExistsError, BadRequestError
+    DatasetNotFoundError, FineTuningJobAlreadyExistsError, BadRequestError, ForbiddenError
 )
 from app.core.scheduler_client import start_fine_tuning_job, stop_fine_tuning_job
 from app.core.utils import setup_logger
@@ -43,13 +43,13 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
     """
     # Check if user has verified their email
     if not user.email_verified:
-        raise BadRequestError(f"User {user.id} has not verified their email - "
+        raise ForbiddenError(f"User {user.id} has not verified their email - "
                               f"please verify your email, logout, and login again", logger)
 
     # Check if the user has minimum required credits
     if user.credits_balance < config.fine_tuning_job_min_credits:
-        raise BadRequestError(f"User {user.id} does not have enough credits "
-                              f"to start a fine tuning job", logger)
+        raise ForbiddenError(f"User {user.id} does not have enough credits "
+                              f"to start a fine tuning job; credits needed: ${config.fine_tuning_job_min_credits}", logger)
     
     # Check if base model exists
     base_model = await db.execute(select(BaseModel).where(BaseModel.name == job.base_model_name))
@@ -124,7 +124,7 @@ async def get_fine_tuning_jobs(
         select(FineTuningJob, BaseModel.name.label('base_model_name'), Dataset.name.label('dataset_name'))
         .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
         .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
-        .where(FineTuningJob.user_id == user_id)
+        .where(FineTuningJob.user_id == user_id).order_by(FineTuningJob.created_at.desc())
     )
     # Paginate the query
     jobs, pagination = await paginate_query(db, query, page, items_per_page)

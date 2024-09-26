@@ -94,6 +94,7 @@ async def get_usage_records(
         select(Usage, FineTuningJob.name.label('fine_tuning_job_name'))
         .join(FineTuningJob, Usage.fine_tuning_job_id == FineTuningJob.id)
         .where(Usage.user_id == user_id)
+        .order_by(Usage.created_at.desc())
     )
     if start_date:
         query = query.where(func.date(Usage.created_at) >= start_date)
