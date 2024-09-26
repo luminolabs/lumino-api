@@ -120,7 +120,7 @@ async def get_datasets(
         tuple[list[DatasetResponse], Pagination]: A tuple containing the list of datasets and pagination info.
     """
     # Construct the query
-    query = select(Dataset).where(Dataset.user_id == user_id)
+    query = select(Dataset).where(Dataset.user_id == user_id).order_by(Dataset.created_at.desc())
     # Paginate the query
     datasets, pagination = await paginate_query(db, query, page, items_per_page)
     # Create response objects

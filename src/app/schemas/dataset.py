@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 from fastapi import UploadFile
@@ -6,7 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 from app.core.constants import DatasetStatus
 from app.core.exceptions import BadRequestError
-from app.schemas.common import NameField
+from app.schemas.common import NameField, DateTime
 
 
 class DatasetCreate(BaseModel):
@@ -29,8 +28,8 @@ class DatasetResponse(BaseModel):
     Schema for dataset response data.
     """
     id: UUID = Field(..., description="The unique identifier of the dataset")
-    created_at: datetime = Field(..., description="The timestamp when the dataset was created")
-    updated_at: datetime = Field(..., description="The timestamp when the dataset was last updated")
+    created_at: DateTime = Field(..., description="The timestamp when the dataset was created")
+    updated_at: DateTime = Field(..., description="The timestamp when the dataset was last updated")
     status: DatasetStatus = Field(..., description="The current status of the dataset")
     name: str = Field(..., description="The name of the dataset")
     description: str | None = Field(None, description="The description of the dataset, if any")
