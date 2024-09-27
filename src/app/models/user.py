@@ -42,6 +42,8 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
     auth0_user_id = Column(String(255), nullable=False)
+    stripe_customer_id = Column(String(255), nullable=True)
+    stripe_payment_method_id = Column(String(255), nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     is_admin = Column(Boolean, default=False, nullable=False)
     credits_balance = Column(Numeric(precision=6, scale=2), nullable=False, default=0)

@@ -6,10 +6,11 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from app.core.authentication import create_user, get_user_by_email
+from app.core.authentication import get_user_by_email
 from app.core.config_manager import config
 from app.core.database import get_db
 from app.core.utils import setup_logger
+from app.services.user import create_user
 
 # Set up API router
 router = APIRouter(tags=["Auth0"])

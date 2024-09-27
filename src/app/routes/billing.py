@@ -1,6 +1,4 @@
-from decimal import Decimal
 from typing import Dict, Union, List
-from uuid import UUID
 
 import stripe
 from fastapi import APIRouter, Depends
@@ -8,18 +6,18 @@ from fastapi.params import Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
-from urllib3 import request
 
-from app.core.authentication import get_current_active_user, admin_required
+from app.core.authentication import get_current_active_user, admin_required, get_user_by_stripe_customer_id
 from app.core.common import parse_date
 from app.core.config_manager import config
 from app.core.constants import BillingTransactionType
 from app.core.database import get_db
+from app.core.stripe_client import create_stripe_checkout_session, create_stripe_billing_portal_session
 from app.core.utils import setup_logger
 from app.models.user import User
 from app.schemas.billing import CreditDeductRequest, CreditDeductResponse, CreditHistoryResponse
 from app.schemas.common import Pagination
-from app.services.billing import create_stripe_checkout_session, deduct_credits_for_fine_tuning_job, add_credits_to_user, get_credit_history
+from app.services.billing import deduct_credits_for_fine_tuning_job, add_credits_to_user, get_credit_history
 
 # Set up API router
 router = APIRouter(tags=["Billing"])
@@ -38,7 +36,7 @@ async def deduct_and_approve_credits(
     """
     Check if user has enough credits for a job and commit them if so (Internal endpoint).
     """
-    has_enough_credits = await deduct_credits_for_fine_tuning_job(request, db)
+    has_enough_credits = await deduct_credits_for_fine_tuning_job(request, db, retry=True)
     return CreditDeductResponse(has_enough_credits=has_enough_credits)
 
 
@@ -66,7 +64,7 @@ async def get_credit_history_route(
 
 
 @router.get("/billing/credits-add")
-async def stripe_redirect(
+async def stripe_credits_add(
         request: Request,
         amount_dollars: int = Query(..., description="The amount of credits to add, in dollars"),
         current_user: User = Depends(get_current_active_user),
@@ -74,11 +72,30 @@ async def stripe_redirect(
     """
     Redirect to Stripe for adding credits.
     """
-    checkout_session = await create_stripe_checkout_session(
-        current_user.id, amount_dollars,
+    # Create a Stripe checkout session
+    checkout_session = create_stripe_checkout_session(
+        current_user, amount_dollars,
         config.ui_url + config.ui_url_settings + "?stripe_success=1" if not config.use_api_ui else request.base_url,
         config.ui_url + config.ui_url_settings + "?stripe_error=user_cancelled" if not config.use_api_ui else request.base_url)
+    # Redirect to the checkout session URL
     return RedirectResponse(url=checkout_session.url, status_code=302)
+
+
+@router.get("/billing/payment-method-add")
+async def stripe_payment_method_add(
+        request: Request,
+        current_user: User = Depends(get_current_active_user),
+):
+    """
+    Redirect to Stripe for adding a payment method.
+    """
+    # Create a Stripe billing portal session
+    billing_portal_session = create_stripe_billing_portal_session(
+        current_user,
+        config.ui_url + config.ui_url_settings + "?stripe_success=2" if not config.use_api_ui else request.base_url,
+    )
+    # Redirect to the checkout session URL
+    return RedirectResponse(url=billing_portal_session.url, status_code=302)
 
 
 @router.post("/billing/stripe-success-callback")
@@ -105,16 +122,28 @@ async def stripe_success_callback(
         logger.error(f"Invalid Stripe signature: {str(e)}")
         return {"status": "error"}
 
+    logger.info(event)
     # Handle the event
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        user_id = UUID(session["client_reference_id"])
-        amount_dollars = session["amount_total"] / 100  # Convert cents to dollars
-        transaction_id = session["payment_intent"]
+    if event["type"] == "charge.succeeded":
+        # Handle successful charges
+        data = event["data"]["object"]
+        stripe_customer_id = data["customer"]
+        user = await get_user_by_stripe_customer_id(db, stripe_customer_id)
+        amount_dollars = data["amount_captured"] / 100  # Convert cents to dollars
+        transaction_id = data["id"]
         # Add credits to user's account
-        await add_credits_to_user(db, user_id, amount_dollars,
+        await add_credits_to_user(db, user, amount_dollars,
                                   transaction_id, BillingTransactionType.STRIPE_CHECKOUT)
-        logger.info(f"Added {amount_dollars} credits to user {user_id}")
+        logger.info(f"Handled successful charge for user {user.id} with amount {amount_dollars}")
+    elif event["type"] == "customer.updated":
+        # Handle stripe customer record updates
+        data = event["data"]["object"]
+        stripe_customer_id = data["id"]
+        user = await get_user_by_stripe_customer_id(db, stripe_customer_id)
+        # Handle default payment method updates
+        user.stripe_payment_method_id = data["invoice_settings"]["default_payment_method"]
+        await db.commit()
+        logger.info(f"Handled customer update for user {user.id}")
 
     # Return success to Stripe
     return {"status": "success"}
