@@ -1,8 +1,8 @@
+import asyncio
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
-import stripe
 from asyncpg import UniqueViolationError
 from sqlalchemy import select, insert, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from app.core.common import paginate_query
 from app.core.config_manager import config
 from app.core.constants import UsageUnit, ServiceName, BillingTransactionType
 from app.core.exceptions import ServerError, BadRequestError
+from app.core.stripe_client import stripe_charge_offline
 from app.core.utils import setup_logger
 from app.models.billing_credit import BillingCredit
 from app.models.fine_tuning_job import FineTuningJob
@@ -23,49 +24,15 @@ from app.schemas.common import Pagination
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
-async def create_stripe_checkout_session(
-        user_id: UUID, amount_dollars: int,
-        success_url: str,
-        cancel_url: str
-) -> stripe.checkout.Session:
-    """
-    Create a Stripe Checkout Session for adding credits.
-    """
-    try:
-        # Create the Checkout Session
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': 'Purchase Credits',
-                    },
-                    'unit_amount': amount_dollars * 100,  # Convert dollars to cents
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url=success_url,
-            cancel_url=cancel_url,
-            client_reference_id=user_id,
-        )
-        return session
-    except Exception as e:
-        raise ServerError(f"Error creating Stripe checkout session: {str(e)}", logger)
-
-
-async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: float,
+async def add_credits_to_user(db: AsyncSession, user: User, amount_dollars: float,
                               transaction_id: str, transaction_type: BillingTransactionType) -> None:
     """
     Add credits to a user's account and log the addition in the billing_credits table.
     """
     try:
-        # Get the user from the database
-        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
         # If user not found, log error and return
         if not user:
-            logger.error(f"User not found: {user_id}")
+            logger.error(f"User not found: {user.id}")
             return
 
         # Add credits to user's balance (this will commit to the users table)
@@ -80,17 +47,18 @@ async def add_credits_to_user(db: AsyncSession, user_id: UUID, amount_dollars: f
             )
         )
         await db.commit()
-        logger.info(f"Added {amount_dollars} credits to user {user_id}")
+        logger.info(f"Added {amount_dollars} credits to user {user.id}")
     except UniqueViolationError:
         # We already added credits for this transaction, log warning and return
         logger.warning(f"Transaction ID already exists: {transaction_id}")
         return
     except Exception as e:
         await db.rollback()
-        raise ServerError(f"Error adding credits to user {user_id}: {str(e)}", logger)
+        raise ServerError(f"Error adding credits to user {user.id}: {str(e)}", logger)
 
 
-async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: AsyncSession) -> bool:
+async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: AsyncSession,
+                                             retry: bool = False) -> bool:
     """
     Check if a user has enough credits for a job, deduct them if so, and log the usage.
     TODO: Make this function more generic to handle other services and units in the future.
@@ -117,13 +85,13 @@ async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: A
         # We already charged the user for this job, allow the request to proceed
         return True
 
-    try:
-        # Calculate the required credits based on usage amount, unit, and service
-        required_credits = calculate_required_credits(request.usage_amount, request.usage_unit, request.service_name)
+    # Calculate the required credits based on usage amount, unit, and service
+    required_credits = calculate_required_credits(request.usage_amount, request.usage_unit, request.service_name)
 
-        if user.credits_balance >= required_credits:
-            # Subtract credits from user's balance (this will deduct to the users table)
-            user.credits_balance -= required_credits
+    if user.credits_balance >= required_credits:
+        # Subtract credits from user's balance (this will deduct to the users table)
+        user.credits_balance -= required_credits
+        try:
             # Log the credit deduction in billing_credits table
             await db.execute(
                 insert(BillingCredit).values(
@@ -145,15 +113,29 @@ async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: A
                 )
             )
             await db.commit()
-            logger.info(f"Deducted {required_credits} credits for user {request.user_id}")
-            return True
-        else:
-            logger.info(f"Insufficient credits for user {request.user_id}. Required: {required_credits}, "
-                        f"Available: {user.credits_balance}")
-            return False
-    except Exception as e:
-        await db.rollback()
-        raise ServerError(f"Error deducting credits for user {request.user_id}: {str(e)}", logger)
+        except Exception as e:
+            await db.rollback()
+            raise ServerError(f"Error deducting credits for user {request.user_id}: {str(e)}", logger)
+        logger.info(f"Deducted {required_credits} credits for user {request.user_id}")
+        return True
+    elif retry:
+        # If user doesn't have enough credits, charge them offline
+        credits_to_charge = required_credits - user.credits_balance
+        stripe_charge_offline(user, float(credits_to_charge))
+
+        logger.info(f"Insufficient credits for user {request.user_id}. "
+                    f"Re-charged user: {required_credits} credits,"
+                    f"Required: {required_credits}, "
+                    f"Available: {user.credits_balance}")
+
+        # Allow time to process the payment
+        await asyncio.sleep(20)
+        await db.refresh(user)  # Refresh the credits balance field
+        # Retry the deduction
+        return await deduct_credits_for_fine_tuning_job(request, db, retry=False)
+
+    # If we reach this point, the user doesn't have enough credits, and we couldn't charge them
+    return False
 
 
 def calculate_required_credits(usage_amount: int, usage_unit: str, service_name: str) -> Decimal:

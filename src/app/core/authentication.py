@@ -6,16 +6,44 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config_manager import config
-from app.core.constants import UserStatus, BillingTransactionType
+from app.core.constants import UserStatus
 from app.core.database import get_db
 from app.core.exceptions import InvalidApiKeyError, UnauthorizedError, InvalidUserSessionError, ForbiddenError
+from app.core.stripe_client import create_stripe_customer
 from app.core.utils import setup_logger
 from app.models.api_key import ApiKey
 from app.models.user import User
-from app.services.billing import add_credits_to_user
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
+
+
+async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
+    """
+    Retrieve a user by email.
+
+    Args:
+        db (AsyncSession): The database session.
+        email (str): The user's email address.
+    Returns:
+        User | None: The user with the given email address, or None if not found.
+    """
+    result = await db.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()
+
+
+async def get_user_by_stripe_customer_id(db: AsyncSession, stripe_customer_id: str) -> User | None:
+    """
+    Retrieve a user by Stripe customer ID.
+
+    Args:
+        db (AsyncSession): The database session.
+        stripe_customer_id (str): The user's Stripe customer ID.
+    Returns:
+        User | None: The user with the given Stripe customer ID, or None if not found.
+    """
+    result = await db.execute(select(User).where(User.stripe_customer_id == stripe_customer_id))
+    return result.scalar_one_or_none()
 
 
 # This is the scheme we'll use for authenticating users on our API
@@ -103,52 +131,14 @@ async def get_current_active_user(
         raise UnauthorizedError("No x_api_key header or user session found", logger)
     # Check if the API key and associated user are valid
     if api_key:
-        return await get_user_from_api_key(db, api_key)
+        user = await get_user_from_api_key(db, api_key)
     # Check if the user session is valid, user exists and is active
     if not user:
         raise InvalidUserSessionError("User session not found, or user not found, or inactive", logger)
+    # Create a Stripe customer if they don't have one
+    if not user.stripe_customer_id:
+        await create_stripe_customer(db, user)
     return user
-
-
-async def create_user(db: AsyncSession, name: str, email: str,
-                      auth0_user_id: str, email_verified: bool) -> User:
-    """
-    Create a new user.
-
-    Args:
-        db (AsyncSession): The database session.
-        name (str): The user's name.
-        email (str): The user's email.
-        auth0_user_id (str): The Auth0 user ID.
-        email_verified (bool): Whether the user's email is verified.
-    Returns:
-        UserResponse: The newly created user.
-    """
-    # Create the new user and give them some credits
-    db_user = User(email=email, name=name, auth0_user_id=auth0_user_id, email_verified=email_verified)
-    db.add(db_user)
-    await db.commit()
-    if config.new_user_credits:
-        await add_credits_to_user(
-            db, db_user.id, float(config.new_user_credits),
-            "NEW_USER_CREDIT", BillingTransactionType.NEW_USER_CREDIT)
-    # Log and return the user
-    logger.info(f"Successfully created new user with ID: {db_user.id}")
-    return db_user
-
-
-async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
-    """
-    Retrieve a user by email.
-
-    Args:
-        db (AsyncSession): The database session.
-        email (str): The user's email address.
-    Returns:
-        User | None: The user with the given email address, or None if not found.
-    """
-    result = await db.execute(select(User).where(User.email == email))
-    return result.scalar_one_or_none()
 
 
 def admin_required(user: User = Depends(get_current_active_user)):

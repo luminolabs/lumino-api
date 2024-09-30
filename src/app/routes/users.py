@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,4 +67,4 @@ async def deactivate_user_route(
     Raises:
         ForbiddenError: If the current user is not an admin.
     """
-    await deactivate_user(db, user_id)
+    await deactivate_user(db, UUID(user_id))
