@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from app.core.constants import FineTuningJobStatus
+from app.core.constants import FineTuningJobStatus, FineTuningJobType
 from app.schemas.common import NameField, DateTime
 
 
@@ -15,6 +15,7 @@ class FineTuningJobCreate(BaseModel):
     dataset_name: str = Field(..., description="The name of the dataset to use for fine-tuning")
     parameters: Dict[str, Any] = Field(..., description="The parameters for the fine-tuning job")
     name: str = NameField(..., description="The name of the fine-tuning job")
+    type: FineTuningJobType = Field(..., description="The type of fine-tuning job to run")
 
 
 class FineTuningJobResponse(BaseModel):

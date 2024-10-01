@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.common import paginate_query
 from app.core.config_manager import config
-from app.core.constants import FineTuningJobStatus
+from app.core.constants import FineTuningJobStatus, FineTuningJobType
 from app.core.exceptions import (
     FineTuningJobNotFoundError,
     BaseModelNotFoundError,
@@ -68,6 +68,14 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
     existing_job = existing_job.scalar_one_or_none()
     if existing_job:
         raise FineTuningJobAlreadyExistsError(f"Fine-tuning job with name {job.name} already exists for user: {user.id}", logger)
+
+    job.parameters['use_lora'] = False
+    job.parameters['use_qlora'] = False
+    if job.type == FineTuningJobType.LORA:
+        job.parameters['use_lora'] = True
+    elif job.type == FineTuningJobType.QLORA:
+        job.parameters['use_lora'] = True
+        job.parameters['use_qlora'] = True
 
     # Create the main fine-tuning job record
     db_job = FineTuningJob(

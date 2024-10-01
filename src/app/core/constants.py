@@ -32,6 +32,12 @@ class FineTuningJobStatus(str, Enum):
     COMPLETED = "COMPLETED"  # Job has completed successfully
     FAILED = "FAILED"  # Job has failed to complete
 
+# Enumeration for fine-tuning job types
+class FineTuningJobType(str, Enum):
+    FULL = "FULL"  # Full fine-tuning job
+    LORA = "LORA"  # Low-resource fine-tuning job
+    QLORA = "QLORA"  # Quantized low-resource fine-tuning job
+
 # Enumeration for base model statuses
 class BaseModelStatus(str, Enum):
     ACTIVE = "ACTIVE"  # Base model is available for use
