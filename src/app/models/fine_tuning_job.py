@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, DateTime, UUID, Integer, BigInteger, Fore
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.core.constants import FineTuningJobStatus
+from app.core.constants import FineTuningJobStatus, FineTuningJobType
 from app.core.database import Base
 
 
@@ -44,6 +44,7 @@ class FineTuningJob(Base):
     dataset_id = Column(UUID, ForeignKey("datasets.id"), nullable=False)
     status = Column(Enum(FineTuningJobStatus), nullable=False, default=FineTuningJobStatus.NEW)
     name = Column(String(255), nullable=False)
+    type = Column(Enum(FineTuningJobType), nullable=False)
     current_step = Column(Integer, nullable=True)
     total_steps = Column(Integer, nullable=True)
     current_epoch = Column(Integer, nullable=True)
