@@ -76,6 +76,7 @@ async def start_fine_tuning_job(job_id: UUID):
             "num_gpus": num_gpus,
         },
         "gpu_type": gpu_type,
+        "num_gpus": num_gpus,
         "user_id": str(job.user_id),
         "keep_alive": False,
     }
