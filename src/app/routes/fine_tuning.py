@@ -24,12 +24,12 @@ router = APIRouter(tags=["Fine-tuning Jobs"])
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
-@router.post("/fine-tuning", response_model=FineTuningJobResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/fine-tuning", response_model=FineTuningJobDetailResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_fine_tuning_job(
         job: FineTuningJobCreate,
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
-) -> FineTuningJobResponse:
+) -> FineTuningJobDetailResponse:
     """
     Create a new fine-tuning job.
 
@@ -39,10 +39,9 @@ async def create_new_fine_tuning_job(
         db (AsyncSession): The database session.
 
     Returns:
-        FineTuningJobResponse: The created fine-tuning job.
+        FineTuningJobDetailResponse: The created fine-tuning job.
     """
-    new_job = await create_fine_tuning_job(db, current_user, job)
-    return new_job
+    return await create_fine_tuning_job(db, current_user, job)
 
 
 @router.get("/fine-tuning", response_model=Dict[str, Union[List[FineTuningJobResponse], Pagination]])

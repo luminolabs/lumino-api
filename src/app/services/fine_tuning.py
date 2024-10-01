@@ -25,7 +25,7 @@ from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, 
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
-async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJobCreate) -> FineTuningJobResponse:
+async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJobCreate) -> FineTuningJobDetailResponse:
     """
     Create a new fine-tuning job.
 
@@ -105,9 +105,11 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
     db_job_dict = db_job.__dict__
     db_job_dict['base_model_name'] = db_job.base_model.name
     db_job_dict['dataset_name'] = db_job.dataset.name
+    db_job_dict['parameters'] = db_job_detail.parameters
+    db_job_dict['metrics'] = db_job_detail.metrics
 
     logger.info(f"Created fine-tuning job: {db_job.id} for user: {user.id}")
-    return FineTuningJobResponse(**db_job_dict)
+    return FineTuningJobDetailResponse(**db_job_dict)
 
 
 async def get_fine_tuning_jobs(

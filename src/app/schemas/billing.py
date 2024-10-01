@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
-from app.core.constants import UsageUnit, ServiceName
+from app.core.constants import UsageUnit, ServiceName, BillingTransactionType
 from app.schemas.common import DateTime
 
 
@@ -31,5 +31,5 @@ class CreditHistoryResponse(BaseModel):
     created_at: DateTime = Field(..., description="The timestamp when the credit record was created")
     credits: Decimal = Field(..., description="The amount of credits added or deducted")
     transaction_id: str = Field(..., description="The transaction ID")
-    transaction_type: str = Field(..., description="The type of transaction")
+    transaction_type: BillingTransactionType = Field(..., description="The type of transaction")
     model_config = ConfigDict(from_attributes=True)
