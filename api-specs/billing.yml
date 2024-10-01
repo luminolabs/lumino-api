@@ -27,7 +27,7 @@ paths:
       security:
         - ApiKeyAuth: [ ]
 
-  /v1/billing/credits-commit:
+  /v1/billing/credits-deduct:
     post:
       summary: Check if user has enough credits for a job (Internal endpoint)
       tags:
@@ -37,14 +37,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditCommitRequest'
+              $ref: '#/components/schemas/CreditDeductRequest'
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditCommitResponse'
+                $ref: '#/components/schemas/CreditDeductResponse'
       security:
         - ApiKeyAuth: [ ]
 
@@ -89,7 +89,7 @@ paths:
 
 components:
   schemas:
-    CreditCommitRequest:
+    CreditDeductRequest:
       type: object
       required:
         - job_id
@@ -98,10 +98,6 @@ components:
         - usage_unit
         - service_name
       properties:
-        job_id:
-          type: string
-          format: uuid
-          description: The ID of the job
         user_id:
           type: string
           format: uuid
@@ -111,13 +107,17 @@ components:
           description: The amount of usage
         usage_unit:
           type: string
-          enum: [ token ]
+          enum: [ TOKEN ]
           description: The unit of usage
         service_name:
           type: string
+          enum: [ FINE_TUNING_JOB ]
           description: The name of the service
+        fine_tuning_job_id:
+          type: string
+          description: The ID of the fine-tuning job
 
-    CreditCommitResponse:
+    CreditDeductResponse:
       type: object
       properties:
         has_enough_credits:
@@ -139,6 +139,13 @@ components:
           type: number
           format: float
           description: The amount of credits added or deducted
+        transaction_id:
+          type: string
+          description: The unique identifier of the transaction
+        transaction_type:
+            type: string
+            enum: [ NEW_USER_CREDIT, FINE_TUNING_JOB, STRIPE_CHECKOUT ]
+            description: The type of transaction
 
   securitySchemes:
     ApiKeyAuth:

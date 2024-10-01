@@ -115,6 +115,7 @@ components:
         - dataset_name
         - parameters
         - name
+        - type
       properties:
         base_model_name:
           type: string
@@ -123,17 +124,30 @@ components:
         parameters:
           type: object
           properties:
+            batch_size:
+              type: integer
+              example: 8
             num_epochs:
               type: integer
               example: 3
-            learning_rate:
+            shuffle:
+              type: boolean
+              example: true
+            lr:
               type: number
               format: float
-              example: 0.00002
+              example: 0.0003
+            seed:
+              type: integer
+              example: 42
           additionalProperties: true
         name:
           type: string
           description: The name of the fine-tuning job
+        type:
+          type: string
+          enum: [ FULL, LORA, QLORA ]
+          description: The type of fine-tuning job to run
 
     FineTuningJobResponse:
       type: object
@@ -149,13 +163,16 @@ components:
           format: date-time
         status:
           type: string
-          enum: [NEW, PENDING, RUNNING, COMPLETED, FAILED, STOPPING, STOPPED]
+          enum: [NEW, QUEUED, RUNNING, COMPLETED, FAILED, STOPPING, STOPPED]
         base_model_name:
           type: string
         dataset_name:
           type: string
         name:
           type: string
+        type:
+          type: string
+          enum: [ FULL, LORA, QLORA ]
         current_step:
           type: integer
         total_steps:
@@ -176,13 +193,22 @@ components:
             parameters:
               type: object
               properties:
+                batch_size:
+                  type: integer
+                  example: 8
                 num_epochs:
                   type: integer
                   example: 3
-                learning_rate:
+                shuffle:
+                  type: boolean
+                  example: true
+                lr:
                   type: number
                   format: float
-                  example: 0.00002
+                  example: 0.0003
+                seed:
+                  type: integer
+                  example: 42
               additionalProperties: true
             metrics:
               type: object

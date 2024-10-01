@@ -104,9 +104,13 @@ components:
           format: date-time
         service_name:
           type: string
+          enum: [ FINE_TUNING_JOB ]
         usage_amount:
           type: number
           format: float
+        usage_unit:
+          type: string
+          enum: [ TOKEN ]
         cost:
           type: number
           format: float
