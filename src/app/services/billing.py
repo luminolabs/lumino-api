@@ -13,8 +13,10 @@ from app.core.constants import UsageUnit, ServiceName, BillingTransactionType
 from app.core.exceptions import ServerError, BadRequestError
 from app.core.stripe_client import stripe_charge_offline
 from app.core.utils import setup_logger
+from app.models.base_model import BaseModel
 from app.models.billing_credit import BillingCredit
 from app.models.fine_tuning_job import FineTuningJob
+from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.models.usage import Usage
 from app.models.user import User
 from app.schemas.billing import CreditDeductRequest, CreditHistoryResponse
@@ -86,7 +88,10 @@ async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: A
         return True
 
     # Calculate the required credits based on usage amount, unit, and service
-    required_credits = calculate_required_credits(request.usage_amount, request.usage_unit, request.service_name)
+    required_credits = await calculate_required_credits(
+        request.usage_amount, request.usage_unit,
+        user.id, job.id, request.service_name,
+        db)
 
     if user.credits_balance >= required_credits:
         # Subtract credits from user's balance (this will deduct to the users table)
@@ -138,14 +143,27 @@ async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: A
     return False
 
 
-def calculate_required_credits(usage_amount: int, usage_unit: str, service_name: str) -> Decimal:
+async def calculate_required_credits(
+        usage_amount: int, usage_unit: str,
+        user_id: UUID, service_id: UUID, service_name: str,
+        db: AsyncSession) -> Decimal:
     """
     Calculate the required credits based on usage amount, unit, and service.
     This is a placeholder function and should be replaced with actual pricing logic.
     """
     if service_name == ServiceName.FINE_TUNING_JOB and usage_unit == UsageUnit.TOKEN:
-        # 3 credits per 1mil tokens
-        return Decimal(3 * usage_amount / 1000000)
+        result = await db.execute(
+            select(FineTuningJob, BaseModel.name.label('base_model_name'))
+            .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
+            .where(FineTuningJob.user_id == user_id, FineTuningJob.id == service_id)
+        )
+        job, base_model_name = result.first()
+        if base_model_name == 'llm_llama3_1_8b':
+            return Decimal(2 * usage_amount / 1000000)
+        elif base_model_name == 'llm_llama3_1_70b':
+            return Decimal(10 * usage_amount / 1000000)
+        # Return 422 if pricing logic not implemented for this base model
+        raise BadRequestError(f"Could not find pricing logic for base model: {base_model_name}")
 
     # Return 422 if pricing logic not implemented for the requested service and unit
     raise BadRequestError(f"Pricing logic not implemented for service: {service_name} and unit: {usage_unit}")
