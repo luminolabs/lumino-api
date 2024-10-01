@@ -89,7 +89,7 @@ async def create_user(db: AsyncSession, name: str, email: str,
     free_credits = float(config.new_user_credits)
     if config.new_user_credits:
         await add_credits_to_user(
-            db, db_user.id, free_credits,
+            db, db_user, free_credits,
             "NEW_USER_CREDIT", BillingTransactionType.NEW_USER_CREDIT)
     # Create a Stripe customer for the new user
     await create_stripe_customer(db, db_user)
