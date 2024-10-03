@@ -74,7 +74,9 @@ class PubSubClient:
             ack = False
             async with AsyncSessionLocal() as db:
                 if action == 'job_artifacts':
+                    logger.info(f"Received action: job_artifacts for job: {job_id}, user: {user_id}")
                     ack = await _handle_job_artifacts(db, job_id, user_id, data)
+                    logger.info(f"Processed action: job_artifacts, ack: {int(ack)}, for job: {job_id}, user: {user_id}")
                 else:
                     logger.warning(f"Received unexpected action: {action}")
 
@@ -96,8 +98,13 @@ class PubSubClient:
 
         streaming_pull_future = self.subscriber.subscribe(subscription_path, callback=callback_wrapper)
         with self.subscriber:
-            try:
-                await asyncio.to_thread(streaming_pull_future.result)
-            except Exception as e:
-                streaming_pull_future.cancel()
-                logger.error(f"Listening for messages failed: {e}")
+            while self.running:
+                try:
+                    # Wait for messages to be received, with a timeout of 1 second
+                    await asyncio.to_thread(streaming_pull_future.result, timeout=1)
+                except TimeoutError:
+                    # No messages were received during the last second, so re-loop
+                    pass
+                except Exception as e:
+                    streaming_pull_future.cancel()
+                    logger.error(f"Listening for messages failed: {str(e)}")
