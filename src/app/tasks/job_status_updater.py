@@ -1,7 +1,7 @@
-from datetime import datetime
 from typing import Dict
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.core.config_manager import config
 from app.core.constants import FineTuningJobStatus
@@ -34,8 +34,11 @@ async def update_job_statuses():
             FineTuningJobStatus.RUNNING,
             FineTuningJobStatus.STOPPING
         ]
-        query = select(FineTuningJob).where(FineTuningJob.status.in_(non_terminal_statuses))
-        result = await db.execute(query)
+        result = await db.execute(
+            select(FineTuningJob)
+            .options(selectinload(FineTuningJob.details))
+            .where(FineTuningJob.status.in_(non_terminal_statuses))
+        )
         jobs = result.scalars().all()
 
         if not jobs:
@@ -54,21 +57,50 @@ async def update_job_statuses():
                 jobs_by_user[job.user_id] = []
             jobs_by_user[job.user_id].append(job.id)
 
-        # Update job statuses for each user
+        # Update jobs for each user
         for user_id, job_ids in jobs_by_user.items():
-            # Poll the Scheduler API for job statuses
+            # Poll the Scheduler API for job updates, grouped by user
             job_updates = await fetch_job_details(user_id, job_ids)
-            # Update the statuses in the database
+
+            # Update job in the API database
+            # 1. Update the status
+            # 2. Update the timestamps
             for job_update in job_updates:
                 job_id = job_update['job_id']
-                # Map the status from the Scheduler API to our internal status
-                new_status = STATUS_MAPPING.get(job_update['status']) or job_update['status']
                 # Find the job in the list of jobs that we already fetched from the database
                 job = job_ids_to_jobs.get(job_id)
-                # Update the status and running_at timestamp
-                job.running_at = datetime.strptime(job_update['timestamps']['running'],"%Y-%m-%dT%H:%M:%SZ")
+
+                # 1. Update the status
+
+                # Map the status from the Scheduler API to our internal status
+                # We hide some statuses from the Scheduler API and map them to API statuses
+                new_status = STATUS_MAPPING.get(job_update['status']) or job_update['status']
+                # Update the status if it's different
                 if job and job.status != new_status:
                     job.status = new_status
                     logger.info(f"Updated status for job {job_id} to {new_status}")
+
+                # 2. Update the timestamps
+
+                # Update timestamps in details table
+                timestamps = job.details.timestamps.copy()
+                for event, timestamp in job_update['timestamps'].items():
+                    # Map the status from the Scheduler API to the API status
+                    if event.upper() in STATUS_MAPPING:
+                        # If there's no timestamp, don't update it,
+                        # because multiple Scheduler statuses can map to the same API status
+                        # we don't want to overwrite an existing API timestamp
+                        # with an empty Scheduler timestamp
+                        if timestamp:
+                            timestamps[STATUS_MAPPING[event.upper()].lower()] = timestamp
+                    else:
+                        # If the event is not in the mapping, just update it
+                        timestamps[event] = timestamp
+                # Update the timestamps in the database;
+                # note that we're updating the entire dictionary
+                # otherwise, the changes won't be detected by SQLAlchemy
+                job.details.timestamps = timestamps
+
+            # Commit the changes for the user
             await db.commit()
             logger.info(f"Successfully updated statuses for {len(job_updates)} jobs for user {user_id}")

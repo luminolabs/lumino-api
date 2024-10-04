@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, ConfigDict, computed_field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.core.constants import FineTuningJobStatus, FineTuningJobType
 from app.schemas.common import NameField, DateTime
@@ -35,7 +35,6 @@ class FineTuningJobResponse(BaseModel):
     current_epoch: int | None = Field(None, description="The current epoch of the fine-tuning process")
     total_epochs: int | None = Field(None, description="The total number of epochs in the fine-tuning process")
     num_tokens: int | None = Field(None, description="The number of tokens processed in the fine-tuning job")
-    running_at: DateTime | None = Field(None, description="The date and time the job started running")
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -45,4 +44,5 @@ class FineTuningJobDetailResponse(FineTuningJobResponse):
     """
     parameters: Dict[str, Any] = Field(..., description="The parameters used for the fine-tuning job")
     metrics: Dict[str, Any] | None = Field(None, description="The metrics collected during the fine-tuning process")
+    timestamps: Dict[str, Any] | None = Field(None, description="The timestamps recorded during the fine-tuning process")
     model_config = ConfigDict(from_attributes=True)
