@@ -44,7 +44,7 @@ async def update_job_statuses():
         # Group jobs by user_id; because that's how the Scheduler API expects them
         jobs_by_user = {}
         # Also group by job_id for easier status update
-        job_ids_to_jobs: Dict[int, FineTuningJob] = {}
+        job_ids_to_jobs: Dict[str, FineTuningJob] = {}
         for job in jobs:
             # Store the job in a dictionary for easier access later
             job_ids_to_jobs[str(job.id)] = job
