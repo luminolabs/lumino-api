@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict
 
 from sqlalchemy import select
@@ -65,7 +66,7 @@ async def update_job_statuses():
                 # Find the job in the list of jobs that we already fetched from the database
                 job = job_ids_to_jobs.get(job_id)
                 # Update the status and running_at timestamp
-                job.running_at = job_update['timestamps']['running']
+                job.running_at = datetime.strptime(job_update['timestamps']['running'],"%Y-%m-%dT%H:%M:%SZ")
                 if job and job.status != new_status:
                     job.status = new_status
                     logger.info(f"Updated status for job {job_id} to {new_status}")

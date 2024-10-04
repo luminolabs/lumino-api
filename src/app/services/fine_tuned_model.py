@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config_manager import config
+from app.core.constants import FineTuningJobStatus
 from app.core.utils import setup_logger
 from app.models.fine_tuned_model import FineTunedModel
 from app.models.fine_tuning_job import FineTuningJob
@@ -13,7 +14,7 @@ logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.l
 
 
 async def create_fine_tuned_model(db: AsyncSession,
-                                  job_id: UUID, user_id: UUID, artifacts: dict) -> FineTunedModel | None:
+                                  job_id: UUID, user_id: UUID, artifacts: dict) -> bool:
     """Update the fine_tuned_models table with the new artifacts."""
     try:
         # First, confirm that the FineTuningJob exists
@@ -23,7 +24,10 @@ async def create_fine_tuned_model(db: AsyncSession,
         job = job_result.scalar_one_or_none()
         if not job:
             logger.warning(f"No FineTuningJob found for job_id: {job_id} and user_id: {user_id}")
-            return
+            return False
+        if job.status != FineTuningJobStatus.COMPLETED:
+            logger.warning(f"FineTuningJob: {job_id} is not in COMPLETED state, skipping model creation")
+            return True
 
         # Check if a FineTunedModel already exists for this job
         model_query = (
@@ -36,7 +40,7 @@ async def create_fine_tuned_model(db: AsyncSession,
         if model:
             # Model exists, do nothing
             logger.warning(f"FineTunedModel: {model.id} already exists")
-            return
+            return True
 
         # Create new model
         model = FineTunedModel(
@@ -49,7 +53,7 @@ async def create_fine_tuned_model(db: AsyncSession,
         await db.commit()
         logger.info(f"Successfully created FineTunedModel: {model.id} "
                     f"for job_id: {job_id} and user_id: {user_id}")
-        return model
+        return True
     except Exception as e:
         logger.error(f"Error updating FineTunedModel: {str(e)}; job_id: {job_id}; user_id: {user_id}")
         await db.rollback()

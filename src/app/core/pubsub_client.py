@@ -23,8 +23,8 @@ async def _handle_job_artifacts(db: AsyncSession, job_id: str, user_id: str, dat
         "weight_files": data["weight_files"],
         "other_files": data["other_files"]
     }
-    model = await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
-    return model is not None
+    ack = await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
+    return ack
 
 
 async def _handle_job_progress(db: AsyncSession, job_id: str, user_id: str, data: dict) -> bool:
@@ -35,8 +35,8 @@ async def _handle_job_progress(db: AsyncSession, job_id: str, user_id: str, data
         "current_epoch": data["current_epoch"],
         "total_epochs": data["total_epochs"],
     }
-    job = await update_fine_tuning_job_progress(db, UUID(job_id), UUID(user_id), progress)
-    return job is not None
+    ack = await update_fine_tuning_job_progress(db, UUID(job_id), UUID(user_id), progress)
+    return ack
 
 
 class PubSubClient:
