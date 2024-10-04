@@ -14,7 +14,7 @@ class FineTuningJob(Base):
         id (UUID): The unique identifier for the fine-tuning job.
         created_at (DateTime): The timestamp when the job was created.
         updated_at (DateTime): The timestamp when the job was last updated.
-        started_at (DateTime): The timestamp when the job was started.
+        running_at (DateTime): The timestamp when the job was started.
         user_id (UUID): The ID of the user who created the job.
         base_model_id (UUID): The ID of the base model used for fine-tuning.
         dataset_id (UUID): The ID of the dataset used for fine-tuning.
@@ -40,7 +40,7 @@ class FineTuningJob(Base):
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
-    started_at = Column(DateTime, nullable=True)
+    running_at = Column(DateTime, nullable=True)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
     base_model_id = Column(UUID, ForeignKey("base_models.id"), nullable=False)
     dataset_id = Column(UUID, ForeignKey("datasets.id"), nullable=False)

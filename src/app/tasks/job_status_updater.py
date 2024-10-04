@@ -64,8 +64,8 @@ async def update_job_statuses():
                 new_status = STATUS_MAPPING.get(job_update['status']) or job_update['status']
                 # Find the job in the list of jobs that we already fetched from the database
                 job = job_ids_to_jobs.get(job_id)
-                # Update the status and started_at timestamp
-                job.started_at = job_update['timestamps']['running']
+                # Update the status and running_at timestamp
+                job.running_at = job_update['timestamps']['running']
                 if job and job.status != new_status:
                     job.status = new_status
                     logger.info(f"Updated status for job {job_id} to {new_status}")
