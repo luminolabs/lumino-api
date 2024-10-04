@@ -1,3 +1,5 @@
+from typing import Dict
+
 from sqlalchemy import select
 
 from app.core.config_manager import config
@@ -42,7 +44,7 @@ async def update_job_statuses():
         # Group jobs by user_id; because that's how the Scheduler API expects them
         jobs_by_user = {}
         # Also group by job_id for easier status update
-        job_ids_to_jobs = {}
+        job_ids_to_jobs: Dict[int, FineTuningJob] = {}
         for job in jobs:
             # Store the job in a dictionary for easier access later
             job_ids_to_jobs[str(job.id)] = job
@@ -54,17 +56,18 @@ async def update_job_statuses():
         # Update job statuses for each user
         for user_id, job_ids in jobs_by_user.items():
             # Poll the Scheduler API for job statuses
-            updated_statuses = await fetch_job_details(user_id, job_ids)
+            job_updates = await fetch_job_details(user_id, job_ids)
             # Update the statuses in the database
-            for status in updated_statuses:
-                job_id = status['job_id']
+            for job_update in job_updates:
+                job_id = job_update['job_id']
                 # Map the status from the Scheduler API to our internal status
-                new_status = STATUS_MAPPING.get(status['status']) or status['status']
+                new_status = STATUS_MAPPING.get(job_update['status']) or job_update['status']
                 # Find the job in the list of jobs that we already fetched from the database
                 job = job_ids_to_jobs.get(job_id)
+                # Update the status and started_at timestamp
+                job.started_at = job_update['timestamps']['running']
                 if job and job.status != new_status:
                     job.status = new_status
                     logger.info(f"Updated status for job {job_id} to {new_status}")
-
             await db.commit()
-            logger.info(f"Successfully updated statuses for {len(updated_statuses)} jobs for user {user_id}")
+            logger.info(f"Successfully updated statuses for {len(job_updates)} jobs for user {user_id}")
