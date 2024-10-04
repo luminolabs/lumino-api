@@ -225,3 +225,23 @@ async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str)
 
     logger.info(f"Stopping fine-tuning job: {job_name} for user: {user_id}")
     return await get_fine_tuning_job(db, user_id, job_name)
+
+
+async def update_fine_tuning_job_progress(db: AsyncSession,
+                                          job_id: UUID, user_id: UUID, progress: dict) -> FineTuningJob:
+    """
+    Update job progress information.
+    """
+    # Fetch job and confirm it exists
+    job = (await db.execute(select(FineTuningJob).where(
+        FineTuningJob.id == job_id, FineTuningJob.user_id == user_id))).scalar_one_or_none()
+    if not job:
+        raise FineTuningJobNotFoundError(f"Fine-tuning job not found: {job_id} for user: {user_id}", logger)
+    # Update job progress
+    job.current_step = progress['current_step']
+    job.total_steps = progress['total_steps']
+    job.current_epoch = progress['current_epoch']
+    job.total_epochs = progress['total_epochs']
+    await db.commit()
+    logger.info(f"Updated progress for fine-tuning job: {job_id} for user: {user_id}")
+    return job
