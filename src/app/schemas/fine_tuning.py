@@ -35,6 +35,7 @@ class FineTuningJobResponse(BaseModel):
     current_epoch: int | None = Field(None, description="The current epoch of the fine-tuning process")
     total_epochs: int | None = Field(None, description="The total number of epochs in the fine-tuning process")
     num_tokens: int | None = Field(None, description="The number of tokens processed in the fine-tuning job")
+    running_at: DateTime | None = Field(None, description="The date and time the job started running")
     model_config = ConfigDict(from_attributes=True)
 
 
