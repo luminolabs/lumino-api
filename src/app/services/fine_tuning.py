@@ -89,7 +89,10 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
     # Create the job details record
     db_job_detail = FineTuningJobDetail(
         fine_tuning_job_id=db_job.id,
-        parameters=job.parameters
+        parameters=job.parameters,
+        metrics={},
+        timestamps={"new": None, "queued": None, "running": None, "stopping": None, "stopped": None,
+                    "completed": None, "failed": None}
     )
     # Add the records to the database and commit the changes
     db.add(db_job)
@@ -107,6 +110,7 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
     db_job_dict['dataset_name'] = db_job.dataset.name
     db_job_dict['parameters'] = db_job_detail.parameters
     db_job_dict['metrics'] = db_job_detail.metrics
+    db_job_dict['timestamps'] = db_job_detail.timestamps
 
     logger.info(f"Created fine-tuning job: {db_job.id} for user: {user.id}")
     return FineTuningJobDetailResponse(**db_job_dict)
@@ -186,6 +190,7 @@ async def get_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) ->
     job_dict['dataset_name'] = dataset_name
     job_dict['parameters'] = detail.parameters
     job_dict['metrics'] = detail.metrics
+    job_dict['timestamps'] = detail.timestamps
 
     # Log the result and return it
     logger.info(f"Retrieved fine-tuning job: {job_name} for user: {user_id}")
@@ -225,3 +230,25 @@ async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str)
 
     logger.info(f"Stopping fine-tuning job: {job_name} for user: {user_id}")
     return await get_fine_tuning_job(db, user_id, job_name)
+
+
+async def update_fine_tuning_job_progress(db: AsyncSession,
+                                          job_id: UUID, user_id: UUID, progress: dict) -> bool:
+    """
+    Update job progress information.
+    """
+    # Fetch job and confirm it exists
+    job = (await db.execute(select(FineTuningJob).where(
+        FineTuningJob.id == job_id, FineTuningJob.user_id == user_id))).scalar_one_or_none()
+    if not job:
+        logger.warning(f"No FineTuningJob found for job_id: {job_id} and user_id: {user_id}")
+        return False
+
+    # Update job progress
+    job.current_step = progress['current_step']
+    job.total_steps = progress['total_steps']
+    job.current_epoch = progress['current_epoch']
+    job.total_epochs = progress['total_epochs']
+    await db.commit()
+    logger.info(f"Updated progress for fine-tuning job: {job_id} for user: {user_id}")
+    return True

@@ -10,6 +10,7 @@ from app.core.config_manager import config
 from app.core.database import AsyncSessionLocal
 from app.core.utils import setup_logger
 from app.services.fine_tuned_model import create_fine_tuned_model
+from app.services.fine_tuning import update_fine_tuning_job_progress
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
@@ -22,8 +23,20 @@ async def _handle_job_artifacts(db: AsyncSession, job_id: str, user_id: str, dat
         "weight_files": data["weight_files"],
         "other_files": data["other_files"]
     }
-    model = await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
-    return model is not None
+    ack = await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
+    return ack
+
+
+async def _handle_job_progress(db: AsyncSession, job_id: str, user_id: str, data: dict) -> bool:
+    """Handle job progress updates received from Pub/Sub."""
+    progress = {
+        "current_step": data["current_step"],
+        "total_steps": data["total_steps"],
+        "current_epoch": data["current_epoch"],
+        "total_epochs": data["total_epochs"],
+    }
+    ack = await update_fine_tuning_job_progress(db, UUID(job_id), UUID(user_id), progress)
+    return ack
 
 
 class PubSubClient:
@@ -72,16 +85,19 @@ class PubSubClient:
             action = data["action"]
 
             ack = False
+            logger.info(f"Received action: job_artifacts for job: {job_id}, user: {user_id}")
+
             async with AsyncSessionLocal() as db:
                 if action == 'job_artifacts':
-                    logger.info(f"Received action: job_artifacts for job: {job_id}, user: {user_id}")
                     ack = await _handle_job_artifacts(db, job_id, user_id, data)
-                    logger.info(f"Processed action: job_artifacts, ack: {int(ack)}, for job: {job_id}, user: {user_id}")
-                else:
-                    logger.warning(f"Received unexpected action: {action}")
+                elif action == 'job_progress':
+                    ack = await _handle_job_progress(db, job_id, user_id, data)
 
             if ack:
+                logger.info(f"Processed action: {action}, data: {data}")
                 message.ack()
+            else:
+                logger.warning(f"Failed to process message, data: {data}")
 
     async def listen_for_messages(self, subscription_name: str) -> None:
         """

@@ -94,9 +94,11 @@ async def deduct_credits_for_fine_tuning_job(request: CreditDeductRequest, db: A
         db)
 
     if user.credits_balance >= required_credits:
-        # Subtract credits from user's balance (this will deduct to the users table)
-        user.credits_balance -= required_credits
         try:
+            # Subtract credits from user's balance (this will deduct to the users table)
+            user.credits_balance -= required_credits
+            # Add token count to job table
+            job.num_tokens = request.usage_amount
             # Log the credit deduction in billing_credits table
             await db.execute(
                 insert(BillingCredit).values(

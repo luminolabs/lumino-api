@@ -63,7 +63,7 @@ async def paginate_query(
     return items, pagination
 
 
-def parse_date(date_str: str) -> date:
+def parse_date(date_str: str) -> date | None:
     """
     Parse a date string in the format YYYY-MM-DD.
 
@@ -72,7 +72,27 @@ def parse_date(date_str: str) -> date:
     Returns:
         date: The parsed date.
     """
+    if not date_str:
+        return None
     try:
         return datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         raise BadRequestError(f"Invalid date format, use YYYY-MM-DD. Example: 2022-12-29; got: {date_str}")
+
+
+def parse_datetime(datetime_str: str) -> datetime | None:
+    """
+    Parse a datetime string in the format %Y-%m-%dT%H:%M:%SZ.
+
+    Args:
+        datetime_str (str): The datetime string to parse.
+    Returns:
+        datetime: The parsed datetime.
+    """
+    if not datetime_str:
+        return None
+    try:
+        return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        raise BadRequestError(f"Invalid datetime format, use %Y-%m-%dT%H:%M:%SZ. "
+                              f"Example: 2022-12-29T12:00:00Z; got: {datetime_str}")
