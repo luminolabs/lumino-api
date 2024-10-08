@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# This script is used to restart the service on the MIG VMs
+# This script is used to restart the service on the MIG VMs, after make-deployment.sh has been run
+# Run this script locally, after make-deployment.sh has been run
 
 # Import common functions and variables
 source ./scripts/utils.sh

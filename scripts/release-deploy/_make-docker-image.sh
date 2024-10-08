@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This is a helper script that is used to build the Docker image and push it to the Artifact Registry
+# Don't use this script locally
 
 # Import common functions and variables
 source /$SERVICE_NAME/scripts/utils.sh

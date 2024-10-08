@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script is used to orchestrate the deployment process
+# Run this script locally, before running deploy-to-mig.sh
 
 # Import common functions and variables
 source ./scripts/utils.sh

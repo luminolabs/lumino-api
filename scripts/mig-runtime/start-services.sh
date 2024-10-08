@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script is used to start the service on dev and production environments
+# Don't use this script locally
 
 # Variables
 HAS_SECRETS=1
