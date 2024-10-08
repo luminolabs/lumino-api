@@ -9,6 +9,21 @@ SECRET_NAME_PREFIX="$SERVICE_NAME-config"
 # Inputs
 COMPOSE_OPTS=$1  # Additional options to pass to docker compose
 
+# Setup the environment
+LOCAL_ENV="local"
+if [[ "$CAPI_ENV" == "" ]]; then
+  CAPI_ENV="$LOCAL_ENV"
+fi
+
+# Change to the directory where the Dockerfile is located
+cd /$SERVICE_NAME
+
+# Export .env environment variables; note, we aren't aware of which environment
+# we're running on before importing CAPI_ENV from .env,
+# so we can't cd to /pipeline-zen-jobs conditionally above
+eval $(cat ./.env | grep -v '^#' | tr -d '\r')
+echo "CAPI_ENV set to $CAPI_ENV"
+
 if HAS_SECRETS; then
   # Fetch the secrets from Secret Manager
   echo "Fetching secrets (db, auth0, stripe creds, etc) from Secret Manager"

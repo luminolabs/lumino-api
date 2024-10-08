@@ -5,6 +5,9 @@
 # Import common functions and variables
 source /$SERVICE_NAME/scripts/utils.sh
 
+# Change directory to the codebase
+cd /$SERVICE_NAME
+
 # Build, tag, and push the Docker image
 echo "Building the Docker image..."
 docker build -t $SERVICE_NAME:local .
