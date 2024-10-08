@@ -1,3 +1,4 @@
+from select import select
 from typing import Dict, Union, List
 
 import stripe
@@ -12,10 +13,11 @@ from app.core.common import parse_date
 from app.core.config_manager import config
 from app.core.constants import BillingTransactionType
 from app.core.database import get_db
+from app.core.exceptions import UserNotFoundError
 from app.core.stripe_client import create_stripe_checkout_session, create_stripe_billing_portal_session
 from app.core.utils import setup_logger
 from app.models.user import User
-from app.schemas.billing import CreditDeductRequest, CreditDeductResponse, CreditHistoryResponse
+from app.schemas.billing import CreditDeductRequest, CreditHistoryResponse, CreditAddRequest
 from app.schemas.common import Pagination
 from app.services.billing import deduct_credits_for_fine_tuning_job, add_credits_to_user, get_credit_history
 
@@ -24,20 +26,6 @@ router = APIRouter(tags=["Billing"])
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
-
-
-@router.post("/billing/credits-deduct", response_model=CreditDeductResponse)
-async def deduct_and_approve_credits(
-    request: CreditDeductRequest,
-    # This is an admin only action, don't remove the `admin_required` dependency
-    current_user: User = Depends(admin_required),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Check if user has enough credits for a job and commit them if so (Internal endpoint).
-    """
-    has_enough_credits = await deduct_credits_for_fine_tuning_job(request, db, retry=True)
-    return CreditDeductResponse(has_enough_credits=has_enough_credits)
 
 
 @router.get("/billing/credit-history", response_model=Dict[str, Union[List[CreditHistoryResponse], Pagination]])
@@ -63,7 +51,10 @@ async def get_credit_history_route(
     }
 
 
-@router.get("/billing/credits-add")
+# Stripe-related routes
+
+
+@router.get("/billing/stripe-credits-add")
 async def stripe_credits_add(
         request: Request,
         amount_dollars: int = Query(..., description="The amount of credits to add, in dollars"),
@@ -81,7 +72,7 @@ async def stripe_credits_add(
     return RedirectResponse(url=checkout_session.url, status_code=302)
 
 
-@router.get("/billing/payment-method-add")
+@router.get("/billing/stripe-payment-method-add")
 async def stripe_payment_method_add(
         request: Request,
         current_user: User = Depends(get_current_active_user),
@@ -147,3 +138,42 @@ async def stripe_success_callback(
 
     # Return success to Stripe
     return {"status": "success"}
+
+
+# Admin-only routes
+
+
+@router.post("/billing/credits-deduct", response_model=CreditHistoryResponse)
+async def deduct_and_approve_credits(
+        request: CreditDeductRequest,
+        current_user: User = Depends(admin_required),
+        db: AsyncSession = Depends(get_db)
+):
+    """
+    Check if user has enough credits for a job and commit them if so (Internal endpoint).
+    """
+    credit_history = await deduct_credits_for_fine_tuning_job(request, db, retry=True)
+    return credit_history
+
+@router.post("/billing/credits-add", response_model=CreditHistoryResponse)
+async def add_credits(
+        request: CreditAddRequest,
+        current_user: User = Depends(admin_required),
+        db: AsyncSession = Depends(get_db)
+):
+    """
+    Add credits to a user's account or refund an existing debit.
+    """
+    # Retrieve the user by ID and raise an error if not found
+    db_user = await db.get(User, request.user_id)
+    if not db_user:
+        raise UserNotFoundError(f"User with ID {request.user_id} not found", logger)
+    # Add credits to user's account
+    credit_history = await add_credits_to_user(
+        db,
+        current_user,
+        request.amount,
+        request.transaction_id,
+        BillingTransactionType.MANUAL_ADJUSTMENT
+    )
+    return credit_history

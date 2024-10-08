@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, UUID, ForeignKey, Numeric, Index, String, Enum, UniqueConstraint
+from sqlalchemy import Column, DateTime, UUID, ForeignKey, Numeric, String, Enum, UniqueConstraint, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -14,7 +14,7 @@ class BillingCredit(Base):
         id (UUID): The unique identifier for the billing credits record.
         created_at (DateTime): The timestamp when the billing credits record was created.
         user_id (UUID): The ID of the user associated with these credits.
-        credits (Numeric): The amount of credits.
+        credits (float): The amount of credits.
 
     Relationships:
         user (User): The user associated with these credits.
@@ -25,7 +25,7 @@ class BillingCredit(Base):
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
-    credits = Column(Numeric(precision=6, scale=2), nullable=False)
+    credits = Column(Float, nullable=False)
     transaction_id = Column(String(255), nullable=False)
     transaction_type = Column(Enum(BillingTransactionType), nullable=False)
 

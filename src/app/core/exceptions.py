@@ -79,6 +79,12 @@ class ServerError(AppException):
         super().__init__(status_code=500, detail=detail, logger=logger)
 
 
+class PaymentNeededError(AppException):
+    """Exception raised when a payment is needed."""
+    def __init__(self, detail: str, logger: Optional[Logger] = None):
+        super().__init__(status_code=402, detail=detail, logger=logger)
+
+
 # Authentication exceptions
 
 

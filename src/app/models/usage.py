@@ -1,9 +1,9 @@
-from sqlalchemy import Column, String, DateTime, UUID, ForeignKey, Numeric, Enum, Integer
+from sqlalchemy import Column, DateTime, UUID, ForeignKey, Numeric, Enum, Integer, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.core.database import Base
 from app.core.constants import UsageUnit, ServiceName
+from app.core.database import Base
 
 
 class Usage(Base):
@@ -14,9 +14,9 @@ class Usage(Base):
         id (UUID): The unique identifier for the usage record.
         created_at (DateTime): The timestamp when the usage record was created.
         user_id (UUID): The ID of the user who used the service.
-        usage_amount (Numeric): The amount of usage.
+        usage_amount (float): The amount of usage.
         usage_unit (UsageUnit): The unit of usage.
-        cost (Numeric): The cost of the usage.
+        cost (float): The cost of the usage.
         service_name (ServiceName): The name of the service.
         fine_tuning_job_id (UUID): The ID of the fine-tuning job associated with this usage record.
 
@@ -32,7 +32,7 @@ class Usage(Base):
     user_id = Column(UUID, ForeignKey("users.id"), index=True, nullable=False)
     usage_amount = Column(Integer, nullable=False)
     usage_unit = Column(Enum(UsageUnit), nullable=False, default=UsageUnit.TOKEN)
-    cost = Column(Numeric(precision=6, scale=2), nullable=False)
+    cost = Column(Float, nullable=False)
     service_name = Column(Enum(ServiceName), nullable=False, default=ServiceName.FINE_TUNING_JOB)
     fine_tuning_job_id = Column(UUID, ForeignKey("fine_tuning_jobs.id"), nullable=False, unique=True)
 

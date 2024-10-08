@@ -63,6 +63,7 @@ class BillingTransactionType(str, Enum):
     """
     Enum for the type of billing transaction.
     """
+    MANUAL_ADJUSTMENT = "MANUAL_ADJUSTMENT"
     NEW_USER_CREDIT = "NEW_USER_CREDIT"
     FINE_TUNING_JOB = "FINE_TUNING_JOB"
     STRIPE_CHECKOUT = "STRIPE_CHECKOUT"
