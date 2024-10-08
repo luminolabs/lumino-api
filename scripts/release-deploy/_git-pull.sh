@@ -9,8 +9,5 @@ source /$SERVICE_NAME/scripts/utils.sh
 cd /$SERVICE_NAME
 
 echo "Pulling the latest code from the git repository..."
-# Add the SSH key to the ssh-agent to authenticate with the git repository
 ssh-agent bash -c "ssh-add ~/.ssh/id_rsa; git pull"
-# Pull the latest code from the git repository
-git pull
 echo "Done."
