@@ -2,8 +2,8 @@ import asyncio
 from datetime import date
 from uuid import UUID
 
-from asyncpg import UniqueViolationError
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.common import paginate_query
@@ -44,14 +44,15 @@ async def add_credits_to_user(db: AsyncSession, user: User, amount_dollars: floa
         await db.commit()
         await db.refresh(billing_credit)
         # Log and return the credit history response
-        logger.info(f"Added {amount_dollars} credits to user {user.id}")
+        logger.info(f"Added: {amount_dollars} credits to user: {user.id}")
         return CreditHistoryResponse.from_orm(billing_credit)
-    except UniqueViolationError:
+    except IntegrityError:
         # We already added credits for this transaction, log warning and return
-        raise BadRequestError("Transaction ID already exists", logger)
+        raise BadRequestError(f"Transaction ID: `{transaction_id}` already exists", logger)
     except Exception as e:
         await db.rollback()
-        raise ServerError(f"Error adding credits to user {user.id}: {str(e)}", logger)
+        await db.refresh(user)  # Refresh the credits balance field
+        raise ServerError(f"Error adding credits to user: {user.id}: {str(e)}", logger)
 
 
 
