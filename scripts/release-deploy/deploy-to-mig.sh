@@ -13,7 +13,7 @@ for VM in $VMS; do
     echo "Processing VM: $VM"
     # SSH into the VM, change directory, run the script, and exit
     gcloud compute ssh $VM --project=$PROJECT_ID --zone=$WORK_ZONE \
-      --command="/$SERVICE_NAME/scripts/mig-runtime/start-services.sh --force-recreate && exit"
+      --command="SERVICE_NAME=$SERVICE_NAME /$SERVICE_NAME/scripts/mig-runtime/start-services.sh --force-recreate && exit"
     echo "Completed processing VM: $VM"
 done
 

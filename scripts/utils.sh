@@ -1,5 +1,4 @@
 PROJECT_ID="neat-airport-407301"
-SERVICE_NAME="lumino-api"
 ARTIFACT_REPO_URL="us-central1-docker.pkg.dev/neat-airport-407301/lum-docker-images"
 WORK_ZONE="us-central1-a"
 BUILD_VM="scheduler-zen"

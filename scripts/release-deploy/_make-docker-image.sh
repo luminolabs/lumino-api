@@ -3,7 +3,7 @@
 # This is a helper script that is used to build the Docker image and push it to the Artifact Registry
 
 # Import common functions and variables
-source ./scripts/utils.sh
+source /$SERVICE_NAME/scripts/utils.sh
 
 # Build, tag, and push the Docker image
 echo "Building the Docker image..."
