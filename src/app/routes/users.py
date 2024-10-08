@@ -50,6 +50,9 @@ async def update_current_user(
     return UserResponse.from_orm(updated_user)
 
 
+# Admin-only routes
+
+
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deactivate_user_route(
         user_id: str,

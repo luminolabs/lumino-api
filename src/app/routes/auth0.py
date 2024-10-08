@@ -31,6 +31,9 @@ oauth.register(
 )
 
 
+# Auth0-related routes
+
+
 @router.get("/auth0/login")
 async def login(request: Request) -> RedirectResponse:
     """

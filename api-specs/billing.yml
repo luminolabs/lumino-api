@@ -5,7 +5,7 @@ info:
   description: API for managing billing and credits
 
 paths:
-  /v1/billing/credits-add:
+  /v1/billing/stripe-credits-add:
     get:
       summary: Redirect to Stripe for adding credits
       tags:
@@ -44,7 +44,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreditDeductResponse'
+                $ref: '#/components/schemas/CreditHistoryResponse'
+      security:
+        - ApiKeyAuth: [ ]
+
+  /v1/billing/credits-add:
+    post:
+      summary: Check if user has enough credits for a job (Internal endpoint)
+      tags:
+        - Billing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditAddRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditHistoryResponse'
       security:
         - ApiKeyAuth: [ ]
 
@@ -117,12 +138,24 @@ components:
           type: string
           description: The ID of the fine-tuning job
 
-    CreditDeductResponse:
+    CreditAddRequest:
       type: object
+      required:
+        - user_id
+        - amount
+        - transaction_id
       properties:
-        has_enough_credits:
-          type: boolean
-          description: Whether the user has enough credits for the job
+        user_id:
+          type: string
+          format: uuid
+          description: The ID of the user
+        amount:
+          type: number
+          description: The amount of credits to add
+        transaction_id:
+          type: string
+          description: The ID or reason of the transaction
+          example: Refund for job 123
 
     CreditHistoryResponse:
       type: object

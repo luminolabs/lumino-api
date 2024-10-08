@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import Column, String, DateTime, UUID, Index, Enum, Boolean, Numeric
+from sqlalchemy import Column, String, DateTime, UUID, Index, Enum, Boolean, Numeric, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -22,7 +22,7 @@ class User(Base):
         auth0_user_id (str): The Auth0 user ID.
         email_verified (bool): Whether the user's email is verified or not.
         is_admin (bool): Whether the user is an admin or not.
-        credits_balance (Numeric): The current credit balance of the user.
+        credits_balance (float): The current credit balance of the user.
 
     Relationships:
         datasets (List[Dataset]): The datasets created by the user.
@@ -46,7 +46,7 @@ class User(Base):
     stripe_payment_method_id = Column(String(255), nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     is_admin = Column(Boolean, default=False, nullable=False)
-    credits_balance = Column(Numeric(precision=6, scale=2), nullable=False, default=0)
+    credits_balance = Column(Float, nullable=False, default=0)
 
     # Relationships
     datasets = relationship("Dataset", back_populates="user")
