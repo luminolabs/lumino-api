@@ -3,6 +3,7 @@
 # This script is used to start the service on dev and production environments
 # Don't use this script locally
 
+# $SERVICE_NAME is set in /etc/environment
 echo "Starting $SERVICE_NAME..."
 
 # Inputs
