@@ -40,5 +40,5 @@ export CAPI_STRIPE_WEBHOOK_SECRET
 echo "Pull the latest image"
 docker pull $ARTIFACT_REPO_URL/$SERVICE_NAME:latest
 echo "Starting services with docker-compose"
-docker compose up -d $COMPOSE_OPTS
-echo "Services started successfully"
+docker compose up $COMPOSE_OPTS
+echo "Done."
