@@ -4,7 +4,6 @@
 # Don't use this script locally
 
 # Variables
-HAS_SECRETS=1
 SECRET_NAME_PREFIX="$SERVICE_NAME-config"
 
 # Inputs
@@ -19,20 +18,21 @@ fi
 # Change to the directory where the Dockerfile is located
 cd /$SERVICE_NAME
 
+# Import common functions and variables
+source ./scripts/utils.sh
+
 # Export .env environment variables; note, we aren't aware of which environment
 # we're running on before importing CAPI_ENV from .env,
 # so we can't cd to /pipeline-zen-jobs conditionally above
 eval $(cat ./.env | grep -v '^#' | tr -d '\r')
 echo "CAPI_ENV set to $CAPI_ENV"
 
-if HAS_SECRETS; then
-  # Fetch the secrets from Secret Manager
-  echo "Fetching secrets (db, auth0, stripe creds, etc) from Secret Manager"
-  SECRET_NAME="$SECRET_NAME_PREFIX-$CAPI_ENV"
-  SECRET_PAYLOAD=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID)
-  # Parse the secret payload and set environment variables
-  eval "$SECRET_PAYLOAD"
-fi
+# Fetch the secrets from Secret Manager
+echo "Fetching secrets (db, auth0, stripe creds, etc) from Secret Manager"
+SECRET_NAME="$SECRET_NAME_PREFIX-$CAPI_ENV"
+SECRET_PAYLOAD=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID)
+# Parse the secret payload and set environment variables
+eval "$SECRET_PAYLOAD"
 
 # Export the variables so they're available to docker-compose
 export CAPI_DB_NAME
