@@ -9,6 +9,7 @@ source /$SERVICE_NAME/scripts/utils.sh  # $SERVICE_NAME is set in make-deploymen
 # Change directory to the codebase
 cd /$SERVICE_NAME
 
+stty -echo  # Hide the user input, so the password is not displayed
 echo "Pulling the latest code from the git repository..."
 ssh-agent bash -c "ssh-add ~/.ssh/id_rsa; git pull"
 echo "Done."
