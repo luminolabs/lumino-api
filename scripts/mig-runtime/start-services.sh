@@ -6,7 +6,7 @@
 echo "Starting $SERVICE_NAME..."
 
 # Inputs
-COMPOSE_OPTS=$1  # Additional options to pass to docker compose
+COMPOSE_OPTS="${@:1}"  # Additional options to pass to docker compose
 echo "COMPOSE_OPTS set to $COMPOSE_OPTS"
 
 # Change to the service directory
