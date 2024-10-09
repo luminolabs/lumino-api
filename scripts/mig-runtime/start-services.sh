@@ -16,9 +16,7 @@ cd /$SERVICE_NAME
 # Import common functions and variables
 source ./scripts/utils.sh
 
-# Export .env environment variables; note, we aren't aware of which environment
-# we're running on before importing CAPI_ENV from .env,
-# so we can't cd to /pipeline-zen-jobs conditionally above
+# Export .env environment variables
 eval $(cat ./.env | grep -v '^#' | tr -d '\r')
 echo "CAPI_ENV set to $CAPI_ENV"
 
