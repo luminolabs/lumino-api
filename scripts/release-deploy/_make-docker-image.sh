@@ -16,4 +16,5 @@ docker tag $SERVICE_NAME:local $ARTIFACT_REPO_URL/$SERVICE_NAME:$(cat VERSION)
 docker tag $SERVICE_NAME:local $ARTIFACT_REPO_URL/$SERVICE_NAME:latest
 echo "Pushing the Docker image..."
 docker push $ARTIFACT_REPO_URL/$SERVICE_NAME:$(cat VERSION)
+docker push $ARTIFACT_REPO_URL/$SERVICE_NAME:latest
 echo "Done."
