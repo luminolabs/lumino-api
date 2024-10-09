@@ -3,19 +3,13 @@
 # This script is used to start the service on dev and production environments
 # Don't use this script locally
 
-# Variables
-SECRET_NAME_PREFIX="$SERVICE_NAME-config"
+echo "Starting $SERVICE_NAME..."
 
 # Inputs
 COMPOSE_OPTS=$1  # Additional options to pass to docker compose
+echo "COMPOSE_OPTS set to $COMPOSE_OPTS"
 
-# Setup the environment
-LOCAL_ENV="local"
-if [[ "$CAPI_ENV" == "" ]]; then
-  CAPI_ENV="$LOCAL_ENV"
-fi
-
-# Change to the directory where the Dockerfile is located
+# Change to the service directory
 cd /$SERVICE_NAME
 
 # Import common functions and variables
@@ -27,9 +21,8 @@ source ./scripts/utils.sh
 eval $(cat ./.env | grep -v '^#' | tr -d '\r')
 echo "CAPI_ENV set to $CAPI_ENV"
 
-# Fetch the secrets from Secret Manager
-echo "Fetching secrets (db, auth0, stripe creds, etc) from Secret Manager"
-SECRET_NAME="$SECRET_NAME_PREFIX-$CAPI_ENV"
+echo "Fetching secrets from Secret Manager"
+SECRET_NAME="$SERVICE_NAME-config-$CAPI_ENV"
 SECRET_PAYLOAD=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID)
 # Parse the secret payload and set environment variables
 eval "$SECRET_PAYLOAD"
@@ -44,9 +37,6 @@ export CAPI_AUTH0_DOMAIN
 export CAPI_APP_SECRET_KEY
 export CAPI_STRIPE_SECRET_KEY
 export CAPI_STRIPE_WEBHOOK_SECRET
-
-# Configure docker to use gcloud as a credential helper
-gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
 echo "Pull the latest image"
 docker pull $ARTIFACT_REPO_URL/$SERVICE_NAME:latest
