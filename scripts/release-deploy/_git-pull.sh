@@ -4,7 +4,7 @@
 # Don't use this script locally
 
 # Import common functions and variables
-source /$SERVICE_NAME/scripts/utils.sh
+source /$SERVICE_NAME/scripts/utils.sh  # $SERVICE_NAME is set in make-deployment.sh
 
 # Change directory to the codebase
 cd /$SERVICE_NAME
