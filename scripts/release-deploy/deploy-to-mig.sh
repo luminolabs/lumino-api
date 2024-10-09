@@ -4,7 +4,7 @@
 # Run this script locally, after make-deployment.sh has been run
 
 # Import common functions and variables
-source ./scripts/utils.sh # Sets $SERVICE_NAME
+source ./scripts/utils.sh  # Sets $SERVICE_NAME
 
 # Get the list of MIG VMs
 VMS=$(gcloud compute instance-groups managed list-instances $SERVICE_NAME-prod --project=$PROJECT_ID --zone=$WORK_ZONE --format="value(name)")
