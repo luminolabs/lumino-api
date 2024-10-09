@@ -3,11 +3,11 @@
 # This script is used to start the service on dev and production environments
 # Don't use this script locally
 
-# $SERVICE_NAME is set in /etc/environment
-echo "Starting $SERVICE_NAME..."
-
 # Inputs
-COMPOSE_OPTS="${@:1}"  # Additional options to pass to docker compose
+SERVICE_NAME=$1
+COMPOSE_OPTS="${@:2}"  # Additional options to pass to docker compose
+
+echo "Starting $SERVICE_NAME..."
 echo "COMPOSE_OPTS set to $COMPOSE_OPTS"
 
 # Change to the service directory
