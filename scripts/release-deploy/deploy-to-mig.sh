@@ -17,7 +17,7 @@ for VM in $VMS; do
     echo "Processing VM: $VM"
     gcloud compute instance-groups managed delete-instances $SERVICE_NAME-prod \
       --project=$PROJECT_ID --zone=$WORK_ZONE \
-      --instances=$VM --quiet
+      --instances=$VM --quiet || true
     echo "Completed processing VM: $VM"
 done
 
