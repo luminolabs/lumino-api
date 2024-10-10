@@ -16,6 +16,7 @@ class CreditDeductRequest(BaseModel):
     service_name: ServiceName = Field(..., description="The name of the service")
     fine_tuning_job_id: UUID = Field(..., description="The ID of the job")
 
+
 class CreditAddRequest(BaseModel):
     """
     Schema for adding credits to a user's account.
@@ -24,7 +25,11 @@ class CreditAddRequest(BaseModel):
     amount: float = Field(..., description="The amount of credits to add")
     transaction_id: str = Field(..., description="The transaction ID")
 
+
 class CreditHistoryResponse(BaseModel):
+    """
+    Schema for credit history response data.
+    """
     id: UUID = Field(..., description="The unique identifier for the credit record")
     created_at: DateTime = Field(..., description="The timestamp when the credit record was created")
     credits: float = Field(..., description="The amount of credits added or deducted")

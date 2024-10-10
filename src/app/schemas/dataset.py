@@ -23,6 +23,15 @@ class DatasetCreate(BaseModel):
             raise BadRequestError(f"File size must not exceed {max_size} bytes, got {v.size} bytes")
         return v
 
+
+class DatasetUpdate(BaseModel):
+    """
+    Schema for updating an existing dataset.
+    """
+    name: str | None = NameField(None, description="The new name for the dataset")
+    description: str | None = Field(None, max_length=1000, description="The new description for the dataset")
+
+
 class DatasetResponse(BaseModel):
     """
     Schema for dataset response data.
@@ -37,10 +46,3 @@ class DatasetResponse(BaseModel):
     file_size: int = Field(..., description="The size of the dataset file in bytes")
     errors: dict | None = Field(None, description="Any errors encountered during dataset processing, if any")
     model_config = ConfigDict(from_attributes=True)
-
-class DatasetUpdate(BaseModel):
-    """
-    Schema for updating an existing dataset.
-    """
-    name: str | None = NameField(None, description="The new name for the dataset")
-    description: str | None = Field(None, max_length=1000, description="The new description for the dataset")

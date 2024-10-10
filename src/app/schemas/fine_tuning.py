@@ -7,15 +7,24 @@ from app.core.constants import FineTuningJobStatus, FineTuningJobType
 from app.schemas.common import NameField, DateTime
 
 
+class FineTuningJobParameters(BaseModel):
+    """Model for fine-tuning job parameters."""
+    batch_size: int = Field(default=2, gt=0, le=8)
+    shuffle: bool = Field(default=True)
+    num_epochs: int = Field(default=1, gt=0, le=10)
+    lr: float = Field(default=3e-4, gt=0, le=1)
+    seed: int | None = Field(None, ge=0)
+
+
 class FineTuningJobCreate(BaseModel):
     """
     Schema for creating a new fine-tuning job.
     """
     base_model_name: str = Field(..., description="The name of the base model to use for fine-tuning")
     dataset_name: str = Field(..., description="The name of the dataset to use for fine-tuning")
-    parameters: Dict[str, Any] = Field(..., description="The parameters for the fine-tuning job")
     name: str = NameField(..., description="The name of the fine-tuning job")
     type: FineTuningJobType = Field(..., description="The type of fine-tuning job to run")
+    parameters: Dict[str, Any] = Field(..., description="The parameters for the fine-tuning job")
 
 
 class FineTuningJobResponse(BaseModel):

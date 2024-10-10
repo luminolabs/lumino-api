@@ -10,5 +10,6 @@ source /$SERVICE_NAME/scripts/utils.sh  # $SERVICE_NAME is set in make-deploymen
 cd /$SERVICE_NAME
 
 echo "Pulling the latest code from the git repository..."
+git config --global --add safe.directory /$SERVICE_NAME
 ssh-agent bash -c "ssh-add ~/.ssh/id_rsa; git pull"
 echo "Done."
