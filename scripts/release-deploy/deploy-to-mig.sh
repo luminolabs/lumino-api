@@ -20,11 +20,6 @@ else
   echo "No version provided, using the latest image tag."
 fi
 
-# Get the current list of VMs before the update (Old VMs)
-OLD_VMS=$(gcloud compute instance-groups managed list-instances $SERVICE_NAME-prod \
-  --project=$PROJECT_ID --zone=$WORK_ZONE \
-  --format="value(name)")
-
 # Get the current MIG target size (the desired number of instances)
 TARGET_SIZE=$(gcloud compute instance-groups managed describe $SERVICE_NAME-prod \
   --project=$PROJECT_ID --zone=$WORK_ZONE \
@@ -34,9 +29,10 @@ TARGET_SIZE=$(gcloud compute instance-groups managed describe $SERVICE_NAME-prod
 echo "Starting the rolling update."
 # Flags:
 # --max-unavailable=0: Our minimum number of instances is 1, so we can't have any unavailable
-# --min-ready=60s: Wait for 60 seconds after an instance is ready before considering it available
+# --min-ready=Xs: Wait for X seconds (see utils.sh) after an instance is ready before considering it available
 gcloud beta compute instance-groups managed rolling-action replace $SERVICE_NAME-prod \
   --project=$PROJECT_ID --zone=$WORK_ZONE \
   --max-unavailable=0 --min-ready=${BUILD_DURATION}s > /dev/null
-echo "Rolling update started and *this script will exit now* - it may take a few minutes for the update to complete."
+echo "Rolling update started and *this script will exit now* - it may take up to 5 minutes for the update to complete."
+echo "Monitor progress at: https://console.cloud.google.com/compute/instanceGroups/details/us-central1-a/$SERVICE_NAME-prod"
 echo "Done."
