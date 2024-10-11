@@ -1,4 +1,5 @@
 GOOGLE_APPLICATION_CREDENTIALS: .secrets/gcp_key.json
+jobs_meta_subscription: pipeline-zen-jobs-meta-local-lumino-api
 run_with_scheduler: False
 scheduler_zen_url: http://localhost:5200
 ui_url: http://localhost:3000
