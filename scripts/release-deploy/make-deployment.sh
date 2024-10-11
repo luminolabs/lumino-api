@@ -3,7 +3,10 @@
 # This script is used to orchestrate the build process
 # Run this script locally, before running deploy-to-mig.sh
 
-# NOTE: You need your github private key in ~/.ssh/id_rsa in the Scheduler VM to run this script
+# Prerequisites:
+# - You need to be in `builders` and `docker` groups in the builder VM
+# - You need your github private key in ~/.ssh/id_rsa in the builder VM
+# Contact Vasilis if you need help with this
 
 # Import common functions and variables
 source ./scripts/utils.sh  # Sets $SERVICE_NAME

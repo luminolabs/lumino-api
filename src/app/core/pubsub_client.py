@@ -30,10 +30,10 @@ async def _handle_job_artifacts(db: AsyncSession, job_id: str, user_id: str, dat
 async def _handle_job_progress(db: AsyncSession, job_id: str, user_id: str, data: dict) -> bool:
     """Handle job progress updates received from Pub/Sub."""
     progress = {
-        "current_step": data["current_step"],
-        "total_steps": data["total_steps"],
-        "current_epoch": data["current_epoch"],
-        "total_epochs": data["total_epochs"],
+        "current_step": data["step_num"],
+        "total_steps": data["step_len"],
+        "current_epoch": data["epoch_num"],
+        "total_epochs": data["epoch_len"],
     }
     ack = await update_fine_tuning_job_progress(db, UUID(job_id), UUID(user_id), progress)
     return ack
@@ -84,6 +84,9 @@ class PubSubClient:
             user_id = data["user_id"]
             action = data["action"]
 
+            if user_id in ("0", "-1"):  # Ignore, non-api user or system user
+                return
+
             ack = False
             logger.info(f"Received action: job_artifacts for job: {job_id}, user: {user_id}")
 
@@ -92,6 +95,8 @@ class PubSubClient:
                     ack = await _handle_job_artifacts(db, job_id, user_id, data)
                 elif action == 'job_progress':
                     ack = await _handle_job_progress(db, job_id, user_id, data)
+                else:
+                    logger.warning(f"Unknown action: {action}")
 
             if ack:
                 logger.info(f"Processed action: {action}, data: {data}")
