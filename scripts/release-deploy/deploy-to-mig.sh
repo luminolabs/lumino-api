@@ -17,7 +17,11 @@ if [ -n "$1" ]; then
     $ARTIFACT_REPO_URL/$SERVICE_NAME:$VERSION \
     $ARTIFACT_REPO_URL/$SERVICE_NAME:latest > /dev/null
 else
-  echo "No version provided, using the latest image tag."
+  VERSION=$(cat VERSION)
+  echo "No version provided, update latest tag to $VERSION"
+  gcloud artifacts docker tags add \
+    $ARTIFACT_REPO_URL/$SERVICE_NAME:$VERSION \
+    $ARTIFACT_REPO_URL/$SERVICE_NAME:latest > /dev/null
 fi
 
 # Get the current MIG target size (the desired number of instances)
