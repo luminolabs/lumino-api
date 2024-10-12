@@ -91,9 +91,10 @@ class PubSubClient:
             logger.info(f"Received action: job_artifacts for job: {job_id}, user: {user_id}")
 
             async with AsyncSessionLocal() as db:
-                if action == 'job_artifacts':
+                is_workflow_supported = data.get("workflow") == "torchtunewrapper"
+                if action == 'job_artifacts' and is_workflow_supported:
                     ack = await _handle_job_artifacts(db, job_id, user_id, data)
-                elif action == 'job_progress':
+                elif action == 'job_progress' and is_workflow_supported:
                     ack = await _handle_job_progress(db, job_id, user_id, data)
                 else:
                     logger.warning(f"Unknown action: {action}")
