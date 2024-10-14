@@ -26,13 +26,6 @@ async def create_fine_tuned_model(db: AsyncSession,
         logger.warning(f"No FineTuningJob found for job_id: {job_id} and user_id: {user_id}")
         return False
 
-    # Check if the job is in the COMPLETED state
-    if job.status != FineTuningJobStatus.COMPLETED:
-        logger.error(f"FineTuningJob: {job_id} is not in COMPLETED state, "
-                     f"skipping model creation - this should not happen; "
-                     f"check pipeline-zen logic")
-        return True
-
     # Check if a FineTunedModel already exists for this job
     model_query = (
         select(FineTunedModel)
