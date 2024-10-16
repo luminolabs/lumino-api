@@ -1,23 +1,38 @@
+# FastAPI framework and related tools
 fastapi
 uvicorn
+
+# Database and ORM
 sqlalchemy
 pydantic
 pydantic[email]
 psycopg2-binary
 alembic
-python-jose
-passlib[bcrypt]
-python-multipart
-pyyaml
-gcloud-aio-storage
-google-cloud-pubsub
-aiohttp
 asyncpg
 greenlet
+
+# Authentication and security
+python-jose
+passlib[bcrypt]
 bcrypt
-apscheduler
-authlib
 itsdangerous
+
+# Task scheduling
+apscheduler
+
+# HTTP clients
 httpx
+aiohttp
+
+# Templating
 jinja2
+
+# Cloud services
+gcloud-aio-storage
+google-cloud-pubsub
+
+# Miscellaneous
+python-multipart
+pyyaml
+authlib
 stripe
