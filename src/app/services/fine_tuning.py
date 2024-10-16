@@ -244,12 +244,13 @@ async def update_fine_tuning_job_progress(db: AsyncSession,
         logger.warning(f"No FineTuningJob found for job_id: {job_id} and user_id: {user_id}")
         return False
 
-    if progress['current_step'] <= job.current_step:
-        # Ignore outdated progress updates
+    new_current_step = progress.get('current_step')
+    # Ignore outdated progress updates
+    if new_current_step and job.current_step and new_current_step <= job.current_step:
         return True
 
     # Update job progress
-    job.current_step = progress['current_step']
+    job.current_step = new_current_step
     job.total_steps = progress['total_steps']
     job.current_epoch = progress['current_epoch']
     job.total_epochs = progress['total_epochs']
