@@ -122,11 +122,7 @@ class PubSubClient:
         with self.subscriber:
             while self.running:
                 try:
-                    # Wait for messages to be received, with a timeout of 1 second
-                    await asyncio.to_thread(streaming_pull_future.result, timeout=1)
-                except TimeoutError:
-                    # No messages were received during the last second, so re-loop
-                    pass
+                    await asyncio.to_thread(streaming_pull_future.result)
                 except Exception as e:
                     streaming_pull_future.cancel()
-                    logger.error(f"Listening for messages failed: {str(e)}")
+                    logger.error(f"Listening for messages failed: {e}")
