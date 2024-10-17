@@ -245,7 +245,7 @@ async def update_fine_tuning_job_progress(db: AsyncSession,
         return False
 
     # Ignore outdated progress updates
-    if progress['current_step'] <= job.current_step:
+    if progress['current_step'] <= (job.current_step or 0):
         return True
 
     # Update job progress
