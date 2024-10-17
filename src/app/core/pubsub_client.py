@@ -1,6 +1,5 @@
 import asyncio
 import json
-from typing import Callable
 from uuid import UUID
 
 from google.cloud import pubsub_v1
@@ -41,9 +40,6 @@ async def _handle_job_progress(db: AsyncSession, job_id: str, user_id: str, data
 
 class PubSubClient:
     """Manages Google Cloud Pub/Sub operations."""
-
-    # Message callback function
-    message_callback: Callable = None
 
     def __init__(self, project_id: str):
         """
