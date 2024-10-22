@@ -220,7 +220,7 @@ async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str)
         raise BadRequestError(f"Job {job_name} cannot be cancelled in its current state: {job.status.value}", logger)
 
     # Request job cancellation from the scheduler
-    await stop_fine_tuning_job(job.id)
+    await stop_fine_tuning_job(job.id, user_id)
 
     # Update the job status in our database
     db_job = await db.get(FineTuningJob, job.id)

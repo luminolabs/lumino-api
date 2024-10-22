@@ -1,17 +1,18 @@
 from typing import List, Dict, Any
 from uuid import UUID
-import aiohttp
 
+import aiohttp
+from sqlalchemy import select
+
+from app.core.config_manager import config
 from app.core.constants import FineTuningJobStatus
 from app.core.database import AsyncSessionLocal
+from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError, FineTuningJobCancellationError
+from app.core.utils import setup_logger
+from app.models.base_model import BaseModel
+from app.models.dataset import Dataset
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
-from app.models.dataset import Dataset
-from app.models.base_model import BaseModel
-from sqlalchemy import select
-from app.core.config_manager import config
-from app.core.utils import setup_logger
-from app.core.exceptions import FineTuningJobCreationError, FineTuningJobRefreshError, FineTuningJobCancellationError
 from app.models.user import User
 
 INTERNAL_API_URL = config.scheduler_zen_url
@@ -89,7 +90,7 @@ async def start_fine_tuning_job(job_id: UUID):
     try:
         # Send request to Scheduler API
         async with aiohttp.ClientSession() as session:
-            async with session.post(f"{INTERNAL_API_URL}/jobs", json=payload) as response:
+            async with session.post(f"{INTERNAL_API_URL}/jobs/gcp", json=payload) as response:
                 # Handle successful job creation;
                 # no need to update job status because it's already set to `NEW`
                 if response.status == 200:
@@ -141,12 +142,13 @@ async def fetch_job_details(user_id: UUID, job_ids: List[UUID]) -> List[Dict[str
                 raise FineTuningJobRefreshError(f"Error refreshing job statuses: {await response.text()}")
 
 
-async def stop_fine_tuning_job(job_id: UUID):
+async def stop_fine_tuning_job(job_id: UUID, user_id: UUID):
     """
     Stop a fine-tuning job asynchronously using the Scheduler API.
 
     Args:
         job_id (UUID): The ID of the fine-tuning job to stop.
+        user_id (UUID): The ID of the user who owns the job.
 
     Raises:
         FineTuningJobCancellationError: If there's an error stopping the fine-tuning job.
@@ -157,7 +159,7 @@ async def stop_fine_tuning_job(job_id: UUID):
 
     # Send request to Scheduler API
     async with aiohttp.ClientSession() as session:
-        async with session.post(f"{INTERNAL_API_URL}/jobs/{job_id}/stop") as response:
+        async with session.post(f"{INTERNAL_API_URL}/jobs/gcp/stop/{job_id}/{user_id}") as response:
             if response.status == 200:
                 logger.info(f"Successfully requested to stop fine-tuning job: {job_id}")
                 return await response.json()
