@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.common import paginate_query
 from app.core.config_manager import config
-from app.core.constants import FineTuningJobStatus, FineTuningJobType
+from app.core.constants import FineTuningJobStatus, FineTuningJobType, ComputeProvider
 from app.core.exceptions import (
     FineTuningJobNotFoundError,
     BaseModelNotFoundError,
@@ -82,6 +82,7 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
         user_id=user.id,
         name=job.name,
         type=job.type,
+        provider=job.provider,
         base_model_id=base_model.id,
         dataset_id=dataset.id,
         status=FineTuningJobStatus.NEW
@@ -214,6 +215,10 @@ async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str)
     """
     # Get the job from the database
     job = await get_fine_tuning_job(db, user_id, job_name)
+
+    # We can't cancel jobs running on the LUM protocol
+    if job.provider == ComputeProvider.LUM:
+        raise BadRequestError(f"Can't cancel job {job_name} because it's running on the {ComputeProvider.LUM} protocol", logger)
 
     # Check if the job is in a state that can be cancelled
     if job.status != FineTuningJobStatus.RUNNING:

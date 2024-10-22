@@ -148,6 +148,10 @@ components:
           type: string
           enum: [ FULL, LORA, QLORA ]
           description: The type of fine-tuning job to run
+        provider:
+          type: string
+          enum: [ GCP, LUM ]
+          description: The compute provider to use for fine-tuning
 
     FineTuningJobResponse:
       type: object
@@ -173,6 +177,9 @@ components:
         type:
           type: string
           enum: [ FULL, LORA, QLORA ]
+        provider:
+          type: string
+          enum: [ GCP, LUM ]
         current_step:
           type: integer
         total_steps:
