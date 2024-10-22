@@ -82,6 +82,7 @@ async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJo
         user_id=user.id,
         name=job.name,
         type=job.type,
+        provider=job.provider,
         base_model_id=base_model.id,
         dataset_id=dataset.id,
         status=FineTuningJobStatus.NEW
