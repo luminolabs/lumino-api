@@ -90,7 +90,7 @@ async def start_fine_tuning_job(job_id: UUID):
     try:
         # Send request to Scheduler API
         async with aiohttp.ClientSession() as session:
-            async with session.post(f"{INTERNAL_API_URL}/jobs/{job.provider}", json=payload) as response:
+            async with session.post(f"{INTERNAL_API_URL}/jobs/{job.provider.value}", json=payload) as response:
                 # Handle successful job creation;
                 # no need to update job status because it's already set to `NEW`
                 if response.status == 200:
