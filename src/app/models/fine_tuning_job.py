@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, DateTime, UUID, Integer, BigInteger, Fore
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.core.constants import FineTuningJobStatus, FineTuningJobType
+from app.core.constants import FineTuningJobStatus, FineTuningJobType, ComputeProvider
 from app.core.database import Base
 
 
@@ -19,6 +19,8 @@ class FineTuningJob(Base):
         dataset_id (UUID): The ID of the dataset used for fine-tuning.
         status (FineTuningJobStatus): The current status of the job.
         name (str): The name of the fine-tuning job.
+        type (FineTuningJobType): The type of fine-tuning job.
+        provider (ComputeProvider): The compute provider used for fine-tuning.
         current_step (int): The current step of the fine-tuning process.
         total_steps (int): The total number of steps in the fine-tuning process.
         current_epoch (int): The current epoch of the fine-tuning process.
@@ -45,6 +47,7 @@ class FineTuningJob(Base):
     status = Column(Enum(FineTuningJobStatus), nullable=False, default=FineTuningJobStatus.NEW)
     name = Column(String(255), nullable=False)
     type = Column(Enum(FineTuningJobType), nullable=False)
+    provider = Column(Enum(ComputeProvider), nullable=False, default=ComputeProvider.GCP)
     current_step = Column(Integer, nullable=True)
     total_steps = Column(Integer, nullable=True)
     current_epoch = Column(Integer, nullable=True)

@@ -32,6 +32,13 @@ class FineTuningJobStatus(str, Enum):
     COMPLETED = "COMPLETED"  # Job has completed successfully
     FAILED = "FAILED"  # Job has failed to complete
 
+
+# Enumeration for compute providers
+class ComputeProvider(str, Enum):
+    GCP = "GCP"
+    LUM = "LUM"
+
+
 # Enumeration for fine-tuning job types
 class FineTuningJobType(str, Enum):
     FULL = "FULL"  # Full fine-tuning job
