@@ -106,6 +106,7 @@ class PubSubClient:
                 # If `ack` is None, the message was not handled above
                 if ack is None:
                     logger.warning(f"Did not process message: {message_dict}")
+                    return
 
             if ack:  # True if the message processor succeeded
                 logger.info(f"Processed message: {message_dict}")
