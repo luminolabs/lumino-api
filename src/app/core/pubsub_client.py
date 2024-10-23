@@ -1,5 +1,4 @@
 import asyncio
-import json
 from uuid import UUID
 
 from google.cloud import pubsub_v1
@@ -7,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config_manager import config
 from app.core.database import AsyncSessionLocal
-from app.core.utils import setup_logger
+from app.core.utils import setup_logger, recursive_json_decode
 from app.services.fine_tuned_model import create_fine_tuned_model
 from app.services.fine_tuning import update_fine_tuning_job_progress
 
@@ -18,9 +17,9 @@ logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.l
 async def _handle_job_artifacts(db: AsyncSession, job_id: str, user_id: str, data: dict) -> bool:
     """Handle job artifacts received from Pub/Sub."""
     artifacts = {
-        "base_url": data["base_url"],
-        "weight_files": data["weight_files"],
-        "other_files": data["other_files"]
+        "base_url": data["data"]["base_url"],
+        "weight_files": data["data"]["weight_files"],
+        "other_files": data["data"]["other_files"]
     }
     ack = await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
     return ack
@@ -73,33 +72,45 @@ class PubSubClient:
         while True:
             if not self.running:
                 break
-            message = await self.messages_queue.get()
 
-            data = json.loads(message.data.decode("utf-8"))
+            # Get the next message from the queue
+            message = await self.messages_queue.get()
+            data = recursive_json_decode(message.data.decode("utf-8"))
+            logger.info(f"Received message: {data}")
+
+            # Extract message data
             job_id = data["job_id"]
             user_id = data["user_id"]
-            action = data["action"]
+            sender = data["sender"]
+            workflow = data["workflow"]
+            operation = data["operation"]
+            is_workflow_supported = workflow in ("torchtunewrapper",)
 
-            if user_id in ("0", "-1"):  # Ignore, non-api user or system user
+            # Ignore, non-api user or system user
+            if user_id in ("0", "-1"):
+                logger.info(f"Ignoring message for internal user: {user_id}")
+                return
+            # Ignore, if workflow is not supported
+            if not is_workflow_supported:
+                logger.info(f"Ignoring message for unsupported workflow: {workflow}")
                 return
 
-            ack = False
-            logger.info(f"Received action: job_artifacts for job: {job_id}, user: {user_id}")
+            ack = None
+            async with (AsyncSessionLocal() as db):
+                if sender == 'job_logger':
+                    if operation == "step" and (data.get('step_num') or -1) >= 0:
+                        ack = await _handle_job_progress(db, job_id, user_id, data)
+                    elif operation == "artifacts":
+                        ack = await _handle_job_artifacts(db, job_id, user_id, data)
+                # If `ack` is None, the message was not handled above
+                if ack is None:
+                    logger.warning(f"Did not process message: {data}")
 
-            async with AsyncSessionLocal() as db:
-                is_workflow_supported = data.get("workflow") == "torchtunewrapper"
-                if action == 'job_artifacts' and is_workflow_supported:
-                    ack = await _handle_job_artifacts(db, job_id, user_id, data)
-                elif action == 'job_progress' and (data.get('step_num') or -1) >= 0 and is_workflow_supported:
-                    ack = await _handle_job_progress(db, job_id, user_id, data)
-                else:
-                    logger.warning(f"Unknown action: {action}")
-
-            if ack:
-                logger.info(f"Processed action: {action}, data: {data}")
+            if ack:  # True if the message processor succeeded
+                logger.info(f"Processed message: {data}")
                 message.ack()
-            else:
-                logger.warning(f"Failed to process message, data: {data}")
+            else:  # False if the message processor failed
+                logger.warning(f"Failed to process message: {data}")
 
     async def listen_for_messages(self, subscription_name: str) -> None:
         """

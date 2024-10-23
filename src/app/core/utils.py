@@ -1,8 +1,9 @@
+import json
 import logging
 import os
 import sys
 from logging.handlers import TimedRotatingFileHandler
-from typing import TypeVar
+from typing import TypeVar, Any
 
 from app.core.config_manager import config
 
@@ -42,3 +43,20 @@ def setup_logger(name: str,
         logger.addHandler(stdout_handler)
     logger.addHandler(file_handler)
     return logger
+
+
+def recursive_json_decode(data: Any) -> Any:
+    """
+    Recursively decode JSON strings into Python objects.
+    """
+    if isinstance(data, str):
+        try:
+            return recursive_json_decode(json.loads(data))
+        except json.JSONDecodeError:
+            return data
+    elif isinstance(data, dict):
+        return {key: recursive_json_decode(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [recursive_json_decode(item) for item in data]
+    else:
+        return data
