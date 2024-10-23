@@ -35,8 +35,7 @@ async def create_fine_tuned_model(db: AsyncSession,
     model = model_result.scalar_one_or_none()
     if model:
         # Model exists, do nothing
-        logger.error(f"FineTunedModel: {model.id} already exists - "
-                     f"this should not happen; check pipeline-zen logic")
+        logger.warning(f"FineTunedModel: {model.id} already exists")
         return True
 
     # Create new model

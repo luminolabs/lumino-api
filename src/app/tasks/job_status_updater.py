@@ -111,7 +111,7 @@ async def update_job_statuses():
                     # Weights are under the job_logger section in the artifacts
                     for x in artifacts.get('job_logger', []):
                         if x.get('operation') == 'weights':
-                            await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), x['data'])
+                            await create_fine_tuned_model(db, UUID(job_id), user_id, x['data'])
 
 
             # Commit the changes for the user
