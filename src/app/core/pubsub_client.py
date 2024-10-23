@@ -17,9 +17,9 @@ logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.l
 async def _handle_job_artifacts(db: AsyncSession, job_id: str, user_id: str, data: dict) -> bool:
     """Handle job artifacts received from Pub/Sub."""
     artifacts = {
-        "base_url": data["data"]["base_url"],
-        "weight_files": data["data"]["weight_files"],
-        "other_files": data["data"]["other_files"]
+        "base_url": data["base_url"],
+        "weight_files": data["weight_files"],
+        "other_files": data["other_files"]
     }
     ack = await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), artifacts)
     return ack
