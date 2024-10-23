@@ -101,7 +101,7 @@ class PubSubClient:
                 if sender == 'job_logger':
                     if operation == "step" and (data.get('step_num') or -1) >= 0:
                         ack = await _handle_job_progress(db, job_id, user_id, data)
-                    elif operation == "artifacts":
+                    elif operation == "weights":
                         ack = await _handle_job_artifacts(db, job_id, user_id, data)
                 # If `ack` is None, the message was not handled above
                 if ack is None:
