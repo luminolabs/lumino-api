@@ -12,6 +12,7 @@ from app.core.scheduler_client import fetch_job_details
 from app.core.utils import setup_logger
 from app.models.fine_tuning_job import FineTuningJob
 from app.services.fine_tuned_model import create_fine_tuned_model
+from app.services.fine_tuning import update_fine_tuning_job_progress
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
@@ -111,7 +112,34 @@ async def update_job_statuses():
                 # otherwise, the changes won't be detected by SQLAlchemy
                 job.details.timestamps = timestamps
 
-                # 3. Create fine-tuned model if artifacts are available
+                # 3. Update steps and epochs
+
+                artifacts = job_update['artifacts']
+                if artifacts:
+                    # Steps and epochs are under the job_logger section in the artifacts
+                    max_step = 0
+                    max_epoch = 0
+                    num_steps = 0
+                    num_epochs = 0
+                    for x in artifacts.get('job_logger', []):
+                        if x.get('operation') == 'step':
+                            max_step = max(max_step, x['data']['step_num'])
+                            max_epoch = max(max_epoch, x['data']['epoch_num'])
+                            num_steps = x['data']['step_len']
+                            num_epochs = x['data']['epoch_len']
+                    logger.info(f"Got steps and epochs for job {job_id} to {max_step}/{num_steps} and {max_epoch}/{num_epochs}")
+                    if max_step > job.current_step:
+                        logger.info(f"Updating progress for job {job_id} to {max_step}/{num_steps} and {max_epoch}/{num_epochs}")
+                        progress = {
+                            "current_step": max_step,
+                            "total_steps": num_steps,
+                            "current_epoch": max_epoch,
+                            "total_epochs": num_epochs,
+                        }
+                        await update_fine_tuning_job_progress(db, UUID(job_id), user_id, progress)
+
+
+                # 4. Create fine-tuned model if artifacts are available
 
                 #  Look through all artifacts for weights
                 artifacts = job_update['artifacts']
