@@ -47,11 +47,11 @@ async def lifespan(app: FastAPI):
     # Start the background scheduler
     background_task_scheduler.start()
     # Initialize the PubSub client
-    pubsub = PubSubClient(config.gcp_project)
-    asyncio.create_task(pubsub.start())
-    # Listen for job metadata messages
-    asyncio.create_task(
-        pubsub.listen_for_messages(config.jobs_meta_subscription))
+    # pubsub = PubSubClient(config.gcp_project)
+    # asyncio.create_task(pubsub.start())
+    # # Listen for job metadata messages
+    # asyncio.create_task(
+    #     pubsub.listen_for_messages(config.jobs_meta_subscription))
 
     yield
 
@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI):
     # Stop the background scheduler
     background_task_scheduler.shutdown()
     # Stop the PubSub client
-    await pubsub.stop()
+    # await pubsub.stop()
 
 app = FastAPI(title="LLM Fine-tuning API", lifespan=lifespan)
 
