@@ -75,15 +75,16 @@ class PubSubClient:
 
             # Get the next message from the queue
             message = await self.messages_queue.get()
-            data = recursive_json_decode(message.data.decode("utf-8"))
-            logger.info(f"Received message: {data}")
+            message_dict = recursive_json_decode(message.data.decode("utf-8"))
+            logger.info(f"Received message: {message_dict}")
 
             # Extract message data
-            job_id = data["job_id"]
-            user_id = data["user_id"]
-            sender = data["sender"]
-            workflow = data["workflow"]
-            operation = data["operation"]
+            job_id = message_dict["job_id"]
+            user_id = message_dict["user_id"]
+            sender = message_dict["sender"]
+            workflow = message_dict["workflow"]
+            operation = message_dict["operation"]
+            data = message_dict["data"]
             is_workflow_supported = workflow in ("torchtunewrapper",)
 
             # Ignore, non-api user or system user
@@ -104,13 +105,13 @@ class PubSubClient:
                         ack = await _handle_job_artifacts(db, job_id, user_id, data)
                 # If `ack` is None, the message was not handled above
                 if ack is None:
-                    logger.warning(f"Did not process message: {data}")
+                    logger.warning(f"Did not process message: {message_dict}")
 
             if ack:  # True if the message processor succeeded
-                logger.info(f"Processed message: {data}")
+                logger.info(f"Processed message: {message_dict}")
                 message.ack()
             else:  # False if the message processor failed
-                logger.warning(f"Failed to process message: {data}")
+                logger.warning(f"Failed to process message: {message_dict}")
 
     async def listen_for_messages(self, subscription_name: str) -> None:
         """
