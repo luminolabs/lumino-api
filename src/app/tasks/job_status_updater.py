@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Dict
 from uuid import UUID
 
@@ -36,10 +37,17 @@ async def update_job_statuses():
             FineTuningJobStatus.RUNNING,
             FineTuningJobStatus.STOPPING
         ]
+        # Fetch all non-terminal jobs or completed jobs in the last 10 minutes
+        now = datetime.utcnow()
+        ten_minutes_ago = now - timedelta(minutes=10)
         result = await db.execute(
             select(FineTuningJob)
             .options(selectinload(FineTuningJob.details))
-            .where(FineTuningJob.status.in_(non_terminal_statuses))
+            .where(
+                FineTuningJob.status.in_(non_terminal_statuses) | (
+                    (FineTuningJob.status == FineTuningJobStatus.COMPLETED) &
+                    (FineTuningJob.updated_at >= ten_minutes_ago))
+            )
         )
         jobs = result.scalars().all()
 
