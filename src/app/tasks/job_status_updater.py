@@ -128,7 +128,7 @@ async def update_job_statuses():
                             num_steps = x['data']['step_len']
                             num_epochs = x['data']['epoch_len']
                     logger.info(f"Got steps and epochs for job {job_id} to {max_step}/{num_steps} and {max_epoch}/{num_epochs}")
-                    if max_step > job.current_step:
+                    if job.current_step is None or max_step > job.current_step:
                         logger.info(f"Updating progress for job {job_id} to {max_step}/{num_steps} and {max_epoch}/{num_epochs}")
                         progress = {
                             "current_step": max_step,
