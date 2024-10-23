@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config_manager import config
-from app.core.constants import FineTuningJobStatus
 from app.core.utils import setup_logger
 from app.models.fine_tuned_model import FineTunedModel
 from app.models.fine_tuning_job import FineTuningJob

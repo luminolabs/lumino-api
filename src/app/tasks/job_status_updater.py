@@ -1,4 +1,5 @@
 from typing import Dict
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -9,6 +10,7 @@ from app.core.database import AsyncSessionLocal
 from app.core.scheduler_client import fetch_job_details
 from app.core.utils import setup_logger
 from app.models.fine_tuning_job import FineTuningJob
+from app.services.fine_tuned_model import create_fine_tuned_model
 
 # Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
@@ -100,6 +102,17 @@ async def update_job_statuses():
                 # note that we're updating the entire dictionary
                 # otherwise, the changes won't be detected by SQLAlchemy
                 job.details.timestamps = timestamps
+
+                # 3. Create fine-tuned model if artifacts are available
+
+                #  Look through all artifacts for weights
+                artifacts = job_update['artifacts']
+                if artifacts:
+                    # Weights are under the job_logger section in the artifacts
+                    for x in artifacts.get('job_logger', []):
+                        if x.get('operation') == 'weights':
+                            await create_fine_tuned_model(db, UUID(job_id), UUID(user_id), x['data'])
+
 
             # Commit the changes for the user
             await db.commit()
