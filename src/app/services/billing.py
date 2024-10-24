@@ -164,6 +164,8 @@ async def calculate_required_credits(
             return 2 * usage_amount / 1000000
         elif base_model_name == 'llm_llama3_1_70b':
             return 10 * usage_amount / 1000000
+        elif base_model_name == 'llm_dummy':
+            return 2 * usage_amount / 1000000
         # Return 422 if pricing logic not implemented for this base model
         raise BadRequestError(f"Could not find pricing logic for base model: {base_model_name}", logger)
 
