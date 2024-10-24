@@ -36,13 +36,27 @@ VALUES (
     'meta-llama/Meta-Llama-3.1-8B-Instruct',
     'ACTIVE',
     NULL,
-    '{"lora": 
-       {"gpu_type": "a100-40gb", "num_gpus": 1}, 
-      "qlora": 
-       {"gpu_type": "a100-40gb", "num_gpus": 1}, 
-      "full": 
-       {"gpu_type": "a100-80gb", "num_gpus": 2}}'
+    '{"lora":
+        {"gpu_type": "a100-40gb", "num_gpus": 1},
+        "qlora":
+        {"gpu_type": "a100-40gb", "num_gpus": 1},
+        "full":
+        {"gpu_type": "a100-80gb", "num_gpus": 2}}'
 );
+INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
+VALUES (
+    'llm_dummy',
+    'Dummy model run',
+    '',
+    'ACTIVE',
+    NULL,
+    '{"lora":
+        {"gpu_type": "v100", "num_gpus": 1},
+        "qlora":
+        {"gpu_type": "v100", "num_gpus": 1},
+        "full":
+        {"gpu_type": "v100", "num_gpus": 4}}'
+    );
 ```
 
 5. To access the UI and generate API keys, navigate to `http://localhost:5100/` in your browser.

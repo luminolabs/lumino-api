@@ -36,8 +36,8 @@ async def get_base_models(
     Returns:
         tuple[list[BaseModelResponse], Pagination]: A tuple containing the list of base models and pagination info.
     """
-    # Construct the query
-    query = select(BaseModel).order_by(BaseModel.name.desc())
+    # Construct the query, select all except name='llm_dummy'
+    query = (select(BaseModel).where(BaseModel.name != 'llm_dummy').order_by(BaseModel.name.desc()))
     # Paginate the query
     models, pagination = await paginate_query(db, query, page, items_per_page)
     # Create response objects
