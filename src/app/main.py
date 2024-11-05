@@ -22,8 +22,8 @@ from app.core.exceptions import (
 )
 from app.routes import users, api_keys, datasets, fine_tuning, models, usage, auth0, billing
 from app.tasks.api_key_cleanup import cleanup_expired_api_keys
-from app.tasks.job_cleanup import cleanup_deleted_job_weights
 from app.tasks.job_status_updater import update_job_statuses
+from app.tasks.model_cleanup import cleanup_deleted_model_weights
 
 # Create the background task scheduler instance
 background_task_scheduler = AsyncIOScheduler()
@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     # Add the job weights cleanup task to the background scheduler
-    background_task_scheduler.add_job(cleanup_deleted_job_weights, 'interval', days=1)
+    background_task_scheduler.add_job(cleanup_deleted_model_weights, 'interval', days=1)
     # Add the API key cleanup task to the background scheduler
     background_task_scheduler.add_job(cleanup_expired_api_keys, 'interval', days=1)
     # Add the job status updater task to the background scheduler
