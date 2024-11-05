@@ -30,6 +30,7 @@ jinja2
 # Cloud services
 gcloud-aio-storage
 google-cloud-pubsub
+google-cloud-storage
 
 # Miscellaneous
 python-multipart
