@@ -31,6 +31,7 @@ class FineTuningJobStatus(str, Enum):
     STOPPED = "STOPPED"  # Job has been stopped by the user or system
     COMPLETED = "COMPLETED"  # Job has completed successfully
     FAILED = "FAILED"  # Job has failed to complete
+    DELETED = "DELETED"  # Job has been marked as deleted
 
 
 # Enumeration for compute providers
@@ -50,6 +51,12 @@ class BaseModelStatus(str, Enum):
     ACTIVE = "ACTIVE"  # Base model is available for use
     INACTIVE = "INACTIVE"  # Base model is deactivated and cannot be used
     DEPRECATED = "DEPRECATED"  # Base model is no longer supported or recommended for use
+
+
+# Enumeration for fine-tuned model statuses
+class FineTunedModelStatus(str, Enum):
+    ACTIVE = "ACTIVE"  # Fine-tuned model is available for use
+    DELETED = "DELETED"  # Fine-tuned model has been marked as deleted
 
 
 class UsageUnit(str, Enum):
