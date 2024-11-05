@@ -14,7 +14,7 @@ from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, 
 from app.services.fine_tuning import (
     create_fine_tuning_job,
     get_fine_tuning_jobs,
-    get_fine_tuning_job, cancel_fine_tuning_job,
+    get_fine_tuning_job, cancel_fine_tuning_job, mark_job_deleted,
 )
 
 # Set up API router
@@ -112,6 +112,18 @@ async def cancel_fine_tuning_job_request(
     return cancelled_job
 
 
-@router.get("/fine-tuning/{job_name}/logs", status_code=status.HTTP_501_NOT_IMPLEMENTED)
-async def get_fine_tuning_job_logs_request() -> str:
-    return "Not implemented"
+@router.delete("/fine-tuning/{job_name}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_fine_tuning_job(
+        job_name: str,
+        current_user: User = Depends(get_current_active_user),
+        db: AsyncSession = Depends(get_db),
+) -> None:
+    """
+    Mark a fine-tuning job as deleted.
+
+    Args:
+        job_name (str): The name of the fine-tuning job to delete.
+        current_user (User): The current authenticated user.
+        db (AsyncSession): The database session.
+    """
+    await mark_job_deleted(db, current_user.id, job_name)

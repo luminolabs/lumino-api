@@ -2,10 +2,11 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.common import paginate_query
 from app.core.config_manager import config
-from app.core.constants import FineTuningJobStatus, FineTuningJobType, ComputeProvider
+from app.core.constants import FineTuningJobStatus, FineTuningJobType, ComputeProvider, FineTunedModelStatus
 from app.core.exceptions import (
     FineTuningJobNotFoundError,
     BaseModelNotFoundError,
@@ -140,7 +141,10 @@ async def get_fine_tuning_jobs(
         select(FineTuningJob, BaseModel.name.label('base_model_name'), Dataset.name.label('dataset_name'))
         .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
         .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
-        .where(FineTuningJob.user_id == user_id).order_by(FineTuningJob.created_at.desc())
+        .where(
+            FineTuningJob.user_id == user_id,
+            FineTuningJob.status != FineTuningJobStatus.DELETED
+        ).order_by(FineTuningJob.created_at.desc())
     )
     # Paginate the query
     jobs, pagination = await paginate_query(db, query, page, items_per_page)
@@ -261,3 +265,36 @@ async def update_fine_tuning_job_progress(db: AsyncSession,
     await db.commit()
     logger.info(f"Updated progress for fine-tuning job: {job_id} for user: {user_id}")
     return True
+
+
+async def mark_job_deleted(db: AsyncSession, user_id: UUID, job_name: str) -> None:
+    """
+    Mark a fine-tuning job and its associated model as deleted.
+
+    Args:
+        db (AsyncSession): The database session.
+        user_id (UUID): The ID of the user.
+        job_name (str): The name of the fine-tuning job.
+
+    Raises:
+        FineTuningJobNotFoundError: If the fine-tuning job is not found.
+    """
+    # Get the job from the database
+    job = (await db.execute(
+        select(FineTuningJob).options(selectinload(FineTuningJob.fine_tuned_model))
+        .where(FineTuningJob.user_id == user_id, FineTuningJob.name == job_name)
+    )).scalar_one_or_none()
+
+    if not job:
+        raise FineTuningJobNotFoundError(f"Fine-tuning job not found: {job_name} for user: {user_id}", logger)
+
+    # Mark the job as deleted
+    job.status = FineTuningJobStatus.DELETED
+
+    # Also delete the fine-tuned model if it exists
+    if job.fine_tuned_model:
+        job.fine_tuned_model.status = FineTunedModelStatus.DELETED
+
+    await db.commit()
+
+    logger.info(f"Marked fine-tuning job as deleted: {job_name} for user: {user_id}")

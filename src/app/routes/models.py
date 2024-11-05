@@ -14,9 +14,8 @@ from app.schemas.model import BaseModelResponse, FineTunedModelResponse
 from app.services.model import (
     get_base_models,
     get_base_model,
-    get_fine_tuned_models,
-    get_fine_tuned_model,
 )
+from app.services.fine_tuned_model import get_fine_tuned_models, get_fine_tuned_model
 
 # Set up router
 router = APIRouter(tags=["Models"])

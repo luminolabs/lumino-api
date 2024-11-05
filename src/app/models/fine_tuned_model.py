@@ -1,7 +1,8 @@
-from sqlalchemy import Column, String, DateTime, UUID, JSON, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, UUID, JSON, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
+from app.core.constants import FineTunedModelStatus
 from app.core.database import Base
 
 
@@ -12,9 +13,11 @@ class FineTunedModel(Base):
     Attributes:
         id (UUID): The unique identifier for the fine-tuned model.
         created_at (DateTime): The timestamp when the fine-tuned model was created.
+        updated_at (DateTime): The timestamp when the fine-tuned model was last updated
         user_id (UUID): The ID of the user who created this fine-tuned model.
         fine_tuning_job_id (UUID): The ID of the fine-tuning job that created this model.
         name (str): The name of the fine-tuned model.
+        status (FineTunedModelStatus): The current status of the fine-tuned model.
         artifacts (JSON): Information about model artifacts, stored as JSON.
 
     Relationships:
@@ -26,9 +29,11 @@ class FineTunedModel(Base):
     # Columns
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False, index=True)
     fine_tuning_job_id = Column(UUID, ForeignKey("fine_tuning_jobs.id"), nullable=False)
     name = Column(String(255), nullable=False)
+    status = Column(Enum(FineTunedModelStatus), nullable=False, default=FineTunedModelStatus.ACTIVE)
     artifacts = Column(JSON, nullable=False)
 
     # Relationships
