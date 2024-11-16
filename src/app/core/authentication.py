@@ -86,6 +86,8 @@ async def get_user_from_api_key(db: AsyncSession, api_key: str) -> User:
     # Raise an error if the API key can't be verified
     if not db_api_key.verify_key(api_key):
         raise InvalidApiKeyError(f"Can't verify API key: {api_key[:8]}...", logger)
+    if db_api_key.user.status == UserStatus.INACTIVE:
+        raise InvalidApiKeyError(f"User associated with API key is inactive: {api_key[:8]}...", logger)
     # Everything checks out, return the user
     logger.info(f"User authenticated via API key: {db_api_key.user.id}, API key: {api_key[:8]}...")
     return db_api_key.user
@@ -133,7 +135,7 @@ async def get_current_active_user(
     if api_key:
         user = await get_user_from_api_key(db, api_key)
     # Check if the user session is valid, user exists and is active
-    if not user:
+    if not user or user.status == UserStatus.INACTIVE:
         raise InvalidUserSessionError("User session not found, or user not found, or inactive", logger)
     # Create a Stripe customer if they don't have one
     if not user.stripe_customer_id:
