@@ -8,7 +8,9 @@ from app.core.constants import FineTuningJobStatus
 from app.core.database import AsyncSessionLocal
 from app.core.scheduler_client import fetch_job_details
 from app.core.utils import setup_logger
+from app.models.fine_tuning_job import FineTuningJob
 from app.queries import fine_tuning as ft_queries
+from app.queries.common import now_utc
 from app.services.fine_tuned_model import create_fine_tuned_model
 from app.services.fine_tuning import update_job_progress
 
@@ -42,7 +44,7 @@ async def update_job_statuses() -> None:
             await db.rollback()
             logger.error(f"Failed to update job statuses: {str(e)}")
 
-async def get_jobs_for_update(db: AsyncSession) -> List[Dict[str, Any]]:
+async def get_jobs_for_update(db: AsyncSession) -> List[FineTuningJob]:
     """Get jobs that need status updates."""
     non_terminal_statuses = [
         FineTuningJobStatus.NEW,
@@ -51,7 +53,7 @@ async def get_jobs_for_update(db: AsyncSession) -> List[Dict[str, Any]]:
         FineTuningJobStatus.STOPPING
     ]
 
-    recent_completed_cutoff = datetime.utcnow() - timedelta(minutes=10)
+    recent_completed_cutoff = now_utc() - timedelta(minutes=10)
 
     return await ft_queries.get_jobs_for_status_update(
         db,
@@ -59,7 +61,7 @@ async def get_jobs_for_update(db: AsyncSession) -> List[Dict[str, Any]]:
         recent_completed_cutoff
     )
 
-def group_jobs_by_user(jobs: List[Dict[str, Any]]) -> Dict[UUID, List[UUID]]:
+def group_jobs_by_user(jobs: List[FineTuningJob]) -> Dict[UUID, List[UUID]]:
     """Group jobs by user ID for efficient scheduler API calls."""
     jobs_by_user = {}
     for job in jobs:

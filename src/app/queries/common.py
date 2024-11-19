@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Tuple, List
 
 from sqlalchemy import Select, select, func, Row
@@ -60,3 +61,19 @@ async def paginate_query(
 
     # Return items and pagination
     return items, pagination
+
+
+def make_naive(dt: datetime) -> datetime:
+    """
+    Make a timezone-aware datetime naive by converting to UTC and removing tzinfo.
+    If already naive, return as-is.
+    """
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc)
+        return dt.replace(tzinfo=None)
+    return dt
+
+
+def now_utc() -> datetime:
+    """Get current UTC datetime with timezone."""
+    return datetime.now(timezone.utc)

@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -7,21 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.constants import ApiKeyStatus
 from app.models.api_key import ApiKey
+from app.queries.common import make_naive, now_utc
 
-
-def make_naive(dt: datetime) -> datetime:
-    """
-    Make a timezone-aware datetime naive by converting to UTC and removing tzinfo.
-    If already naive, return as-is.
-    """
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(timezone.utc)
-        return dt.replace(tzinfo=None)
-    return dt
-
-def now_utc() -> datetime:
-    """Get current UTC datetime with timezone."""
-    return datetime.now(timezone.utc)
 
 async def get_api_key_by_prefix(db: AsyncSession, prefix: str) -> Optional[ApiKey]:
     """Get an API key by its prefix."""
@@ -80,8 +66,7 @@ async def mark_expired_keys(db: AsyncSession) -> int:
             )
         )
         .values(
-            status=ApiKeyStatus.EXPIRED,
-            updated_at=make_naive(now_utc())
+            status=ApiKeyStatus.EXPIRED
         )
         .returning(ApiKey.id)
     )

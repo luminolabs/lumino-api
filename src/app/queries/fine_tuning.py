@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, UTC
-from typing import List, Optional, Tuple, Dict, Any
+from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import select, and_, or_, func
@@ -12,6 +12,7 @@ from app.models.dataset import Dataset
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.models.user import User
+from app.queries.common import make_naive, now_utc
 
 
 async def get_job_with_details(
@@ -90,10 +91,10 @@ async def get_non_terminal_jobs(
     conditions = [FineTuningJob.status.in_(statuses)]
 
     if completed_within_minutes:
-        recent_time = datetime.now(UTC) - timedelta(minutes=completed_within_minutes)
+        recent_time = now_utc() - timedelta(minutes=completed_within_minutes)
         conditions.append(and_(
             FineTuningJob.status == FineTuningJobStatus.COMPLETED,
-            FineTuningJob.updated_at >= recent_time
+            FineTuningJob.updated_at >= make_naive(recent_time)
         ))
 
     result = await db.execute(
@@ -122,7 +123,7 @@ async def get_jobs_for_status_update(
         db: AsyncSession,
         non_terminal_statuses: List[FineTuningJobStatus],
         recent_completed_cutoff: datetime
-) -> List[Dict[str, Any]]:
+) -> List[FineTuningJob]:
     """
     Get jobs that need status updates.
 
@@ -150,7 +151,7 @@ async def get_jobs_for_status_update(
                 # Get recently completed jobs
                 and_(
                     FineTuningJob.status == FineTuningJobStatus.COMPLETED,
-                    FineTuningJob.updated_at >= recent_completed_cutoff
+                    FineTuningJob.updated_at >= make_naive(recent_completed_cutoff)
                 )
             )
         )

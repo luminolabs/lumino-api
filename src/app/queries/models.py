@@ -9,6 +9,7 @@ from app.core.constants import FineTunedModelStatus
 from app.models.base_model import BaseModel
 from app.models.fine_tuned_model import FineTunedModel
 from app.models.fine_tuning_job import FineTuningJob
+from app.queries.common import make_naive
 
 
 async def get_base_model_by_name(db: AsyncSession, name: str) -> Optional[BaseModel]:
@@ -120,11 +121,9 @@ async def get_deleted_models(
         .where(
             and_(
                 FineTunedModel.status == FineTunedModelStatus.DELETED,
-                FineTunedModel.updated_at >= cutoff_date,
+                FineTunedModel.updated_at >= make_naive(cutoff_date),
                 # Only include models that still have weight files
-                FineTunedModel.artifacts.is_not(None),
-                # Check for non-empty weight_files array in artifacts
-                FineTunedModel.artifacts['weight_files'] != '[]'
+                FineTunedModel.artifacts.is_not(None)
             )
         )
         .order_by(FineTunedModel.updated_at.desc())

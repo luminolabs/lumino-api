@@ -39,12 +39,12 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     # Add the job weights cleanup task to the background scheduler
-    background_task_scheduler.add_job(cleanup_deleted_model_weights, 'interval', days=1)
+    background_task_scheduler.add_job(cleanup_deleted_model_weights, 'interval', minutes=2)
     # Add the API key cleanup task to the background scheduler
-    background_task_scheduler.add_job(cleanup_expired_api_keys, 'interval', days=1)
+    background_task_scheduler.add_job(cleanup_expired_api_keys, 'interval', minutes=1)
     # Add the job status updater task to the background scheduler
     if config.run_with_scheduler:
-        background_task_scheduler.add_job(update_job_statuses, 'interval', days=1)
+        background_task_scheduler.add_job(update_job_statuses, 'interval', seconds=15)
     # Start the background scheduler
     background_task_scheduler.start()
 

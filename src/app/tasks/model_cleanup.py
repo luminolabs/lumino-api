@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 from google.api_core.exceptions import NotFound
@@ -7,6 +7,7 @@ from google.cloud import storage
 from app.core.database import AsyncSessionLocal
 from app.core.utils import setup_logger
 from app.queries import models as model_queries
+from app.queries.common import now_utc
 
 logger = setup_logger(__name__)
 
@@ -15,7 +16,7 @@ async def cleanup_deleted_model_weights() -> None:
     async with AsyncSessionLocal() as db:
         try:
             # Find recently deleted models
-            cutoff_date = datetime.utcnow() - timedelta(days=3)
+            cutoff_date = now_utc() - timedelta(days=3)
             deleted_models = await model_queries.get_deleted_models(
                 db,
                 cutoff_date
