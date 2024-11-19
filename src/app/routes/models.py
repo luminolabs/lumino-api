@@ -11,16 +11,16 @@ from app.core.utils import setup_logger
 from app.models.user import User
 from app.schemas.common import Pagination
 from app.schemas.model import BaseModelResponse, FineTunedModelResponse
+from app.services.fine_tuned_model import (
+    get_fine_tuned_models,
+    get_fine_tuned_model
+)
 from app.services.model import (
     get_base_models,
     get_base_model,
 )
-from app.services.fine_tuned_model import get_fine_tuned_models, get_fine_tuned_model
 
-# Set up router
 router = APIRouter(tags=["Models"])
-
-# Set up logger
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
@@ -30,19 +30,8 @@ async def list_base_models(
         page: int = Query(1, ge=1, description="Page number"),
         items_per_page: int = Query(20, ge=1, le=100, description="Number of items per page")
 ) -> Dict[str, Union[List[BaseModelResponse], Pagination]]:
-    """
-    List all available base LLM models.
-
-    Args:
-        db (AsyncSession): The database session.
-        page (int): The page number for pagination.
-        items_per_page (int): The number of items per page.
-
-    Returns:
-        Dict[str, Union[List[BaseModelResponse], Pagination]]: A dictionary containing the list of base models and pagination info.
-    """
+    """List all available base LLM models."""
     models, pagination = await get_base_models(db, page, items_per_page)
-    logger.info(f"Retrieved {len(models)} base models, page: {page}")
     return {
         "data": models,
         "pagination": pagination
@@ -54,19 +43,8 @@ async def get_base_model_details(
         model_name: str,
         db: AsyncSession = Depends(get_db),
 ) -> BaseModelResponse:
-    """
-    Get detailed information about a specific base model.
-
-    Args:
-        model_name (str): The name of the base model.
-        db (AsyncSession): The database session.
-
-    Returns:
-        BaseModelResponse: The detailed information about the base model.
-    """
-    model = await get_base_model(db, model_name)
-    logger.info(f"Retrieved details for base model: {model_name}")
-    return model
+    """Get detailed information about a specific base model."""
+    return await get_base_model(db, model_name)
 
 
 @router.get("/models/fine-tuned", response_model=Dict[str, Union[List[FineTunedModelResponse], Pagination]])
@@ -76,20 +54,8 @@ async def list_fine_tuned_models(
         page: int = Query(1, ge=1, description="Page number"),
         items_per_page: int = Query(20, ge=1, le=100, description="Number of items per page")
 ) -> Dict[str, Union[List[FineTunedModelResponse], Pagination]]:
-    """
-    List all fine-tuned models for the current user.
-
-    Args:
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-        page (int): The page number for pagination.
-        items_per_page (int): The number of items per page.
-
-    Returns:
-        Dict[str, Union[List[FineTunedModelResponse], Pagination]]: A dictionary containing the list of fine-tuned models and pagination info.
-    """
+    """List all fine-tuned models for the current user."""
     models, pagination = await get_fine_tuned_models(db, current_user.id, page, items_per_page)
-    logger.info(f"Retrieved {len(models)} fine-tuned models for user: {current_user.id}")
     return {
         "data": models,
         "pagination": pagination
@@ -102,17 +68,5 @@ async def get_fine_tuned_model_details(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> FineTunedModelResponse:
-    """
-    Get detailed information about a specific fine-tuned model.
-
-    Args:
-        model_name (str): The name of the fine-tuned model.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        FineTunedModelResponse: The detailed information about the fine-tuned model.
-    """
-    model = await get_fine_tuned_model(db, current_user.id, model_name)
-    logger.info(f"Retrieved details for fine-tuned model: {model_name}, user: {current_user.id}")
-    return model
+    """Get detailed information about a specific fine-tuned model."""
+    return await get_fine_tuned_model(db, current_user.id, model_name)

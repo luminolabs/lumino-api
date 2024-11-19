@@ -22,13 +22,8 @@ logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.l
 async def get_current_user_info(
         current_user: User = Depends(get_current_active_user)
 ) -> UserResponse:
-    """
-    Get the current user's information.
-
-    Args:
-        current_user (User): The current authenticated user.
-    """
-    logger.info(f"Retrieving information for user: {current_user.id}")
+    """Get current user's information."""
+    logger.info(f"Retrieved information for user: {current_user.id}")
     return UserResponse.from_orm(current_user)
 
 
@@ -38,36 +33,15 @@ async def update_current_user(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
-    """
-    Update the current user's information.
-
-    Args:
-        user_update (UserUpdate): The updated user information.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-    """
-    updated_user = await update_user(db, current_user, user_update)
-    return UserResponse.from_orm(updated_user)
-
-
-# Admin-only routes
+    """Update current user's information."""
+    return await update_user(db, current_user.id, user_update)
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deactivate_user_route(
-        user_id: str,
-        # This is an admin only action, don't remove the `admin_required` dependency
-        current_user: User = Depends(admin_required),
+        user_id: UUID,
+        _: User = Depends(admin_required),  # Admin check
         db: AsyncSession = Depends(get_db)
 ) -> None:
-    """
-    Set the current user's account to inactive.
-
-    Args:
-        user_id (str): The ID of the user to deactivate.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-    Raises:
-        ForbiddenError: If the current user is not an admin.
-    """
-    await deactivate_user(db, UUID(user_id))
+    """Deactivate a user's account (admin only)."""
+    await deactivate_user(db, user_id)

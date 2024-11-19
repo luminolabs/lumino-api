@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
     background_task_scheduler.add_job(cleanup_expired_api_keys, 'interval', days=1)
     # Add the job status updater task to the background scheduler
     if config.run_with_scheduler:
-        background_task_scheduler.add_job(update_job_statuses, 'interval', seconds=10)
+        background_task_scheduler.add_job(update_job_statuses, 'interval', days=1)
     # Start the background scheduler
     background_task_scheduler.start()
 

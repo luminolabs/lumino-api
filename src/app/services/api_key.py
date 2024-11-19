@@ -1,10 +1,8 @@
 from datetime import timezone
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.common import paginate_query
 from app.core.config_manager import config
 from app.core.constants import ApiKeyStatus
 from app.core.cryptography import generate_api_key
@@ -14,6 +12,7 @@ from app.core.exceptions import (
 )
 from app.core.utils import setup_logger
 from app.models.api_key import ApiKey
+from app.queries import api_keys as api_key_queries
 from app.schemas.api_key import ApiKeyCreate, ApiKeyUpdate, ApiKeyResponse, ApiKeyWithSecretResponse
 from app.schemas.common import Pagination
 
@@ -22,36 +21,20 @@ logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.l
 
 
 async def create_api_key(db: AsyncSession, user_id: UUID, api_key: ApiKeyCreate) -> ApiKeyWithSecretResponse:
-    """
-    Create a new API key for a user.
-
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user creating the API key.
-        api_key (ApiKeyCreate): The API key creation data.
-
-    Returns:
-        ApiKeyWithSecretResponse: The newly created API key, including the secret.
-
-    Raises:
-        ApiKeyCreationError: If there's an error creating the API key.
-    """
+    """Create a new API key for a user."""
     # Check if an API key with the same name already exists for this user
-    existing_key = (await db.execute(
-        select(ApiKey).where(ApiKey.user_id == user_id, ApiKey.name == api_key.name)
-    )).scalar_one_or_none()
+    existing_key = await api_key_queries.get_api_key_by_name(db, user_id, api_key.name)
     if existing_key:
         raise ApiKeyAlreadyExistsError(f"An API key with the name {api_key.name} "
-                                  f"already exists for user {user_id}", logger)
+                                       f"already exists for user {user_id}", logger)
 
     # Generate a new API key
     key, key_hash = generate_api_key()
     key_prefix = key[:8]
 
     # Ensure the expires_at field is stored as timezone-naive UTC datetime
-    expires_at = api_key.expires_at
-    expires_at = expires_at.astimezone(timezone.utc)
-    expires_at = expires_at.replace(tzinfo=None)  # TODO: We get a db error here if we don't do this; figure out why
+    expires_at = api_key.expires_at.astimezone(timezone.utc)
+    expires_at = expires_at.replace(tzinfo=None)
 
     # Store the API key in the database
     db_api_key = ApiKey(
@@ -64,13 +47,11 @@ async def create_api_key(db: AsyncSession, user_id: UUID, api_key: ApiKeyCreate)
     )
     db.add(db_api_key)
     await db.commit()
+    await db.refresh(db_api_key)
 
-    # Restore the timezone to the expires_at field as UTC timezone-aware datetime
-    expires_at = expires_at.replace(tzinfo=timezone.utc)
-    db_api_key.expires_at = expires_at
+    # Restore the timezone to the expires_at field
+    db_api_key.expires_at = expires_at.replace(tzinfo=timezone.utc)
 
-    # Return the API key with the full secret
-    # We only return the generated secret once, so the user can store it
     logger.info(f"Created new API key for user: {user_id}, prefix: {key_prefix}")
     return ApiKeyWithSecretResponse(
         **ApiKeyResponse.from_orm(db_api_key).dict(),
@@ -84,82 +65,41 @@ async def get_api_keys(
         page: int = 1,
         items_per_page: int = 20
 ) -> tuple[list[ApiKeyResponse], Pagination]:
-    """
-    Get all API keys for a user with pagination.
+    """Get all API keys for a user with pagination."""
+    offset = (page - 1) * items_per_page
 
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        page (int): The page number for pagination.
-        items_per_page (int): The number of items per page.
+    # Get total count and paginated results
+    total_count = await api_key_queries.count_api_keys(db, user_id)
+    api_keys = await api_key_queries.list_api_keys(db, user_id, offset, items_per_page)
 
-    Returns:
-        tuple[list[ApiKeyResponse], Pagination]: A tuple containing the list of API keys and pagination info.
-    """
-    # Construct the query
-    query = select(ApiKey).where(ApiKey.user_id == user_id)
-    # Paginate the query
-    api_keys, pagination = await paginate_query(db, query, page, items_per_page)
+    # Calculate pagination
+    total_pages = (total_count + items_per_page - 1) // items_per_page
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page,
+    )
+
     # Create response objects
     api_key_responses = [ApiKeyResponse.from_orm(key) for key in api_keys]
-    # Log and return objects
+
     logger.info(f"Retrieved API keys for user: {user_id}, page: {page}")
     return api_key_responses, pagination
 
 
 async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyResponse:
-    """
-    Get a specific API key.
-
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        key_name (str): The name of the API key.
-
-    Returns:
-        ApiKeyResponse: The API key if found, None otherwise.
-
-    Raises:
-        ApiKeyNotFoundError: If the API key is not found.
-    """
-    # Get the API key from the database
-    api_key = (await db.execute(
-        select(ApiKey)
-        .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
-    )).scalar_one_or_none()
-
-    # Raise an error if the API key is not found
+    """Get a specific API key."""
+    api_key = await api_key_queries.get_api_key_by_name(db, user_id, key_name)
     if not api_key:
         raise ApiKeyNotFoundError(f"API key not found: {key_name} for user: {user_id}", logger)
 
-    # Log and return the API key
     logger.info(f"Retrieved API key: {key_name} for user: {user_id}")
     return ApiKeyResponse.from_orm(api_key)
 
 
 async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key_update: ApiKeyUpdate) -> ApiKeyResponse:
-    """
-    Update an API key.
-
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        key_name (str): The name of the API key to update.
-        api_key_update (ApiKeyUpdate): The update data for the API key.
-
-    Returns:
-        ApiKeyResponse: The updated API key.
-
-    Raises:
-        ApiKeyNotFoundError: If the API key is not found.
-    """
-    # Get the API key from the database
-    db_api_key = (await db.execute(
-        select(ApiKey)
-        .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
-    )).scalar_one_or_none()
-
-    # Raise an error if the API key is not found
+    """Update an API key."""
+    db_api_key = await api_key_queries.get_api_key_by_name(db, user_id, key_name)
     if not db_api_key:
         raise ApiKeyNotFoundError(f"API key not found: {key_name} for user: {user_id}", logger)
 
@@ -167,52 +107,33 @@ async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key
     expires_at = api_key_update.expires_at
     if expires_at:
         expires_at = expires_at.astimezone(timezone.utc)
-        expires_at = expires_at.replace(tzinfo=None)  # TODO: We get a db error here if we don't do this; figure out why
+        expires_at = expires_at.replace(tzinfo=None)
         api_key_update.expires_at = expires_at
 
-    # Update the API key fields with the new data from the request
+    # Update the API key fields
     update_data = api_key_update.dict(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_api_key, field, value)
 
-    # Store the updated API key in the database
     await db.commit()
-    
-    # Restore the timezone to the expires_at field as UTC timezone-aware datetime
+    await db.refresh(db_api_key)
+
+    # Restore the timezone to the expires_at field
     db_api_key.expires_at = db_api_key.expires_at.replace(tzinfo=timezone.utc)
-    
-    # Log and return the updated API key
+
     logger.info(f"Updated API key: {key_name} for user: {user_id}")
     return ApiKeyResponse.from_orm(db_api_key)
 
 
 async def revoke_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyResponse:
-    """
-    Revoke an API key by marking it as revoked.
-
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        key_name (str): The name of the API key to revoke.
-
-    Raises:
-        ApiKeyNotFoundError: If the API key is not found.
-    """
-    # Get the API key from the database
-    db_api_key = (await db.execute(
-        select(ApiKey)
-        .where(ApiKey.user_id == user_id, ApiKey.name == key_name)
-    )).scalar_one_or_none()
-    # Raise an error if the API key is not found
+    """Revoke an API key."""
+    db_api_key = await api_key_queries.get_api_key_by_name(db, user_id, key_name)
     if not db_api_key:
         raise ApiKeyNotFoundError(f"API key not found: {key_name} for user: {user_id}", logger)
 
-    # Mark the API key as revoked
     db_api_key.status = ApiKeyStatus.REVOKED
-    
-    # Store the updated API key in the database
     await db.commit()
-    
-    # Log and return the revoked API key
+    await db.refresh(db_api_key)
+
     logger.info(f"Revoked API key: {key_name} for user: {user_id}")
     return ApiKeyResponse.from_orm(db_api_key)

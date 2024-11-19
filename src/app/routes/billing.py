@@ -1,76 +1,59 @@
-from select import select
 from typing import Dict, Union, List
 
-import stripe
-from fastapi import APIRouter, Depends
-from fastapi.params import Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from app.core.authentication import get_current_active_user, admin_required, get_user_by_stripe_customer_id
-from app.core.common import parse_date
-from app.core.config_manager import config
-from app.core.constants import BillingTransactionType
+from app.core.authentication import get_current_active_user, admin_required
 from app.core.database import get_db
-from app.core.exceptions import UserNotFoundError
-from app.core.stripe_client import create_stripe_checkout_session, create_stripe_billing_portal_session
 from app.core.utils import setup_logger
 from app.models.user import User
 from app.schemas.billing import CreditDeductRequest, CreditHistoryResponse, CreditAddRequest
 from app.schemas.common import Pagination
-from app.services.billing import deduct_credits_for_fine_tuning_job, add_credits_to_user, get_credit_history
+from app.services.billing import (
+    add_stripe_credits,
+    add_manual_credits,
+    deduct_credits,
+    get_credit_history,
+    handle_stripe_webhook, get_stripe_billing_portal_url,
+)
 
-# Set up API router
 router = APIRouter(tags=["Billing"])
-
-# Set up logger
-logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
-
+logger = setup_logger(__name__)
 
 @router.get("/billing/credit-history", response_model=Dict[str, Union[List[CreditHistoryResponse], Pagination]])
 async def get_credit_history_route(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
-        start_date: str = Query(..., description="Start date for the period (YYYY-MM-DD)"),
-        end_date: str = Query(..., description="End date for the period (YYYY-MM-DD)"),
+        start_date: str = Query(..., description="Start date (YYYY-MM-DD)"),
+        end_date: str = Query(..., description="End date (YYYY-MM-DD)"),
         page: int = Query(1, ge=1),
         items_per_page: int = Query(20, ge=1, le=100),
 ) -> Dict[str, Union[List[CreditHistoryResponse], Pagination]]:
-    """
-    Get credit history for the current user.
-    """
-    # Parse dates
-    start_date_obj = parse_date(start_date)
-    end_date_obj = parse_date(end_date)
-    # Get credit history
-    credit_history, pagination = await get_credit_history(db, current_user.id, start_date_obj, end_date_obj, page, items_per_page)
-    return {
-        "data": credit_history,
-        "pagination": pagination
-    }
-
-
-# Stripe-related routes
-
+    """Get credit history for the current user."""
+    credits, pagination = await get_credit_history(
+        db, current_user.id, start_date, end_date, page, items_per_page
+    )
+    return {"data": credits, "pagination": pagination}
 
 @router.get("/billing/stripe-credits-add")
-async def stripe_credits_add(
+async def stripe_credits_add_route(
         request: Request,
-        amount_dollars: int = Query(..., description="The amount of credits to add, in dollars"),
+        amount_dollars: int = Query(..., description="Amount to add in dollars"),
         current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Redirect to Stripe for adding credits.
-    """
-    # Create a Stripe checkout session
-    checkout_session = create_stripe_checkout_session(
-        current_user, amount_dollars,
-        config.ui_url + config.ui_url_settings + "?stripe_success=1" if not config.use_api_ui else request.base_url,
-        config.ui_url + config.ui_url_settings + "?stripe_error=user_cancelled" if not config.use_api_ui else request.base_url)
-    # Redirect to the checkout session URL
-    return RedirectResponse(url=checkout_session.url, status_code=302)
+    """Redirect to Stripe for adding credits."""
+    checkout_url = await add_stripe_credits(current_user, amount_dollars, str(request.base_url))
+    return RedirectResponse(url=checkout_url, status_code=302)
 
+@router.post("/billing/stripe-success-callback")
+async def stripe_webhook_handler(
+        request: Request,
+        db: AsyncSession = Depends(get_db)
+):
+    """Handle Stripe webhook callbacks."""
+    return await handle_stripe_webhook(request, db)
 
 @router.get("/billing/stripe-payment-method-add")
 async def stripe_payment_method_add(
@@ -80,100 +63,24 @@ async def stripe_payment_method_add(
     """
     Redirect to Stripe for adding a payment method.
     """
-    # Create a Stripe billing portal session
-    billing_portal_session = create_stripe_billing_portal_session(
-        current_user,
-        config.ui_url + config.ui_url_settings + "?stripe_success=2" if not config.use_api_ui else request.base_url,
-    )
-    # Redirect to the checkout session URL
-    return RedirectResponse(url=billing_portal_session.url, status_code=302)
+    billing_portal_session_url = await get_stripe_billing_portal_url(current_user, str(request.base_url))
+    return RedirectResponse(url=billing_portal_session_url, status_code=302)
 
-
-@router.post("/billing/stripe-success-callback")
-async def stripe_success_callback(
-    request: Request,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Handle Stripe webhook callbacks.
-    """
-    # Get the payload and signature
-    payload = await request.body()
-    sig_header = request.headers['stripe-signature']
-
-    # Verify the signature and extract the event
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, config.stripe_webhook_secret
-        )
-    except ValueError as e:
-        logger.error(f"Invalid Stripe payload: {str(e)}")
-        return {"status": "error"}
-    except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid Stripe signature: {str(e)}")
-        return {"status": "error"}
-
-    logger.info(event)
-    # Handle the event
-    if event["type"] == "charge.succeeded":
-        # Handle successful charges
-        data = event["data"]["object"]
-        stripe_customer_id = data["customer"]
-        user = await get_user_by_stripe_customer_id(db, stripe_customer_id)
-        amount_dollars = data["amount_captured"] / 100  # Convert cents to dollars
-        transaction_id = data["id"]
-        # Add credits to user's account
-        await add_credits_to_user(db, user, amount_dollars,
-                                  transaction_id, BillingTransactionType.STRIPE_CHECKOUT)
-        logger.info(f"Handled successful charge for user {user.id} with amount {amount_dollars}")
-    elif event["type"] == "customer.updated":
-        # Handle stripe customer record updates
-        data = event["data"]["object"]
-        stripe_customer_id = data["id"]
-        user = await get_user_by_stripe_customer_id(db, stripe_customer_id)
-        # Handle default payment method updates
-        user.stripe_payment_method_id = data["invoice_settings"]["default_payment_method"]
-        await db.commit()
-        logger.info(f"Handled customer update for user {user.id}")
-
-    # Return success to Stripe
-    return {"status": "success"}
-
-
-# Admin-only routes
-
-
+# Admin routes
 @router.post("/billing/credits-deduct", response_model=CreditHistoryResponse)
-async def deduct_and_approve_credits(
+async def deduct_credits_route(
         request: CreditDeductRequest,
-        current_user: User = Depends(admin_required),
+        _: User = Depends(admin_required),
         db: AsyncSession = Depends(get_db)
 ):
-    """
-    Check if user has enough credits for a job and commit them if so (Internal endpoint).
-    """
-    credit_history = await deduct_credits_for_fine_tuning_job(request, db, retry=True)
-    return credit_history
+    """Deduct credits for a job (Internal endpoint)."""
+    return await deduct_credits(request, db, retry=True)
 
 @router.post("/billing/credits-add", response_model=CreditHistoryResponse)
-async def add_credits(
+async def add_credits_route(
         request: CreditAddRequest,
-        current_user: User = Depends(admin_required),
+        _: User = Depends(admin_required),
         db: AsyncSession = Depends(get_db)
 ):
-    """
-    Add credits to a user's account or refund an existing debit.
-    """
-    # Retrieve the user by ID and raise an error if not found
-    db_user = await db.get(User, request.user_id)
-    if not db_user:
-        raise UserNotFoundError(f"User with ID {request.user_id} not found", logger)
-    # Add credits to user's account
-    credit_history = await add_credits_to_user(
-        db,
-        current_user,
-        request.amount,
-        request.transaction_id,
-        BillingTransactionType.MANUAL_ADJUSTMENT
-    )
-    return credit_history
+    """Add credits to a user's account (Admin only)."""
+    return await add_manual_credits(db, request)

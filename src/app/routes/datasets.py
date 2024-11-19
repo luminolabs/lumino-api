@@ -16,7 +16,7 @@ from app.services.dataset import (
     get_datasets,
     get_dataset,
     update_dataset,
-    mark_dataset_deleted,
+    delete_dataset,
 )
 
 # Set up API router
@@ -34,26 +34,13 @@ async def upload_dataset(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:
-    """
-    Upload a new dataset file.
-
-    Args:
-        file (UploadFile): The dataset file to be uploaded.
-        name (str): The name of the dataset.
-        description (str, optional): A description of the dataset.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        DatasetResponse: The created dataset information.
-    """
+    """Upload a new dataset file."""
     dataset_create = DatasetCreate(
         name=name,
         description=description,
         file=file,
     )
-    new_dataset = await create_dataset(db, current_user.id, dataset_create)
-    return new_dataset
+    return await create_dataset(db, current_user.id, dataset_create)
 
 
 @router.get("/datasets", response_model=Dict[str, Union[List[DatasetResponse], Pagination]])
@@ -63,18 +50,7 @@ async def list_datasets(
         page: int = Query(1, ge=1),
         items_per_page: int = Query(20, ge=1, le=100),
 ) -> Dict[str, Union[List[DatasetResponse], Pagination]]:
-    """
-    List all datasets uploaded by the user.
-
-    Args:
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-        page (int): The page number for pagination.
-        items_per_page (int): The number of items per page.
-
-    Returns:
-        Dict[str, Union[List[DatasetResponse], Pagination]]: A dictionary containing the list of datasets and pagination info.
-    """
+    """List all datasets uploaded by the user."""
     datasets, pagination = await get_datasets(db, current_user.id, page, items_per_page)
     return {
         "data": datasets,
@@ -88,19 +64,8 @@ async def get_dataset_info(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:
-    """
-    Get information about a specific dataset.
-
-    Args:
-        dataset_name (str): The name of the dataset.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        DatasetResponse: The dataset information.
-    """
-    dataset = await get_dataset(db, current_user.id, dataset_name)
-    return dataset
+    """Get information about a specific dataset."""
+    return await get_dataset(db, current_user.id, dataset_name)
 
 
 @router.patch("/datasets/{dataset_name}", response_model=DatasetResponse)
@@ -110,20 +75,8 @@ async def update_dataset_info(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> DatasetResponse:
-    """
-    Update a specific dataset's information.
-
-    Args:
-        dataset_name (str): The name of the dataset to update.
-        dataset_update (DatasetUpdate): The update data for the dataset.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        DatasetResponse: The updated dataset information.
-    """
-    updated_dataset = await update_dataset(db, current_user.id, dataset_name, dataset_update)
-    return updated_dataset
+    """Update a specific dataset's information."""
+    return await update_dataset(db, current_user.id, dataset_name, dataset_update)
 
 
 @router.delete("/datasets/{dataset_name}", status_code=status.HTTP_204_NO_CONTENT)
@@ -132,12 +85,5 @@ async def delete_dataset_file(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> None:
-    """
-    Delete a specific dataset file.
-
-    Args:
-        dataset_name (str): The name of the dataset to delete.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-    """
-    await mark_dataset_deleted(db, current_user.id, dataset_name)
+    """Delete a specific dataset file."""
+    await delete_dataset(db, current_user.id, dataset_name)

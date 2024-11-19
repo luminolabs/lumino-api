@@ -11,7 +11,7 @@ from app.core.config_manager import config
 from app.core.utils import setup_logger
 
 # Set up logger
-logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
+logger_ = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
 class AppException(HTTPException):
@@ -193,7 +193,8 @@ class FineTuningJobCancellationError(ServerError):
         super().__init__(detail, logger)
 
 
-# Billing exceptions
+# Other exceptions
+
 
 class StripeCheckoutSessionCreationError(ServerError):
     """Exception raised when there's an error creating a Stripe checkout session."""
@@ -201,9 +202,16 @@ class StripeCheckoutSessionCreationError(ServerError):
         super().__init__(detail, logger)
 
 
+class StorageError(ServerError):
+    """Exception for storage operations failures."""
+    def __init__(self, detail: str, logger: Optional[Logger] = None):
+        super().__init__(detail, logger)
+
+
 # Exception handlers
 
 
+# noinspection PyUnusedLocal
 async def app_exception_handler(request: Request, exc: AppException):
     """Handler for application-specific exceptions."""
     return JSONResponse(
@@ -212,6 +220,7 @@ async def app_exception_handler(request: Request, exc: AppException):
     )
 
 
+# noinspection PyUnusedLocal
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handler for request validation errors."""
     return JSONResponse(
@@ -220,18 +229,20 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+# noinspection PyUnusedLocal
 async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     """Handler for SQLAlchemy database errors."""
-    logger.exception(f"An unexpected database error occurred: {exc}, {exc.with_traceback(exc.__traceback__)}")
+    logger_.exception(f"An unexpected database error occurred: {exc}, {exc.with_traceback(exc.__traceback__)}")
     return JSONResponse(
         status_code=500,
         content={"status": 500, "message": "An unexpected database error occurred"},
     )
 
 
+# noinspection PyUnusedLocal
 async def generic_exception_handler(request: Request, exc: Exception):
     """Handler for generic, uncaught exceptions."""
-    logger.exception(f"An unexpected error occurred: {exc}, {exc.with_traceback(exc.__traceback__)}")
+    logger_.exception(f"An unexpected error occurred: {exc}, {exc.with_traceback(exc.__traceback__)}")
     return JSONResponse(
         status_code=500,
         content={"status": 500, "message": "An unexpected error occurred"},
