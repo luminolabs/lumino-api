@@ -26,9 +26,7 @@ async def list_base_models(
         exclude_dummy: bool = True
 ) -> List[BaseModel]:
     """List base models with pagination."""
-    query = select(BaseModel).order_by(BaseModel.name.desc())
-    if exclude_dummy:
-        query = query.where(BaseModel.name != 'llm_dummy')
+    query = select(BaseModel).order_by(BaseModel.name.desc()).where(BaseModel.name != 'llm_dummy')
     query = query.offset(offset).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()

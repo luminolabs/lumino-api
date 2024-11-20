@@ -39,6 +39,7 @@ async def create_stripe_customer(db: AsyncSession, user: User) -> stripe.Custome
         user.stripe_customer_id = stripe_customer.id
         await db.commit()
         await db.refresh(user)  # Refreshes the updated_at field
+        return stripe_customer
     except stripe.error.StripeError as e:
         print(f"Stripe error for user: {user.id} message: {e.user_message}")
         return None

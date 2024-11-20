@@ -14,8 +14,6 @@ async def get_api_key_by_prefix(db: AsyncSession, prefix: str) -> Optional[ApiKe
     result = await db.execute(
         select(ApiKey).where(
             ApiKey.prefix == prefix,
-            ApiKey.status == ApiKeyStatus.ACTIVE,
-            ApiKey.expires_at > make_naive(now_utc())
         )
     )
     return result.scalar_one_or_none()

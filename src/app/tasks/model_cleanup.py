@@ -1,41 +1,42 @@
 from datetime import timedelta
 from typing import Any
 
+from fastapi import Depends
 from google.api_core.exceptions import NotFound
 from google.cloud import storage
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import AsyncSessionLocal
+from app.core.database import get_db
 from app.core.utils import setup_logger
 from app.queries import models as model_queries
 from app.queries.common import now_utc
 
 logger = setup_logger(__name__)
 
-async def cleanup_deleted_model_weights() -> None:
+async def cleanup_deleted_model_weights(db: AsyncSession = Depends(get_db)) -> None:
     """Clean up weights files from GCS for deleted models."""
-    async with AsyncSessionLocal() as db:
-        try:
-            # Find recently deleted models
-            cutoff_date = now_utc() - timedelta(days=3)
-            deleted_models = await model_queries.get_deleted_models(
-                db,
-                cutoff_date
-            )
+    try:
+        # Find recently deleted models
+        cutoff_date = now_utc() - timedelta(days=3)
+        deleted_models = await model_queries.get_deleted_models(
+            db,
+            cutoff_date
+        )
 
-            if not deleted_models:
-                logger.info("No deleted models found for cleanup")
-                return
+        if not deleted_models:
+            logger.info("No deleted models found for cleanup")
+            return
 
-            storage_client = storage.Client()
+        storage_client = storage.Client()
 
-            for model in deleted_models:
-                await cleanup_model_weights(model, storage_client)
+        for model in deleted_models:
+            await cleanup_model_weights(model, storage_client)
 
-            await db.commit()
+        await db.commit()
 
-        except Exception as e:
-            await db.rollback()
-            logger.error(f"Failed to cleanup model weights: {str(e)}")
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to cleanup model weights: {str(e)}")
 
 async def cleanup_model_weights(
         model: Any,
