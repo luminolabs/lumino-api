@@ -1,7 +1,7 @@
 from fastapi import Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.constants import UserStatus
+from app.core.constants import UserStatus, ApiKeyStatus
 from app.core.database import get_db
 from app.core.exceptions import (
     InvalidApiKeyError,
@@ -14,6 +14,7 @@ from app.core.utils import setup_logger
 from app.models.user import User
 from app.queries import api_keys as api_key_queries
 from app.queries import users as user_queries
+from app.queries.common import now_utc, make_naive
 
 logger = setup_logger(__name__)
 
@@ -38,7 +39,7 @@ async def get_user_from_api_key(db: AsyncSession, api_key: str) -> User:
     # Get API key from database
     db_api_key = await api_key_queries.get_api_key_by_prefix(db, api_key[:8])
 
-    if not db_api_key:
+    if not db_api_key or db_api_key.status != ApiKeyStatus.ACTIVE or db_api_key.expires_at < make_naive(now_utc()):
         raise InvalidApiKeyError(
             f"API key not found, expired, or revoked: {api_key[:8]}...",
             logger

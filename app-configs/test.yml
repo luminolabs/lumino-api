@@ -1,0 +1,6 @@
+log_level: DEBUG
+db_name: test_db
+db_user: test_user
+db_pass: test_pass
+db_host: test_host
+db_port: 1234

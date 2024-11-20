@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import List, Dict, Any
 from uuid import UUID
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.constants import FineTuningJobStatus
-from app.core.database import AsyncSessionLocal
+from app.core.database import get_db
 from app.core.scheduler_client import fetch_job_details
 from app.core.utils import setup_logger
 from app.models.fine_tuning_job import FineTuningJob
@@ -23,26 +24,25 @@ STATUS_MAPPING = {
     "DETACHED_VM": FineTuningJobStatus.QUEUED,
 }
 
-async def update_job_statuses() -> None:
+async def update_job_statuses(db: AsyncSession = Depends(get_db)) -> None:
     """Update the status of all non-terminal jobs."""
-    async with AsyncSessionLocal() as db:
-        try:
-            # Get jobs that need updates
-            jobs = await get_jobs_for_update(db)
-            if not jobs:
-                logger.info("No jobs found for status update")
-                return
+    try:
+        # Get jobs that need updates
+        jobs = await get_jobs_for_update(db)
+        if not jobs:
+            logger.info("No jobs found for status update")
+            return
 
-            # Group jobs by user for scheduler API
-            jobs_by_user = group_jobs_by_user(jobs)
+        # Group jobs by user for scheduler API
+        jobs_by_user = group_jobs_by_user(jobs)
 
-            # Update each group of jobs
-            for user_id, job_ids in jobs_by_user.items():
-                await update_job_group(db, user_id, job_ids)
+        # Update each group of jobs
+        for user_id, job_ids in jobs_by_user.items():
+            await update_job_group(db, user_id, job_ids)
 
-        except Exception as e:
-            await db.rollback()
-            logger.error(f"Failed to update job statuses: {str(e)}")
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to update job statuses: {str(e)}")
 
 async def get_jobs_for_update(db: AsyncSession) -> List[FineTuningJob]:
     """Get jobs that need status updates."""
@@ -97,10 +97,8 @@ async def process_job_update(
         user_id: UUID
 ) -> None:
     """Process a single job update from the scheduler."""
-    job_id = update['job_id']
-
-    # Get job from database
-    job = await ft_queries.get_job_with_details(db, UUID(job_id))
+    job_id = UUID(update['job_id'])
+    job = await ft_queries.get_job_by_id(db, user_id, job_id)
     if not job:
         logger.warning(f"Job not found for update: {job_id}")
         return
@@ -135,13 +133,13 @@ async def update_job_timestamps(
                 job_timestamps[mapped_status] = timestamp
         else:
             # Direct update for unmapped statuses
-            job_timestamps[event] = timestamp
+            job_timestamps[event.lower()] = timestamp
 
     job.details.timestamps = job_timestamps
 
 async def update_job_steps(
         db: AsyncSession,
-        job: Any,
+        job: FineTuningJob,
         user_id: UUID,
         artifacts: Dict[str, Any]
 ) -> None:
@@ -169,7 +167,7 @@ async def update_job_steps(
             "current_epoch": max_epoch,
             "total_epochs": num_epochs,
         }
-        await update_job_progress(db, job.id, user_id, progress)
+        await update_job_progress(db, job, progress)
 
 async def check_create_model(
         db: AsyncSession,
@@ -183,4 +181,4 @@ async def check_create_model(
 
     for log in artifacts.get('job_logger', []):
         if log.get('operation') == 'weights':
-            await create_fine_tuned_model(db, UUID(job_id), user_id, log['data'])
+            await create_fine_tuned_model(db, job_id, user_id, log['data'])

@@ -86,4 +86,4 @@ def sanitize_filename(filename: str) -> str:
             f"Filename is too long (max 255 characters); got {len(result)} characters"
         )
 
-    return result
+    return result.strip()

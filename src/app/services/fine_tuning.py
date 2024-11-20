@@ -2,7 +2,6 @@ from typing import List
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.util import await_fallback
 
 from app.core.config_manager import config
 from app.core.constants import (
@@ -21,9 +20,9 @@ from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.models.user import User
 from app.queries import datasets as dataset_queries
+from app.queries import fine_tuned_models as ft_models_queries
 from app.queries import fine_tuning as ft_queries
 from app.queries import models as model_queries
-from app.queries import fine_tuned_models as ft_models_queries
 from app.schemas.common import Pagination
 from app.schemas.fine_tuning import (
     FineTuningJobCreate,
@@ -92,6 +91,7 @@ async def create_fine_tuning_job(
         )
         db.add(db_job_detail)
         await db.commit()
+        await db.refresh(db_job)
 
         # Start the job via scheduler
         await start_fine_tuning_job(db_job.id)
@@ -247,16 +247,10 @@ async def delete_fine_tuning_job(
 
 async def update_job_progress(
         db: AsyncSession,
-        job_id: UUID,
-        user_id: UUID,
+        job: FineTuningJob,
         progress: dict
 ) -> bool:
     """Update job progress information."""
-    # Get job
-    job = await ft_queries.get_job_by_id(db, job_id, user_id)
-    if not job:
-        logger.warning(f"No job found for update: {job_id}")
-        return False
 
     # Ignore outdated progress updates
     if progress['current_step'] <= (job.current_step or -1):
@@ -270,7 +264,7 @@ async def update_job_progress(
         job.total_epochs = progress['total_epochs']
 
         await db.commit()
-        logger.info(f"Updated progress for job: {job_id}, step: {progress['current_step']}")
+        logger.info(f"Updated progress for job: {job.id}, step: {progress['current_step']}")
         return True
 
     except Exception as e:
