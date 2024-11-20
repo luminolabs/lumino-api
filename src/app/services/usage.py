@@ -1,113 +1,136 @@
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.common import paginate_query
-from app.core.config_manager import config
 from app.core.exceptions import BadRequestError
 from app.core.utils import setup_logger
-from app.models.fine_tuning_job import FineTuningJob
-from app.models.usage import Usage
+from app.queries import usage as usage_queries
 from app.schemas.common import Pagination
 from app.schemas.usage import UsageRecordResponse, TotalCostResponse
 
-# Set up logger
-logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
-
-
-async def get_total_cost(
-        db: AsyncSession,
-        user_id: UUID,
-        start_date: date | None = None,
-        end_date: date | None = None
-) -> TotalCostResponse:
-    """
-    Get total cost for a given period.
-
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        start_date (date | None): The start date of the period (inclusive).
-        end_date (date | None): The end date of the period (inclusive).
-
-    Returns:
-        TotalCostResponse: The total cost for the specified period.
-
-    Raises:
-        BadRequestError: If the end date is before the start date.
-    """
-    # Validate dates
-    if start_date and end_date and end_date < start_date:
-        raise BadRequestError(f"End date must be after start date; start_date: {start_date}, end_date: {end_date}")
-
-    # Construct query
-    query = select(func.sum(Usage.cost)).where(Usage.user_id == user_id)
-    if start_date:
-        query = query.where(func.date(Usage.created_at) >= start_date)
-    if end_date:
-        query = query.where(func.date(Usage.created_at) <= end_date)
-
-    # Execute query
-    result = await db.execute(query)
-    total_cost = result.scalar_one_or_none()
-
-    logger.info(f"Retrieved total cost for user: {user_id}, start_date: {start_date}, end_date: {end_date}")
-    return TotalCostResponse(
-        start_date=start_date,
-        end_date=end_date,
-        total_cost=float(total_cost) if total_cost else 0.0
-    )
-
+logger = setup_logger(__name__)
 
 async def get_usage_records(
         db: AsyncSession,
         user_id: UUID,
-        start_date: date | None = None,
-        end_date: date | None = None,
+        start_date_str: str,
+        end_date_str: str,
         page: int = 1,
         items_per_page: int = 20
 ) -> tuple[list[UsageRecordResponse], Pagination]:
     """
-    Get a list of usage records for a given period with pagination.
+    Get usage records for a user with pagination.
 
     Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        start_date (date | None): The start date of the period (inclusive).
-        end_date (date | None): The end date of the period (inclusive).
-        page (int): The page number for pagination.
-        items_per_page (int): The number of items per page.
+        db: Database session
+        user_id: User ID
+        start_date_str: Start date in YYYY-MM-DD format
+        end_date_str: End date in YYYY-MM-DD format
+        page: Page number
+        items_per_page: Items per page
 
     Returns:
-        tuple[list[UsageRecordResponse], Pagination]: A tuple containing the list of usage records and pagination info.
+        Tuple of usage records and pagination info
 
     Raises:
-        BadRequestError: If the end date is before the start date.
+        BadRequestError: If dates are invalid
     """
-    # Validate dates
-    if start_date and end_date and end_date < start_date:
-        raise BadRequestError(f"End date must be after start date; start_date: {start_date}, end_date: {end_date}")
-    # Construct query
-    query = (
-        select(Usage, FineTuningJob.name.label('fine_tuning_job_name'))
-        .join(FineTuningJob, Usage.fine_tuning_job_id == FineTuningJob.id)
-        .where(Usage.user_id == user_id)
-        .order_by(Usage.created_at.desc())
+    # Parse and validate dates
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise BadRequestError(
+            "Invalid date format. Please use YYYY-MM-DD format"
+        )
+
+    if end_date < start_date:
+        raise BadRequestError(
+            f"End date ({end_date}) must be after start date ({start_date})"
+        )
+
+    # Calculate pagination
+    offset = (page - 1) * items_per_page
+
+    # Get total count and records
+    total_count = await usage_queries.count_usage_records(
+        db, user_id, start_date, end_date
     )
-    if start_date:
-        query = query.where(func.date(Usage.created_at) >= start_date)
-    if end_date:
-        query = query.where(func.date(Usage.created_at) <= end_date)
-    # Paginate query
-    results, pagination = await paginate_query(db, query.order_by(Usage.created_at.desc()), page, items_per_page)
-    records = []
+
+    usage_records = await usage_queries.get_usage_records(
+        db, user_id, start_date, end_date, offset, items_per_page
+    )
+
+    # Prepare pagination
+    total_pages = (total_count + items_per_page - 1) // items_per_page
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page
+    )
+
     # Create response objects
-    for row in results:
-        usage_dict = row.Usage.__dict__
-        usage_dict['fine_tuning_job_name'] = row.fine_tuning_job_name
-        records.append(UsageRecordResponse(**usage_dict))
-    # Log and return records
-    logger.info(f"Retrieved {len(records)} usage records for user: {user_id}, page: {page}")
-    return records, pagination
+    usage_responses = []
+    for usage, job_name in usage_records:
+        usage_dict = usage.__dict__
+        usage_dict['fine_tuning_job_name'] = job_name
+        usage_responses.append(UsageRecordResponse(**usage_dict))
+
+    logger.info(
+        f"Retrieved {len(usage_responses)} usage records for user: {user_id} "
+        f"between {start_date} and {end_date}"
+    )
+
+    return usage_responses, pagination
+
+async def get_total_cost(
+        db: AsyncSession,
+        user_id: UUID,
+        start_date_str: str,
+        end_date_str: str
+) -> TotalCostResponse:
+    """
+    Get total cost for a period.
+
+    Args:
+        db: Database session
+        user_id: User ID
+        start_date_str: Start date in YYYY-MM-DD format
+        end_date_str: End date in YYYY-MM-DD format
+
+    Returns:
+        Total cost information
+
+    Raises:
+        BadRequestError: If dates are invalid
+    """
+    # Parse and validate dates
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise BadRequestError(
+            "Invalid date format. Please use YYYY-MM-DD format"
+        )
+
+    if end_date < start_date:
+        raise BadRequestError(
+            f"End date ({end_date}) must be after start date ({start_date})"
+        )
+
+    # Get total cost
+    total_cost = await usage_queries.get_total_cost(
+        db, user_id, start_date, end_date
+    )
+
+    logger.info(
+        f"Calculated total cost for user {user_id}: {total_cost} "
+        f"between {start_date} and {end_date}"
+    )
+
+    return TotalCostResponse(
+        start_date=start_date,
+        end_date=end_date,
+        total_cost=total_cost
+    )

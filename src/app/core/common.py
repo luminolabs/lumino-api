@@ -1,66 +1,7 @@
+import re
 from datetime import date, datetime
-from typing import Tuple, List
-
-from sqlalchemy import Select, select, func, Row
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import BadRequestError
-from app.core.utils import T
-from app.schemas.common import Pagination
-
-
-async def paginate_query(
-        db: AsyncSession,
-        query: Select,
-        page: int,
-        items_per_page: int
-) -> Tuple[List[T], Pagination]:
-    """
-    Paginate a query and return the items and pagination object.
-
-    Args:
-        db (AsyncSession): The database session.
-        query (Select): The SQLAlchemy query.
-        page (int): The page number.
-        items_per_page (int): The number of items per page.
-    Returns:
-        Tuple[List[T], Pagination]: A tuple of the items and pagination object.
-    """
-    # Validate inputs
-    if page < 1 or items_per_page < 1:
-        raise BadRequestError("`page` and `items_per_page` must be positive integers")
-
-    # Count total items
-    count_query = select(func.count()).select_from(query.subquery())
-    total_count = await db.scalar(count_query)
-
-    # Calculate total pages and validate if page is out of range
-    total_pages = (total_count + items_per_page - 1) // items_per_page
-    if page > total_pages:
-        return [], Pagination(
-            total_pages=total_pages,
-            current_page=page,
-            items_per_page=items_per_page,
-        )
-
-    offset = (page - 1) * items_per_page
-
-    # Fetch items
-    result = await db.execute(query.offset(offset).limit(items_per_page))
-    items = result.all()
-
-    if items and isinstance(items[0], Row) and len(items[0]) == 1:
-        items = [item[0] for item in items]
-
-    # Create pagination object
-    pagination = Pagination(
-        total_pages=total_pages,
-        current_page=page,
-        items_per_page=items_per_page,
-    )
-
-    # Return items and pagination
-    return items, pagination
 
 
 def parse_date(date_str: str) -> date | None:
@@ -96,3 +37,53 @@ def parse_datetime(datetime_str: str) -> datetime | None:
     except ValueError:
         raise BadRequestError(f"Invalid datetime format, use %Y-%m-%dT%H:%M:%SZ. "
                               f"Example: 2022-12-29T12:00:00Z; got: {datetime_str}")
+
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitize the filename to use only lowercase letters, numbers, hyphens, and underscores.
+
+    Args:
+        filename (str): The original filename.
+
+    Returns:
+        str: The sanitized filename.
+
+    Raises:
+        BadRequestError: If the filename cannot be sanitized to a valid format.
+    """
+    if not filename:
+        raise BadRequestError("Filename cannot be empty")
+
+    # Get file extension if it exists
+    parts = filename.rsplit('.', 1)
+    name = parts[0]
+    extension = f".{parts[1].lower()}" if len(parts) > 1 else ""
+
+    # Convert to lowercase
+    sanitized = name.lower()
+
+    # Replace spaces and other special characters with underscore
+    sanitized = re.sub(r'[^a-z0-9-]', '_', sanitized)
+
+    # Remove consecutive underscores/hyphens
+    sanitized = re.sub(r'[-_]{2,}', '_', sanitized)
+
+    # Remove leading/trailing underscores/hyphens
+    sanitized = sanitized.strip('_-')
+
+    # Recombine with extension
+    result = sanitized + extension
+
+    # Check if we have a valid filename
+    if not sanitized:
+        raise BadRequestError(
+            f"Filename must contain at least one letter or number; got: {filename}"
+        )
+
+    if len(result) > 255:
+        raise BadRequestError(
+            f"Filename is too long (max 255 characters); got {len(result)} characters"
+        )
+
+    return result

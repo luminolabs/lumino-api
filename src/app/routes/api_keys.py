@@ -32,19 +32,8 @@ async def create_new_api_key(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> ApiKeyWithSecretResponse:
-    """
-    Create a new API key for the current user.
-
-    Args:
-        api_key (ApiKeyCreate): The API key creation data.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        ApiKeyResponse: The newly created API key.
-    """
-    new_api_key = await create_api_key(db, current_user.id, api_key)
-    return new_api_key
+    """Create a new API key."""
+    return await create_api_key(db, current_user.id, api_key)
 
 
 @router.get("/api-keys", response_model=Dict[str, Union[List[ApiKeyResponse], Pagination]])
@@ -54,18 +43,7 @@ async def list_api_keys(
         page: int = Query(1, ge=1),
         items_per_page: int = Query(20, ge=1, le=100),
 ) -> Dict[str, Union[List[ApiKeyResponse], Pagination]]:
-    """
-    List all API keys for the current user.
-
-    Args:
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-        page (int): The page number for pagination.
-        items_per_page (int): The number of items per page.
-
-    Returns:
-        Dict[str, Union[List[ApiKeyResponse], Pagination]]: A dictionary containing the list of API keys and pagination info.
-    """
+    """List all API keys for the current user."""
     api_keys, pagination = await get_api_keys(db, current_user.id, page, items_per_page)
     return {
         "data": api_keys,
@@ -79,19 +57,8 @@ async def get_api_key_details(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> ApiKeyResponse:
-    """
-    Get details of a specific API key.
-
-    Args:
-        key_name (str): The name of the API key.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        ApiKeyResponse: The details of the requested API key.
-    """
-    api_key = await get_api_key(db, current_user.id, key_name)
-    return api_key
+    """Get details of a specific API key."""
+    return await get_api_key(db, current_user.id, key_name)
 
 
 @router.patch("/api-keys/{key_name}", response_model=ApiKeyResponse)
@@ -101,20 +68,8 @@ async def update_api_key_details(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> ApiKeyResponse:
-    """
-    Update a specific API key.
-
-    Args:
-        key_name (str): The name of the API key to update.
-        api_key_update (ApiKeyUpdate): The update data for the API key.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        ApiKeyResponse: The updated API key.
-    """
-    updated_key = await update_api_key(db, current_user.id, key_name, api_key_update)
-    return updated_key
+    """Update a specific API key."""
+    return await update_api_key(db, current_user.id, key_name, api_key_update)
 
 
 @router.delete("/api-keys/{key_name}", response_model=ApiKeyResponse)
@@ -123,16 +78,5 @@ async def revoke_api_key_route(
         current_user: User = Depends(get_current_active_user),
         db: AsyncSession = Depends(get_db),
 ) -> ApiKeyResponse:
-    """
-    Revoke a specific API key.
-
-    Args:
-        key_name (str): The name of the API key to revoke.
-        current_user (User): The current authenticated user.
-        db (AsyncSession): The database session.
-
-    Returns:
-        ApiKeyResponse: The revoked API key.
-    """
-    revoked_key = await revoke_api_key(db, current_user.id, key_name)
-    return revoked_key
+    """Revoke a specific API key."""
+    return await revoke_api_key(db, current_user.id, key_name)

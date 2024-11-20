@@ -1,122 +1,117 @@
+from typing import List
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.util import await_fallback
 
-from app.core.common import paginate_query
 from app.core.config_manager import config
-from app.core.constants import FineTuningJobStatus, FineTuningJobType, ComputeProvider, FineTunedModelStatus
+from app.core.constants import (
+    FineTuningJobStatus,
+    FineTuningJobType, FineTunedModelStatus, ComputeProvider
+)
 from app.core.exceptions import (
-    FineTuningJobNotFoundError,
     BaseModelNotFoundError,
-    DatasetNotFoundError, FineTuningJobAlreadyExistsError, BadRequestError, ForbiddenError
+    DatasetNotFoundError,
+    FineTuningJobAlreadyExistsError,
+    ForbiddenError, FineTuningJobNotFoundError, BadRequestError
 )
 from app.core.scheduler_client import start_fine_tuning_job, stop_fine_tuning_job
 from app.core.utils import setup_logger
-from app.models.base_model import BaseModel
-from app.models.dataset import Dataset
 from app.models.fine_tuning_job import FineTuningJob
 from app.models.fine_tuning_job_detail import FineTuningJobDetail
 from app.models.user import User
+from app.queries import datasets as dataset_queries
+from app.queries import fine_tuning as ft_queries
+from app.queries import models as model_queries
+from app.queries import fine_tuned_models as ft_models_queries
 from app.schemas.common import Pagination
-from app.schemas.fine_tuning import FineTuningJobCreate, FineTuningJobResponse, FineTuningJobDetailResponse
+from app.schemas.fine_tuning import (
+    FineTuningJobCreate,
+    FineTuningJobDetailResponse, FineTuningJobResponse
+)
 
-# Set up logger
-logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
+logger = setup_logger(__name__)
 
-
-async def create_fine_tuning_job(db: AsyncSession, user: User, job: FineTuningJobCreate) -> FineTuningJobDetailResponse:
-    """
-    Create a new fine-tuning job.
-
-    Args:
-        db (AsyncSession): The database session.
-        user (User): The user creating the fine-tuning job.
-        job (FineTuningJobCreate): The fine-tuning job creation data.
-
-    Returns:
-        FineTuningJobResponse: The created fine-tuning job.
-
-    Raises:
-        BaseModelNotFoundError: If the specified base model is not found.
-        DatasetNotFoundError: If the specified dataset is not found.
-    """
-    # Check if user has verified their email
+async def create_fine_tuning_job(
+        db: AsyncSession,
+        user: User,
+        job: FineTuningJobCreate
+) -> FineTuningJobDetailResponse:
+    """Create a new fine-tuning job."""
+    # Validate user status
     if not user.email_verified:
-        raise ForbiddenError(f"User {user.id} has not verified their email - "
-                              f"please verify your email, logout, and login again", logger)
+        raise ForbiddenError("Email verification required", logger)
 
-    # Check if the user has minimum required credits
     if user.credits_balance < config.fine_tuning_job_min_credits:
-        raise ForbiddenError(f"User {user.id} does not have enough credits "
-                              f"to start a fine tuning job; credits needed: ${config.fine_tuning_job_min_credits}", logger)
-    
-    # Check if base model exists
-    base_model = await db.execute(select(BaseModel).where(BaseModel.name == job.base_model_name))
-    base_model = base_model.scalar_one_or_none()
+        raise ForbiddenError(f"Insufficient credits. Required: {config.fine_tuning_job_min_credits}", logger)
+
+    # Validate base model
+    base_model = await model_queries.get_base_model_by_name(db, job.base_model_name)
     if not base_model:
-        raise BaseModelNotFoundError(f"Base model with name {job.base_model_name} not found, user: {user.id}", logger)
+        raise BaseModelNotFoundError(f"Base model not found: {job.base_model_name}", logger)
 
-    # Check if dataset exists and belongs to the user
-    dataset = await db.execute(select(Dataset).where(Dataset.name == job.dataset_name, Dataset.user_id == user.id))
-    dataset = dataset.scalar_one_or_none()
+    # Validate dataset
+    dataset = await dataset_queries.get_dataset_by_name(db, user.id, job.dataset_name)
     if not dataset:
-        raise DatasetNotFoundError(f"Dataset with name {job.dataset_name} not found, user: {user.id}", logger)
+        raise DatasetNotFoundError(f"Dataset not found: {job.dataset_name}", logger)
 
-    # Check if the job name is unique for the user
-    existing_job = await db.execute(select(FineTuningJob).where(FineTuningJob.user_id == user.id, FineTuningJob.name == job.name))
-    existing_job = existing_job.scalar_one_or_none()
+    # Check for duplicate job name
+    existing_job = await ft_queries.get_job_with_details(db, user.id, job.name)
     if existing_job:
-        raise FineTuningJobAlreadyExistsError(f"Fine-tuning job with name {job.name} already exists for user: {user.id}", logger)
+        raise FineTuningJobAlreadyExistsError(f"Job name already exists: {job.name}", logger)
 
-    job.parameters['use_lora'] = False
-    job.parameters['use_qlora'] = False
-    if job.type == FineTuningJobType.LORA:
-        job.parameters['use_lora'] = True
-    elif job.type == FineTuningJobType.QLORA:
-        job.parameters['use_lora'] = True
-        job.parameters['use_qlora'] = True
+    try:
+        # Prepare job parameters
+        params = job.parameters.copy()
+        params['use_lora'] = job.type in (FineTuningJobType.LORA, FineTuningJobType.QLORA)
+        params['use_qlora'] = job.type == FineTuningJobType.QLORA
 
-    # Create the main fine-tuning job record
-    db_job = FineTuningJob(
-        user_id=user.id,
-        name=job.name,
-        type=job.type,
-        provider=job.provider,
-        base_model_id=base_model.id,
-        dataset_id=dataset.id,
-        status=FineTuningJobStatus.NEW
-    )
-    # Create the job details record
-    db_job_detail = FineTuningJobDetail(
-        fine_tuning_job_id=db_job.id,
-        parameters=job.parameters,
-        metrics={},
-        timestamps={"new": None, "queued": None, "running": None, "stopping": None, "stopped": None,
-                    "completed": None, "failed": None}
-    )
-    # Add the records to the database and commit the changes
-    db.add(db_job)
-    await db.flush()  # Ensure the job ID is generated before adding the detail record
-    db_job_detail.fine_tuning_job_id = db_job.id
-    db.add(db_job_detail)
-    await db.commit()
+        # Create job record
+        db_job = FineTuningJob(
+            user_id=user.id,
+            name=job.name,
+            type=job.type,
+            provider=job.provider,
+            base_model_id=base_model.id,
+            dataset_id=dataset.id,
+            status=FineTuningJobStatus.NEW
+        )
+        db.add(db_job)
+        await db.flush()
 
-    # Start the fine-tuning job
-    await start_fine_tuning_job(db_job.id)
+        # Create job details
+        db_job_detail = FineTuningJobDetail(
+            fine_tuning_job_id=db_job.id,
+            parameters=params,
+            metrics={},
+            timestamps={
+                "new": None, "queued": None, "running": None,
+                "stopping": None, "stopped": None,
+                "completed": None, "failed": None
+            }
+        )
+        db.add(db_job_detail)
+        await db.commit()
 
-    # Prepare the response
-    db_job_dict = db_job.__dict__
-    db_job_dict['base_model_name'] = db_job.base_model.name
-    db_job_dict['dataset_name'] = db_job.dataset.name
-    db_job_dict['parameters'] = db_job_detail.parameters
-    db_job_dict['metrics'] = db_job_detail.metrics
-    db_job_dict['timestamps'] = db_job_detail.timestamps
+        # Start the job via scheduler
+        await start_fine_tuning_job(db_job.id)
 
-    logger.info(f"Created fine-tuning job: {db_job.id} for user: {user.id}")
-    return FineTuningJobDetailResponse(**db_job_dict)
+        # Prepare response
+        response_data = {
+            **db_job.__dict__,
+            'base_model_name': base_model.name,
+            'dataset_name': dataset.name,
+            'parameters': db_job_detail.parameters,
+            'metrics': db_job_detail.metrics,
+            'timestamps': db_job_detail.timestamps
+        }
 
+        logger.info(f"Created fine-tuning job: {db_job.id} for user: {user.id}")
+        return FineTuningJobDetailResponse(**response_data)
+
+    except Exception as e:
+        await db.rollback()
+        raise e
 
 async def get_fine_tuning_jobs(
         db: AsyncSession,
@@ -124,177 +119,183 @@ async def get_fine_tuning_jobs(
         page: int = 1,
         items_per_page: int = 20
 ) -> tuple[list[FineTuningJobResponse], Pagination]:
-    """
-    Get all fine-tuning jobs for a user with pagination.
+    """Get all fine-tuning jobs for a user with pagination."""
+    offset = (page - 1) * items_per_page
 
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        page (int): The page number for pagination.
-        items_per_page (int): The number of items per page.
+    # Get total count and paginated results
+    total_count = await ft_queries.count_jobs(db, user_id)
+    results = await ft_queries.list_jobs(db, user_id, offset, items_per_page)
 
-    Returns:
-        tuple[list[FineTuningJobResponse], Pagination]: A tuple containing the list of fine-tuning jobs and pagination info.
-    """
-    # Construct the query
-    query = (
-        select(FineTuningJob, BaseModel.name.label('base_model_name'), Dataset.name.label('dataset_name'))
-        .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
-        .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
-        .where(
-            FineTuningJob.user_id == user_id,
-            FineTuningJob.status != FineTuningJobStatus.DELETED
-        ).order_by(FineTuningJob.created_at.desc())
+    # Calculate pagination
+    total_pages = (total_count + items_per_page - 1) // items_per_page
+    pagination = Pagination(
+        total_pages=total_pages,
+        current_page=page,
+        items_per_page=items_per_page,
     )
-    # Paginate the query
-    jobs, pagination = await paginate_query(db, query, page, items_per_page)
-    # Convert the results to response objects
-    job_responses = []
-    for job, base_model_name, dataset_name in jobs:
+
+    # Create response objects
+    jobs = []
+    for job, base_model_name, dataset_name in results:
         job_dict = job.__dict__
         job_dict['base_model_name'] = base_model_name
         job_dict['dataset_name'] = dataset_name
-        job_responses.append(FineTuningJobResponse(**job_dict))
-    # Log the results and return them
-    logger.info(f"Retrieved {len(job_responses)} fine-tuning jobs for user: {user_id}")
-    return job_responses, pagination
+        jobs.append(FineTuningJobResponse(**job_dict))
 
+    logger.info(f"Retrieved {len(jobs)} fine-tuning jobs for user: {user_id}, page: {page}")
+    return jobs, pagination
 
-async def get_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) -> FineTuningJobDetailResponse:
-    """
-    Get a specific fine-tuning job.
+# app/services/fine_tuning.py (continued)
 
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        job_name (str): The name of the fine-tuning job.
+async def get_fine_tuning_job(
+        db: AsyncSession,
+        user_id: UUID,
+        job_name: str
+) -> FineTuningJobDetailResponse:
+    """Get detailed information about a specific fine-tuning job."""
+    result = await ft_queries.get_job_with_details(db, user_id, job_name)
+    if not result:
+        raise FineTuningJobNotFoundError(f"Job not found: {job_name}", logger)
 
-    Returns:
-        FineTuningJobDetailResponse: The detailed information about the fine-tuning job.
+    job, detail, base_model_name, dataset_name = result
+    response_data = {
+        **job.__dict__,
+        'base_model_name': base_model_name,
+        'dataset_name': dataset_name,
+        'parameters': detail.parameters,
+        'metrics': detail.metrics,
+        'timestamps': detail.timestamps
+    }
 
-    Raises:
-        FineTuningJobNotFoundError: If the fine-tuning job is not found.
-    """
-    # Construct the query
-    result = await db.execute(
-        select(FineTuningJob, FineTuningJobDetail, BaseModel.name.label('base_model_name'), Dataset.name.label('dataset_name'))
-        .join(FineTuningJobDetail)
-        .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
-        .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
-        .where(FineTuningJob.user_id == user_id, FineTuningJob.name == job_name)
-    )
-    # Get the result and raise an error if not found
-    row = result.first()
-    if not row:
-        raise FineTuningJobNotFoundError(f"Fine-tuning job not found: {job_name} for user: {user_id}", logger)
-
-    # Convert the result to a response object
-    job, detail, base_model_name, dataset_name = row
-    job_dict = job.__dict__
-    job_dict['base_model_name'] = base_model_name
-    job_dict['dataset_name'] = dataset_name
-    job_dict['parameters'] = detail.parameters
-    job_dict['metrics'] = detail.metrics
-    job_dict['timestamps'] = detail.timestamps
-
-    # Log the result and return it
     logger.info(f"Retrieved fine-tuning job: {job_name} for user: {user_id}")
-    return FineTuningJobDetailResponse(**job_dict)
+    return FineTuningJobDetailResponse(**response_data)
 
+async def cancel_fine_tuning_job(
+        db: AsyncSession,
+        user_id: UUID,
+        job_name: str
+) -> FineTuningJobDetailResponse:
+    """Cancel a specific fine-tuning job."""
+    # Get job details
+    result = await ft_queries.get_job_with_details(db, user_id, job_name)
+    if not result:
+        raise FineTuningJobNotFoundError(f"Job not found: {job_name}", logger)
 
-async def cancel_fine_tuning_job(db: AsyncSession, user_id: UUID, job_name: str) -> FineTuningJobDetailResponse:
-    """
-    Cancel a specific fine-tuning job.
+    job, detail, base_model_name, dataset_name = result
 
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        job_name (str): The name of the fine-tuning job.
-
-    Returns:
-        FineTuningJobDetailResponse: The updated fine-tuning job information.
-
-    Raises:
-        BadRequestError: If the fine-tuning job is not in a state that can be cancelled.
-    """
-    # Get the job from the database
-    job = await get_fine_tuning_job(db, user_id, job_name)
-
-    # We can't cancel jobs running on the LUM protocol
+    # Validate job can be cancelled
     if job.provider == ComputeProvider.LUM:
-        raise BadRequestError(f"Can't cancel job {job_name} because it's running on the {ComputeProvider.LUM} protocol", logger)
+        raise BadRequestError(f"Cannot cancel job running on {ComputeProvider.LUM} protocol", logger)
 
-    # Check if the job is in a state that can be cancelled
     if job.status != FineTuningJobStatus.RUNNING:
-        raise BadRequestError(f"Job {job_name} cannot be cancelled in its current state: {job.status.value}", logger)
+        raise BadRequestError(f"Job cannot be cancelled in state: {job.status.value}", logger)
 
-    # Request job cancellation from the scheduler
-    await stop_fine_tuning_job(job.id, user_id)
+    try:
+        # Request job cancellation from scheduler
+        await stop_fine_tuning_job(job.id, user_id)
 
-    # Update the job status in our database
-    db_job = await db.get(FineTuningJob, job.id)
-    db_job.status = FineTuningJobStatus.STOPPING
-    await db.commit()
-    await db.refresh(db_job)
+        # Update job status
+        job.status = FineTuningJobStatus.STOPPING
+        await db.commit()
+        await db.refresh(job)
 
-    logger.info(f"Stopping fine-tuning job: {job_name} for user: {user_id}")
-    return await get_fine_tuning_job(db, user_id, job_name)
+        # Prepare response
+        response_data = {
+            **job.__dict__,
+            'base_model_name': base_model_name,
+            'dataset_name': dataset_name,
+            'parameters': detail.parameters,
+            'metrics': detail.metrics,
+            'timestamps': detail.timestamps
+        }
 
+        logger.info(f"Cancelled fine-tuning job: {job_name} for user: {user_id}")
+        return FineTuningJobDetailResponse(**response_data)
 
-async def update_fine_tuning_job_progress(db: AsyncSession,
-                                          job_id: UUID, user_id: UUID, progress: dict) -> bool:
-    """
-    Update job progress information.
-    """
-    # Fetch job and confirm it exists
-    job = (await db.execute(select(FineTuningJob).where(
-        FineTuningJob.id == job_id, FineTuningJob.user_id == user_id))).scalar_one_or_none()
+    except Exception as e:
+        await db.rollback()
+        raise e
+
+async def delete_fine_tuning_job(
+        db: AsyncSession,
+        user_id: UUID,
+        job_name: str
+) -> None:
+    """Mark a fine-tuning job and its associated model as deleted."""
+    # Get job with fine-tuned model
+    result = await ft_queries.get_job_with_details(db, user_id, job_name)
+    if not result:
+        raise FineTuningJobNotFoundError(f"Job not found: {job_name}", logger)
+
+    job, detail, _, _ = result
+
+    try:
+        # Mark job as deleted
+        job.status = FineTuningJobStatus.DELETED
+
+        # If there's an associated fine-tuned model, mark it as deleted too
+        fine_tuned_model = await ft_models_queries.get_existing_model(db, job.id, user_id)
+        if fine_tuned_model:
+            fine_tuned_model.status = FineTunedModelStatus.DELETED
+
+        await db.commit()
+        logger.info(f"Marked fine-tuning job as deleted: {job_name} for user: {user_id}")
+
+    except Exception as e:
+        await db.rollback()
+        raise e
+
+async def update_job_progress(
+        db: AsyncSession,
+        job_id: UUID,
+        user_id: UUID,
+        progress: dict
+) -> bool:
+    """Update job progress information."""
+    # Get job
+    job = await ft_queries.get_job_by_id(db, job_id, user_id)
     if not job:
-        logger.warning(f"No FineTuningJob found for job_id: {job_id} and user_id: {user_id}")
+        logger.warning(f"No job found for update: {job_id}")
         return False
 
     # Ignore outdated progress updates
     if progress['current_step'] <= (job.current_step or -1):
         return True
 
-    # Update job progress
-    job.current_step = progress['current_step']
-    job.total_steps = progress['total_steps']
-    job.current_epoch = progress['current_epoch']
-    job.total_epochs = progress['total_epochs']
-    await db.commit()
-    logger.info(f"Updated progress for fine-tuning job: {job_id} for user: {user_id}")
-    return True
+    try:
+        # Update job progress
+        job.current_step = progress['current_step']
+        job.total_steps = progress['total_steps']
+        job.current_epoch = progress['current_epoch']
+        job.total_epochs = progress['total_epochs']
 
+        await db.commit()
+        logger.info(f"Updated progress for job: {job_id}, step: {progress['current_step']}")
+        return True
 
-async def mark_job_deleted(db: AsyncSession, user_id: UUID, job_name: str) -> None:
-    """
-    Mark a fine-tuning job and its associated model as deleted.
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Failed to update job progress: {str(e)}")
+        return False
 
-    Args:
-        db (AsyncSession): The database session.
-        user_id (UUID): The ID of the user.
-        job_name (str): The name of the fine-tuning job.
+async def get_jobs_for_status_update(
+        db: AsyncSession,
+        include_recent_completed: bool = True
+) -> List[FineTuningJob]:
+    """Get jobs that need status updates."""
+    non_terminal_statuses = [
+        FineTuningJobStatus.NEW,
+        FineTuningJobStatus.QUEUED,
+        FineTuningJobStatus.RUNNING,
+        FineTuningJobStatus.STOPPING
+    ]
 
-    Raises:
-        FineTuningJobNotFoundError: If the fine-tuning job is not found.
-    """
-    # Get the job from the database
-    job = (await db.execute(
-        select(FineTuningJob).options(selectinload(FineTuningJob.fine_tuned_model))
-        .where(FineTuningJob.user_id == user_id, FineTuningJob.name == job_name)
-    )).scalar_one_or_none()
+    completed_within_minutes = 10 if include_recent_completed else None
 
-    if not job:
-        raise FineTuningJobNotFoundError(f"Fine-tuning job not found: {job_name} for user: {user_id}", logger)
+    jobs = await ft_queries.get_non_terminal_jobs(
+        db,
+        statuses=non_terminal_statuses,
+        completed_within_minutes=completed_within_minutes
+    )
 
-    # Mark the job as deleted
-    job.status = FineTuningJobStatus.DELETED
-
-    # Also delete the fine-tuned model if it exists
-    if job.fine_tuned_model:
-        job.fine_tuned_model.status = FineTunedModelStatus.DELETED
-
-    await db.commit()
-
-    logger.info(f"Marked fine-tuning job as deleted: {job_name} for user: {user_id}")
+    return jobs
