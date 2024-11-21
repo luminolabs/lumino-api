@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.core.utils import setup_logger
+from app.models.fine_tuned_model import FineTunedModel
 from app.queries import models as model_queries
 from app.queries.common import now_utc
 
@@ -53,7 +54,7 @@ async def _cleanup_deleted_model_weights(db: AsyncSession) -> None:
 
 
 async def _cleanup_model_weights(
-        model: Any,
+        model: FineTunedModel,
         storage_client: storage.Client
 ) -> None:
     """Clean up weights for a single model."""
@@ -81,12 +82,12 @@ async def _cleanup_model_weights(
             except NotFound:
                 # Weight file already deleted, continue
                 logger.info(f"Weight file not found: {weight_path}, model {model.id}")
-                pass
             except Exception as e:
+                # Log error and continue, no need to fail entire cleanup
                 logger.error(f"Error deleting weight file {weight_path}, model {model.id}: {str(e)}")
 
         # Update artifacts to remove weight files
-        model.artifacts['weight_files'] = []
+        model.artifacts = model.artifacts.replace(weight_files=[])
 
         logger.info(f"Deleted weights for model {model.id}")
 
