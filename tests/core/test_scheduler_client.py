@@ -92,7 +92,7 @@ async def test_start_fine_tuning_job_success(
     """Test successful job start."""
     # Mock the job query
     with patch('app.core.scheduler_client.ft_queries.get_job_with_details_full') as mock_query:
-        mock_query.return_value = (mock_job, mock_dataset, mock_base_model, mock_job_detail, mock_user)
+        mock_query.return_value = (mock_job, mock_dataset, mock_base_model, mock_job_detail)
 
         # Mock aiohttp session
         mock_response = AsyncMock()
@@ -103,7 +103,7 @@ async def test_start_fine_tuning_job_success(
 
         with patch('aiohttp.ClientSession', return_value=mock_session):
             # Call the function
-            await start_fine_tuning_job(mock_job.id)
+            await start_fine_tuning_job(mock_db, mock_job.id, mock_user.id)
 
             # Verify the scheduler API was called correctly
             mock_session.post.assert_called_once()
@@ -127,7 +127,7 @@ async def test_start_fine_tuning_job_validation_error(mock_db, mock_job):
         mock_query.return_value = None
 
         with pytest.raises(FineTuningJobCreationError) as exc_info:
-            await start_fine_tuning_job(mock_job.id)
+            await start_fine_tuning_job(mock_db, mock_job.id, mock_job.user_id)
 
         assert "Failed to find job" in str(exc_info.value)
 
@@ -144,7 +144,7 @@ async def test_start_fine_tuning_job_scheduler_error(
     """Test job start with scheduler error."""
     # Mock the job query
     with patch('app.core.scheduler_client.ft_queries.get_job_with_details_full') as mock_query:
-        mock_query.return_value = (mock_job, mock_dataset, mock_base_model, mock_job_detail, mock_user)
+        mock_query.return_value = (mock_job, mock_dataset, mock_base_model, mock_job_detail)
 
         # Mock aiohttp session with error response
         mock_response = AsyncMock()
@@ -156,7 +156,7 @@ async def test_start_fine_tuning_job_scheduler_error(
 
         with patch('aiohttp.ClientSession', return_value=mock_session):
             with pytest.raises(FineTuningJobCreationError) as exc_info:
-                await start_fine_tuning_job(mock_job.id)
+                await start_fine_tuning_job(mock_db, mock_job.id, mock_user.id)
 
             assert "Validation error" in str(exc_info.value)
 
@@ -278,13 +278,13 @@ async def test_stop_fine_tuning_job_error():
 
 
 @pytest.mark.asyncio
-async def test_scheduler_disabled():
+async def test_scheduler_disabled(mock_db):
     """Test behavior when scheduler is disabled."""
     with patch('app.core.scheduler_client.config.run_with_scheduler', False):
         # All functions should return early without error
         job_id = UUID('12345678-1234-5678-1234-567812345678')
         user_id = UUID('98765432-9876-5432-9876-987654321098')
 
-        await start_fine_tuning_job(job_id)
+        await start_fine_tuning_job(mock_db, job_id, user_id)
         assert await fetch_job_details(user_id, [job_id]) == []
         assert await stop_fine_tuning_job(job_id, user_id) is None

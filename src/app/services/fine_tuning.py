@@ -95,7 +95,7 @@ async def create_fine_tuning_job(
         await db.refresh(db_job)
 
         # Start the job via scheduler
-        await start_fine_tuning_job(db_job.id)
+        await start_fine_tuning_job(db, db_job.id, user.id)
 
         # Prepare response
         response_data = {

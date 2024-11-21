@@ -19,92 +19,91 @@ logger = setup_logger(__name__)
 INTERNAL_API_URL = config.scheduler_zen_url
 
 
-async def start_fine_tuning_job(job_id: UUID) -> None:
+async def start_fine_tuning_job(db: AsyncSession, job_id: UUID, user_id: UUID) -> None:
     """Start a fine-tuning job via scheduler."""
     if not config.run_with_scheduler:
         logger.info("Scheduler API is disabled")
         return
 
-    async with AsyncSession() as db:
-        # Get job with all required information
-        job_info = await ft_queries.get_job_with_details_full(db, job_id)
-        if not job_info:
-            raise FineTuningJobCreationError(
-                f"Failed to find job: {job_id}",
-                logger
-            )
-
-        job, dataset, base_model, job_detail, user = job_info
-
-        # Extract cluster configuration
-        use_lora = job_detail.parameters.get("use_lora", True)
-        use_qlora = job_detail.parameters.get("use_qlora", False)
-        if not use_lora:
-            use_qlora = False
-
-        cluster_config_name = (
-            f"{'q' if use_qlora else ''}"
-            f"{'lora' if use_lora else 'full'}"
+    # Get job with all required information
+    job_info = await ft_queries.get_job_with_details_full(db, job_id, user_id)
+    if not job_info:
+        raise FineTuningJobCreationError(
+            f"Failed to find job: {job_id}",
+            logger
         )
 
-        cluster_config = base_model.cluster_config.get(cluster_config_name)
-        num_gpus = cluster_config.get("num_gpus")
-        gpu_type = cluster_config.get("gpu_type")
+    job, dataset, base_model, job_detail = job_info
 
-        # Prepare scheduler payload
-        payload = {
-            "job_id": str(job_id),
-            "workflow": "torchtunewrapper",
-            "args": {
-                "job_config_name": base_model.name,
-                "dataset_id": (
-                    f"gs://{config.gcs_bucket}/datasets/{user.id}/"
-                    f"{dataset.file_name}"
-                ),
-                "batch_size": job_detail.parameters.get("batch_size", 2),
-                "shuffle": job_detail.parameters.get("shuffle", True),
-                "num_epochs": job_detail.parameters.get("num_epochs", 1),
-                "use_lora": use_lora,
-                "use_qlora": use_qlora,
-                "num_gpus": num_gpus,
-            },
-            "gpu_type": gpu_type,
+    # Extract cluster configuration
+    use_lora = job_detail.parameters.get("use_lora", True)
+    use_qlora = job_detail.parameters.get("use_qlora", False)
+    if not use_lora:
+        use_qlora = False
+
+    cluster_config_name = (
+        f"{'q' if use_qlora else ''}"
+        f"{'lora' if use_lora else 'full'}"
+    )
+
+    cluster_config = base_model.cluster_config.get(cluster_config_name)
+    num_gpus = cluster_config.get("num_gpus")
+    gpu_type = cluster_config.get("gpu_type")
+
+    # Prepare scheduler payload
+    payload = {
+        "job_id": str(job_id),
+        "workflow": "torchtunewrapper",
+        "args": {
+            "job_config_name": base_model.name,
+            "dataset_id": (
+                f"gs://{config.gcs_bucket}/datasets/{user_id}/"
+                f"{dataset.file_name}"
+            ),
+            "batch_size": job_detail.parameters.get("batch_size", 2),
+            "shuffle": job_detail.parameters.get("shuffle", True),
+            "num_epochs": job_detail.parameters.get("num_epochs", 1),
+            "use_lora": use_lora,
+            "use_qlora": use_qlora,
             "num_gpus": num_gpus,
-            "user_id": str(job.user_id),
-            "keep_alive": False,
-        }
+        },
+        "gpu_type": gpu_type,
+        "num_gpus": num_gpus,
+        "user_id": str(job.user_id),
+        "keep_alive": False,
+    }
 
-        if config.env_name in ("dev", "prod"):
-            payload["args"]["override_env"] = config.env_name
+    if config.env_name in ("dev", "prod"):
+        payload["args"]["override_env"] = config.env_name
 
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                        f"{INTERNAL_API_URL}/jobs/{job.provider.value.lower()}",
-                        json=payload
-                ) as response:
-                    if response.status == 200:
-                        logger.info(f"Started fine-tuning job: {job_id}")
-                    elif response.status == 422:
-                        error_data = await response.json()
-                        raise FineTuningJobCreationError(
-                            f"Failed to start job {job_id}: {error_data['message']}",
-                            logger
-                        )
-                    else:
-                        raise FineTuningJobCreationError(
-                            f"Failed to start job {job_id}: {await response.text()}",
-                            logger
-                        )
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                    f"{INTERNAL_API_URL}/jobs/{job.provider.value.lower()}",
+                    json=payload
+            ) as response:
+                if response.status == 200:
+                    logger.info(f"Started fine-tuning job: {job_id}")
+                elif response.status == 422:
+                    error_data = await response.json()
+                    raise FineTuningJobCreationError(
+                        f"Failed to start job {job_id}: {error_data['message']}",
+                        logger
+                    )
+                else:
+                    raise FineTuningJobCreationError(
+                        f"Failed to start job {job_id}: {await response.text()}",
+                        logger
+                    )
 
-        except Exception as e:
-            # Update job status to failed
-            job.status = FineTuningJobStatus.FAILED
-            await db.commit()
-            raise FineTuningJobCreationError(
-                f"Failed to start job {job_id}: {str(e)}",
-                logger
-            )
+    except Exception as e:
+        # Update job status to failed
+        job.status = FineTuningJobStatus.FAILED
+        await db.commit()
+        raise FineTuningJobCreationError(
+            f"Failed to start job {job_id}: {str(e)}",
+            logger
+        )
 
 
 async def fetch_job_details(

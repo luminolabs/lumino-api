@@ -35,6 +35,25 @@ async def get_job_with_details(
     return result.first()
 
 
+async def get_job_with_details_full(
+        db: AsyncSession,
+        job_id: UUID,
+        user_id: UUID
+) -> Optional[Tuple[FineTuningJob, Dataset, BaseModel, FineTuningJobDetail]]:
+    """Get complete job details with all related entities."""
+    result = await db.execute(
+        select(FineTuningJob, Dataset, BaseModel, FineTuningJobDetail)
+        .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
+        .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
+        .join(FineTuningJobDetail)
+        .where(
+            FineTuningJob.user_id == user_id,
+            FineTuningJob.id == job_id
+        )
+    )
+    return result.first()
+
+
 async def get_job_by_id(
         db: AsyncSession,
         job_id: UUID,
@@ -108,22 +127,6 @@ async def get_non_terminal_jobs(
         .where(or_(*conditions))
     )
     return result.scalars().all()
-
-
-async def get_job_with_details_full(
-        db: AsyncSession,
-        job_id: UUID
-) -> Optional[Tuple[FineTuningJob, Dataset, BaseModel, FineTuningJobDetail, User]]:
-    """Get complete job details with all related entities."""
-    result = await db.execute(
-        select(FineTuningJob, Dataset, BaseModel, FineTuningJobDetail, User)
-        .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
-        .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
-        .join(FineTuningJobDetail, FineTuningJob.id == FineTuningJobDetail.fine_tuning_job_id)
-        .join(User, FineTuningJob.user_id == User.id)
-        .where(FineTuningJob.id == job_id)
-    )
-    return result.first()
 
 
 async def get_jobs_for_status_update(
