@@ -106,6 +106,11 @@ async def update_dataset(db: AsyncSession, user_id: UUID, dataset_name: str,
     if not db_dataset:
         raise DatasetNotFoundError(f"Dataset not found: {dataset_name} for user: {user_id}", logger)
 
+    new_db_dataset = await dataset_queries.get_dataset_by_name(db, user_id, dataset_update.name)
+    if new_db_dataset:
+        raise DatasetAlreadyExistsError(f"A dataset with the name '{dataset_update.name}' already "
+                                        f"exists for user {user_id}", logger)
+
     # Update the dataset fields
     update_data = dataset_update.dict(exclude_unset=True)
     for field, value in update_data.items():

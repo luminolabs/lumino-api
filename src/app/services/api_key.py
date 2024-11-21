@@ -104,6 +104,11 @@ async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str,
     if not db_api_key:
         raise ApiKeyNotFoundError(f"API key not found: {key_name} for user: {user_id}", logger)
 
+    new_db_api_key = await api_key_queries.get_api_key_by_name(db, user_id, api_key_update.name)
+    if new_db_api_key:
+        raise ApiKeyAlreadyExistsError(f"An API key with the name '{api_key_update.name}' already "
+                                       f"exists for user {user_id}", logger)
+
     # Ensure the expires_at field is stored as timezone-naive UTC datetime
     expires_at = api_key_update.expires_at
     if expires_at:

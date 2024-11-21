@@ -44,7 +44,6 @@ class ApiKeyResponse(BaseModel):
     """
     id: UUID = Field(..., description="The unique identifier of the API key")
     created_at: DateTime = Field(..., description="The creation date and time of the API key")
-    last_used_at: datetime | None = Field(None, description="The last usage date and time of the API key")
     expires_at: DateTime = Field(..., description="The expiration date and time of the API key")
     status: ApiKeyStatus = Field(..., description="The current status of the API key")
     name: str = Field(..., description="The name of the API key")

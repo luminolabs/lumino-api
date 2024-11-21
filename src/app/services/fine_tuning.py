@@ -52,8 +52,8 @@ async def create_fine_tuning_job(
 
     # Validate dataset
     dataset = await dataset_queries.get_dataset_by_name(db, user.id, job.dataset_name)
-    if not dataset:
-        raise DatasetNotFoundError(f"Dataset not found: {job.dataset_name}", logger)
+    if not dataset or dataset.status != FineTunedModelStatus.ACTIVE:
+        raise DatasetNotFoundError(f"Dataset not found or deleted: {job.dataset_name}", logger)
 
     # Check for duplicate job name
     existing_job = await ft_queries.get_job_with_details(db, user.id, job.name)

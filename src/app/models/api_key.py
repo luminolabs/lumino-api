@@ -14,7 +14,6 @@ class ApiKey(Base):
     Attributes:
         id (UUID): The unique identifier for the API key.
         created_at (DateTime): The timestamp when the API key was created.
-        last_used_at (DateTime | None): The timestamp when the API key was last used.
         expires_at (DateTime): The timestamp when the API key expires.
         user_id (UUID): The ID of the user who owns this API key.
         status (ApiKeyStatus): The current status of the API key.
@@ -30,7 +29,6 @@ class ApiKey(Base):
     # Columns
     id = Column(UUID, primary_key=True, server_default=func.gen_random_uuid(), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    last_used_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=False)
     user_id = Column(UUID, ForeignKey("users.id"), index=True)
     status = Column(Enum(ApiKeyStatus), nullable=False, default=ApiKeyStatus.ACTIVE)

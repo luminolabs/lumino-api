@@ -111,9 +111,9 @@ async def _process_job_update(
 ) -> None:
     """Process a single job update from the scheduler."""
     job_id = UUID(update['job_id'])
-    job = await ft_queries.get_job_by_id(db, user_id, job_id)
+    job = await ft_queries.get_job_by_id(db, job_id, user_id)
     if not job:
-        logger.warning(f"Job not found for update: {job_id}")
+        logger.warning(f"Job not found for update: {job_id}, user: {user_id}")
         return
 
     # Update job status
