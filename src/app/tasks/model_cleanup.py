@@ -3,6 +3,7 @@ from typing import Any, Optional
 
 from google.api_core.exceptions import NotFound
 from google.cloud import storage
+from pyasn1_modules.rfc6031 import at_pskc_deviceStartDate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
@@ -87,7 +88,9 @@ async def _cleanup_model_weights(
                 logger.error(f"Error deleting weight file {weight_path}, model {model.id}: {str(e)}")
 
         # Update artifacts to remove weight files
-        model.artifacts = model.artifacts.replace(weight_files=[])
+        artifacts = model.artifacts.copy()
+        artifacts['weight_files'] = []
+        model.artifacts = artifacts
 
         logger.info(f"Deleted weights for model {model.id}")
 
