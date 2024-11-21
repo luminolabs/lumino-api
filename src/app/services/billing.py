@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 import stripe
-from asyncpg.exceptions import UniqueViolationError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
@@ -96,7 +96,7 @@ async def add_manual_credits(
 
         logger.info(f"Added {request.amount} credits to user: {user.id}")
         return CreditHistoryResponse.from_orm(credit_record)
-    except UniqueViolationError:
+    except IntegrityError:
         await db.rollback()
         raise BadRequestError(f"Transaction already exists: {request.transaction_id}, "
                               f"use a different transaction ID", logger)
