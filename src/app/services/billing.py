@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 import stripe
-from asyncpg import UniqueViolationError
+from asyncpg.exceptions import UniqueViolationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
