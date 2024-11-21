@@ -136,7 +136,7 @@ async def test_update_api_key_success(mock_db, mock_user_id, mock_api_key):
     )
 
     with patch('app.services.api_key.api_key_queries') as mock_queries:
-        mock_queries.get_api_key_by_name = AsyncMock(return_value=mock_api_key)
+        mock_queries.get_api_key_by_name = AsyncMock(side_effect=[mock_api_key, None])
 
         result = await update_api_key(mock_db, mock_user_id, "test-key", key_update)
 

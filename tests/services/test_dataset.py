@@ -173,7 +173,7 @@ async def test_update_dataset_success(mock_db, mock_user_id, mock_dataset):
     )
 
     with patch('app.services.dataset.dataset_queries') as mock_queries:
-        mock_queries.get_dataset_by_name = AsyncMock(return_value=mock_dataset)
+        mock_queries.get_dataset_by_name = AsyncMock(side_effect=[mock_dataset, None])
 
         result = await update_dataset(mock_db, mock_user_id, "test-dataset", dataset_update)
 
