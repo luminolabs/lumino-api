@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config_manager import config
 from app.core.constants import (
     FineTuningJobStatus,
-    FineTuningJobType, FineTunedModelStatus, ComputeProvider
+    FineTuningJobType, FineTunedModelStatus, ComputeProvider, DatasetStatus
 )
 from app.core.exceptions import (
     BaseModelNotFoundError,
@@ -52,7 +52,7 @@ async def create_fine_tuning_job(
 
     # Validate dataset
     dataset = await dataset_queries.get_dataset_by_name(db, user.id, job.dataset_name)
-    if not dataset or dataset.status != FineTunedModelStatus.ACTIVE:
+    if not dataset or dataset.status not in (DatasetStatus.UPLOADED, DatasetStatus.VALIDATED):
         raise DatasetNotFoundError(f"Dataset not found or deleted: {job.dataset_name}", logger)
 
     # Check for duplicate job name
