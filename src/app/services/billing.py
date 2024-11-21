@@ -34,6 +34,7 @@ from app.schemas.common import Pagination
 
 logger = setup_logger(__name__)
 
+
 async def add_stripe_credits(
         user: User,
         amount_dollars: int,
@@ -66,6 +67,7 @@ async def get_stripe_billing_portal_url(user: User, base_url: str) -> str:
     )
     return billing_portal_session.url
 
+
 async def add_manual_credits(
         db: AsyncSession,
         request: CreditAddRequest
@@ -97,6 +99,7 @@ async def add_manual_credits(
     except Exception as e:
         await db.rollback()
         raise ServerError(f"Failed to add credits: {str(e)}", logger)
+
 
 async def deduct_credits(
         request: CreditDeductRequest,
@@ -146,6 +149,7 @@ async def deduct_credits(
         await db.rollback()
         raise e
 
+
 async def process_credit_deduction(
         db: AsyncSession,
         user: User,
@@ -184,6 +188,7 @@ async def process_credit_deduction(
     logger.info(f"Deducted {required_credits} credits for user: {user.id}, job: {job.id}")
     return CreditHistoryResponse.from_orm(credit_record)
 
+
 async def handle_insufficient_credits(
         db: AsyncSession,
         user: User,
@@ -204,6 +209,7 @@ async def handle_insufficient_credits(
 
     # Retry deduction
     return await deduct_credits(request, db, retry=False)
+
 
 async def handle_stripe_webhook(request: Request, db: AsyncSession):
     """Handle Stripe webhook callbacks."""
@@ -229,6 +235,7 @@ async def handle_stripe_webhook(request: Request, db: AsyncSession):
         return {"status": "error"}
 
     return {"status": "success"}
+
 
 async def get_credit_history(
         db: AsyncSession,
@@ -313,6 +320,7 @@ async def get_credit_history(
 
     return credit_responses, pagination
 
+
 async def handle_successful_charge(db: AsyncSession, charge_data: dict) -> None:
     """
     Handle a successful Stripe charge by adding credits to user's account.
@@ -364,6 +372,7 @@ async def handle_successful_charge(db: AsyncSession, charge_data: dict) -> None:
         logger.error(f"Failed to process successful charge: {str(e)}")
         raise ServerError(f"Failed to process charge: {str(e)}", logger)
 
+
 async def handle_customer_update(db: AsyncSession, customer_data: dict) -> None:
     """
     Handle Stripe customer update events, particularly payment method changes.
@@ -402,6 +411,7 @@ async def handle_customer_update(db: AsyncSession, customer_data: dict) -> None:
         logger.error(f"Failed to process customer update: {str(e)}")
         raise ServerError(f"Failed to process customer update: {str(e)}", logger)
 
+
 async def calculate_required_credits(
         usage_amount: int,
         usage_unit: str,
@@ -431,9 +441,9 @@ async def calculate_required_credits(
 
     # Define pricing tiers based on model
     model_pricing = {
-        'llm_llama3_1_8b': 2.0,    # $2 per million tokens
+        'llm_llama3_1_8b': 2.0,  # $2 per million tokens
         'llm_llama3_1_70b': 10.0,  # $10 per million tokens
-        'llm_dummy': 2.0,          # $2 per million tokens for testing
+        'llm_dummy': 2.0,  # $2 per million tokens for testing
     }
 
     # Get price per million tokens for the model
@@ -452,6 +462,7 @@ async def calculate_required_credits(
     )
 
     return required_credits
+
 
 async def add_credits_to_user(
         db: AsyncSession,

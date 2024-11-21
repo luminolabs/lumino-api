@@ -22,6 +22,7 @@ def mock_user():
     user.stripe_customer_id = None
     return user
 
+
 @pytest.mark.asyncio
 async def test_create_stripe_customer_new(mock_db, mock_user):
     """Test creating a new Stripe customer."""
@@ -31,7 +32,6 @@ async def test_create_stripe_customer_new(mock_db, mock_user):
 
     with patch('stripe.Customer.list', return_value=None), \
             patch('stripe.Customer.create', return_value=mock_stripe_customer):
-
         # Call function
         result = await create_stripe_customer(mock_db, mock_user)
 
@@ -48,6 +48,7 @@ async def test_create_stripe_customer_new(mock_db, mock_user):
         mock_db.refresh.assert_awaited_once_with(mock_user)
         assert result == mock_stripe_customer
 
+
 @pytest.mark.asyncio
 async def test_create_stripe_customer_existing(mock_db, mock_user):
     """Test handling existing Stripe customer."""
@@ -58,7 +59,6 @@ async def test_create_stripe_customer_existing(mock_db, mock_user):
 
     with patch('stripe.Customer.list', return_value=mock_customer_list), \
             patch('stripe.Customer.create') as mock_create:
-
         # Call function
         result = await create_stripe_customer(mock_db, mock_user)
 
@@ -72,6 +72,7 @@ async def test_create_stripe_customer_existing(mock_db, mock_user):
         mock_db.refresh.assert_awaited_once_with(mock_user)
         assert result == mock_stripe_customer
 
+
 @pytest.mark.asyncio
 async def test_create_stripe_customer_with_id(mock_db, mock_user):
     """Test when user already has a Stripe customer ID."""
@@ -81,7 +82,6 @@ async def test_create_stripe_customer_with_id(mock_db, mock_user):
     with patch('stripe.Customer.retrieve', return_value=mock_stripe_customer) as mock_retrieve, \
             patch('stripe.Customer.list') as mock_list, \
             patch('stripe.Customer.create') as mock_create:
-
         result = await create_stripe_customer(mock_db, mock_user)
 
         # Verify only retrieve was called
@@ -90,6 +90,7 @@ async def test_create_stripe_customer_with_id(mock_db, mock_user):
         mock_create.assert_not_called()
         assert result == mock_stripe_customer
 
+
 @pytest.mark.asyncio
 async def test_create_stripe_customer_error(mock_db, mock_user):
     """Test handling Stripe API errors."""
@@ -97,6 +98,7 @@ async def test_create_stripe_customer_error(mock_db, mock_user):
         result = await create_stripe_customer(mock_db, mock_user)
         assert result is None
         mock_db.commit.assert_not_awaited()
+
 
 def test_create_stripe_checkout_session():
     """Test creating a Stripe checkout session."""
@@ -133,6 +135,7 @@ def test_create_stripe_checkout_session():
         )
         assert result == mock_session
 
+
 def test_create_stripe_checkout_session_error():
     """Test handling errors in checkout session creation."""
     mock_user = MagicMock()
@@ -148,6 +151,7 @@ def test_create_stripe_checkout_session_error():
             cancel_url="http://cancel"
         )
     assert "Error creating Stripe checkout session" in str(exc_info.value)
+
 
 def test_create_stripe_billing_portal_session():
     """Test creating a Stripe billing portal session."""
@@ -168,6 +172,7 @@ def test_create_stripe_billing_portal_session():
         )
         assert result == mock_session
 
+
 def test_stripe_charge_offline_success():
     """Test successful offline Stripe charge."""
     mock_user = MagicMock()
@@ -178,7 +183,6 @@ def test_stripe_charge_offline_success():
             patch('stripe.InvoiceItem.create') as mock_item_create, \
             patch('stripe.Invoice.finalize_invoice') as mock_finalize, \
             patch('stripe.Invoice.pay') as mock_pay:
-
         result = stripe_charge_offline(mock_user, 100.50)
 
         # Verify Stripe API calls
@@ -196,6 +200,7 @@ def test_stripe_charge_offline_success():
         mock_finalize.assert_called_once_with(mock_invoice.id)
         mock_pay.assert_called_once_with(mock_invoice.id)
         assert result == mock_invoice
+
 
 def test_stripe_charge_offline_error():
     """Test handling errors in offline charging."""

@@ -19,6 +19,7 @@ async def get_base_model_by_name(db: AsyncSession, name: str) -> Optional[BaseMo
     )
     return result.scalar_one_or_none()
 
+
 async def list_base_models(
         db: AsyncSession,
         offset: int,
@@ -31,6 +32,7 @@ async def list_base_models(
     result = await db.execute(query)
     return result.scalars().all()
 
+
 async def count_base_models(
         db: AsyncSession,
         exclude_dummy: bool = True
@@ -41,6 +43,7 @@ async def count_base_models(
         query = query.where(BaseModel.name != 'llm_dummy')
     result = await db.execute(query)
     return result.scalar_one()
+
 
 async def get_fine_tuned_model_by_name(
         db: AsyncSession,
@@ -60,6 +63,7 @@ async def get_fine_tuned_model_by_name(
         )
     )
     return result.first()
+
 
 async def list_fine_tuned_models(
         db: AsyncSession,
@@ -83,6 +87,7 @@ async def list_fine_tuned_models(
     )
     return result.all()
 
+
 async def count_fine_tuned_models(
         db: AsyncSession,
         user_id: UUID
@@ -99,6 +104,7 @@ async def count_fine_tuned_models(
         )
     )
     return result.scalar_one()
+
 
 async def get_deleted_models(
         db: AsyncSession,

@@ -30,5 +30,6 @@ class FineTunedModelResponse(BaseModel):
     fine_tuning_job_name: str = Field(..., description="The name of the associated fine-tuning job")
     status: FineTunedModelStatus = Field(..., description="The current status of the fine-tuned model")
     name: str = Field(..., description="The name of the fine-tuned model")
-    artifacts: Dict[str, Any] | None = Field(None, description="Additional artifacts associated with the fine-tuned model")
+    artifacts: Dict[str, Any] | None = Field(None,
+                                             description="Additional artifacts associated with the fine-tuned model")
     model_config = ConfigDict(from_attributes=True)

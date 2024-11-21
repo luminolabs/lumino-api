@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import Column, String, DateTime, UUID, Index, Enum, Boolean, Numeric, Float
+from sqlalchemy import Column, String, DateTime, UUID, Index, Enum, Boolean, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 

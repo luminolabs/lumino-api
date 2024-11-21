@@ -1,13 +1,24 @@
-from fastapi import Depends
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal
 from app.core.utils import setup_logger
 from app.queries import api_keys as api_key_queries
 
 logger = setup_logger(__name__)
 
-async def cleanup_expired_api_keys(db: AsyncSession = Depends(get_db)) -> None:
+
+async def cleanup_expired_api_keys(db: Optional[AsyncSession] = None) -> None:
+    """Wrapper to _cleanup_expired_api_keys that handles database session."""
+    if db is None:
+        async with AsyncSessionLocal() as db:
+            await _cleanup_expired_api_keys(db)
+    else:
+        await _cleanup_expired_api_keys(db)
+
+
+async def _cleanup_expired_api_keys(db: AsyncSession) -> None:
     """Mark expired API keys as EXPIRED in a single transaction."""
     try:
         # Update expired keys to EXPIRED status

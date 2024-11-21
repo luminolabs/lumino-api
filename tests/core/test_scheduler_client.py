@@ -27,12 +27,14 @@ def mock_job():
     job.status = FineTuningJobStatus.NEW
     return job
 
+
 @pytest.fixture
 def mock_dataset():
     """Create a mock dataset."""
     dataset = MagicMock()
     dataset.file_name = "test_dataset.jsonl"
     return dataset
+
 
 @pytest.fixture
 def mock_base_model():
@@ -55,6 +57,7 @@ def mock_base_model():
     }
     return base_model
 
+
 @pytest.fixture
 def mock_job_detail():
     """Create a mock job detail."""
@@ -68,12 +71,14 @@ def mock_job_detail():
     }
     return detail
 
+
 @pytest.fixture
 def mock_user():
     """Create a mock user."""
     user = MagicMock()
     user.id = UUID('98765432-9876-5432-9876-987654321098')
     return user
+
 
 @pytest.mark.asyncio
 async def test_start_fine_tuning_job_success(
@@ -113,6 +118,7 @@ async def test_start_fine_tuning_job_success(
             assert payload['gpu_type'] == 'test-gpu'
             assert payload['num_gpus'] == 1
 
+
 @pytest.mark.asyncio
 async def test_start_fine_tuning_job_validation_error(mock_db, mock_job):
     """Test job start with validation error."""
@@ -124,6 +130,7 @@ async def test_start_fine_tuning_job_validation_error(mock_db, mock_job):
             await start_fine_tuning_job(mock_job.id)
 
         assert "Failed to find job" in str(exc_info.value)
+
 
 @pytest.mark.asyncio
 async def test_start_fine_tuning_job_scheduler_error(
@@ -152,6 +159,7 @@ async def test_start_fine_tuning_job_scheduler_error(
                 await start_fine_tuning_job(mock_job.id)
 
             assert "Validation error" in str(exc_info.value)
+
 
 @pytest.mark.asyncio
 async def test_fetch_job_details_success():
@@ -182,6 +190,7 @@ async def test_fetch_job_details_success():
         assert payload['user_id'] == str(user_id)
         assert payload['job_ids'] == [str(job_ids[0])]
 
+
 @pytest.mark.asyncio
 async def test_fetch_job_details_error():
     """Test job details fetch with error."""
@@ -201,6 +210,7 @@ async def test_fetch_job_details_error():
             await fetch_job_details(user_id, job_ids)
 
         assert "Error refreshing job statuses" in str(exc_info.value)
+
 
 @pytest.mark.asyncio
 async def test_stop_fine_tuning_job_success():
@@ -224,6 +234,7 @@ async def test_stop_fine_tuning_job_success():
         mock_session.post.assert_called_once()
         assert f"jobs/gcp/stop/{job_id}/{user_id}" in mock_session.post.call_args[0][0]
 
+
 @pytest.mark.asyncio
 async def test_stop_fine_tuning_job_not_found():
     """Test job stop when job not found."""
@@ -244,6 +255,7 @@ async def test_stop_fine_tuning_job_not_found():
 
         assert "Job not found or not running" in str(exc_info.value)
 
+
 @pytest.mark.asyncio
 async def test_stop_fine_tuning_job_error():
     """Test job stop with error."""
@@ -263,6 +275,7 @@ async def test_stop_fine_tuning_job_error():
             await stop_fine_tuning_job(job_id, user_id)
 
         assert "Failed to stop job" in str(exc_info.value)
+
 
 @pytest.mark.asyncio
 async def test_scheduler_disabled():

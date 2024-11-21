@@ -31,6 +31,7 @@ from app.schemas.fine_tuning import (
 
 logger = setup_logger(__name__)
 
+
 async def create_fine_tuning_job(
         db: AsyncSession,
         user: User,
@@ -113,6 +114,7 @@ async def create_fine_tuning_job(
         await db.rollback()
         raise e
 
+
 async def get_fine_tuning_jobs(
         db: AsyncSession,
         user_id: UUID,
@@ -145,6 +147,7 @@ async def get_fine_tuning_jobs(
     logger.info(f"Retrieved {len(jobs)} fine-tuning jobs for user: {user_id}, page: {page}")
     return jobs, pagination
 
+
 # app/services/fine_tuning.py (continued)
 
 async def get_fine_tuning_job(
@@ -169,6 +172,7 @@ async def get_fine_tuning_job(
 
     logger.info(f"Retrieved fine-tuning job: {job_name} for user: {user_id}")
     return FineTuningJobDetailResponse(**response_data)
+
 
 async def cancel_fine_tuning_job(
         db: AsyncSession,
@@ -216,6 +220,7 @@ async def cancel_fine_tuning_job(
         await db.rollback()
         raise e
 
+
 async def delete_fine_tuning_job(
         db: AsyncSession,
         user_id: UUID,
@@ -245,6 +250,7 @@ async def delete_fine_tuning_job(
         await db.rollback()
         raise e
 
+
 async def update_job_progress(
         db: AsyncSession,
         job: FineTuningJob,
@@ -271,6 +277,7 @@ async def update_job_progress(
         await db.rollback()
         logger.error(f"Failed to update job progress: {str(e)}")
         return False
+
 
 async def get_jobs_for_status_update(
         db: AsyncSession,

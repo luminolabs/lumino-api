@@ -22,6 +22,7 @@ from app.services.billing import (
 router = APIRouter(tags=["Billing"])
 logger = setup_logger(__name__)
 
+
 @router.get("/billing/credit-history", response_model=Dict[str, Union[List[CreditHistoryResponse], Pagination]])
 async def get_credit_history_route(
         current_user: User = Depends(get_current_active_user),
@@ -37,6 +38,7 @@ async def get_credit_history_route(
     )
     return {"data": credits, "pagination": pagination}
 
+
 @router.get("/billing/stripe-credits-add")
 async def stripe_credits_add_route(
         request: Request,
@@ -47,6 +49,7 @@ async def stripe_credits_add_route(
     checkout_url = await add_stripe_credits(current_user, amount_dollars, str(request.base_url))
     return RedirectResponse(url=checkout_url, status_code=302)
 
+
 @router.post("/billing/stripe-success-callback")
 async def stripe_webhook_handler(
         request: Request,
@@ -54,6 +57,7 @@ async def stripe_webhook_handler(
 ):
     """Handle Stripe webhook callbacks."""
     return await handle_stripe_webhook(request, db)
+
 
 @router.get("/billing/stripe-payment-method-add")
 async def stripe_payment_method_add(
@@ -66,6 +70,7 @@ async def stripe_payment_method_add(
     billing_portal_session_url = await get_stripe_billing_portal_url(current_user, str(request.base_url))
     return RedirectResponse(url=billing_portal_session_url, status_code=302)
 
+
 # Admin routes
 @router.post("/billing/credits-deduct", response_model=CreditHistoryResponse)
 async def deduct_credits_route(
@@ -75,6 +80,7 @@ async def deduct_credits_route(
 ):
     """Deduct credits for a job (Internal endpoint)."""
     return await deduct_credits(request, db, retry=True)
+
 
 @router.post("/billing/credits-add", response_model=CreditHistoryResponse)
 async def add_credits_route(

@@ -79,7 +79,6 @@ async def create_user(db: AsyncSession, name: str, email: str,
         # Create a Stripe customer
         await create_stripe_customer(db, db_user)
 
-
         logger.info(f"Successfully created new user with ID: {db_user.id}")
         return db_user
 

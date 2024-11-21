@@ -13,6 +13,7 @@ from app.services.billing import add_credits_to_user
 
 logger = setup_logger(__name__)
 
+
 class Auth0Service:
     """Service for handling Auth0 authentication."""
 

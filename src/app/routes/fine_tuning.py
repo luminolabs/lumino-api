@@ -25,6 +25,7 @@ from app.services.fine_tuning import (
 router = APIRouter(tags=["Fine-tuning Jobs"])
 logger = setup_logger(__name__)
 
+
 @router.post("/fine-tuning", response_model=FineTuningJobDetailResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_fine_tuning_job(
         job: FineTuningJobCreate,
@@ -33,6 +34,7 @@ async def create_new_fine_tuning_job(
 ) -> FineTuningJobDetailResponse:
     """Create a new fine-tuning job."""
     return await create_fine_tuning_job(db, current_user, job)
+
 
 @router.get("/fine-tuning", response_model=Dict[str, Union[List[FineTuningJobResponse], Pagination]])
 async def list_fine_tuning_jobs(
@@ -48,6 +50,7 @@ async def list_fine_tuning_jobs(
         "pagination": pagination
     }
 
+
 @router.get("/fine-tuning/{job_name}", response_model=FineTuningJobDetailResponse)
 async def get_fine_tuning_job_details(
         job_name: str,
@@ -57,6 +60,7 @@ async def get_fine_tuning_job_details(
     """Get details of a specific fine-tuning job."""
     return await get_fine_tuning_job(db, current_user.id, job_name)
 
+
 @router.post("/fine-tuning/{job_name}/cancel", response_model=FineTuningJobDetailResponse)
 async def cancel_fine_tuning_job_route(
         job_name: str,
@@ -65,6 +69,7 @@ async def cancel_fine_tuning_job_route(
 ) -> FineTuningJobDetailResponse:
     """Cancel a fine-tuning job."""
     return await cancel_fine_tuning_job(db, current_user.id, job_name)
+
 
 @router.delete("/fine-tuning/{job_name}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_fine_tuning_job_route(

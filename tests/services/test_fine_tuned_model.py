@@ -1,4 +1,3 @@
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID, uuid4
 
@@ -7,6 +6,7 @@ import pytest
 from app.core.constants import FineTunedModelStatus
 from app.core.exceptions import FineTunedModelNotFoundError
 from app.models.fine_tuned_model import FineTunedModel
+from app.queries.common import now_utc, make_naive
 from app.services.fine_tuned_model import (
     get_fine_tuned_models,
     get_fine_tuned_model,
@@ -19,24 +19,27 @@ def mock_user_id():
     """Create a mock user ID."""
     return UUID('12345678-1234-5678-1234-567812345678')
 
+
 @pytest.fixture
 def mock_job_id():
     """Create a mock job ID."""
     return UUID('98765432-9876-5432-9876-987654321098')
+
 
 @pytest.fixture
 def mock_fine_tuned_model():
     """Create a mock fine-tuned model object."""
     model = MagicMock(spec=FineTunedModel)
     model.id = uuid4()
-    model.created_at = datetime.utcnow()
-    model.updated_at = datetime.utcnow()
+    model.created_at = make_naive(now_utc())
+    model.updated_at = make_naive(now_utc())
     model.user_id = UUID('12345678-1234-5678-1234-567812345678')
     model.fine_tuning_job_id = UUID('98765432-9876-5432-9876-987654321098')
     model.name = "test-model"
     model.status = FineTunedModelStatus.ACTIVE
     model.artifacts = {"weights": "model.pt"}
     return model
+
 
 @pytest.mark.asyncio
 async def test_get_fine_tuned_models(mock_db, mock_user_id, mock_fine_tuned_model):
@@ -60,6 +63,7 @@ async def test_get_fine_tuned_models(mock_db, mock_user_id, mock_fine_tuned_mode
         mock_queries.count_models.assert_awaited_once_with(mock_db, mock_user_id)
         mock_queries.list_models.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_get_fine_tuned_model_success(mock_db, mock_user_id, mock_fine_tuned_model):
     """Test retrieving a specific fine-tuned model."""
@@ -76,6 +80,7 @@ async def test_get_fine_tuned_model_success(mock_db, mock_user_id, mock_fine_tun
             mock_db, mock_user_id, "test-model"
         )
 
+
 @pytest.mark.asyncio
 async def test_get_fine_tuned_model_not_found(mock_db, mock_user_id):
     """Test retrieving a non-existent fine-tuned model."""
@@ -84,6 +89,7 @@ async def test_get_fine_tuned_model_not_found(mock_db, mock_user_id):
 
         with pytest.raises(FineTunedModelNotFoundError):
             await get_fine_tuned_model(mock_db, mock_user_id, "nonexistent-model")
+
 
 @pytest.mark.asyncio
 async def test_create_fine_tuned_model_success(mock_db, mock_user_id, mock_job_id):
@@ -98,8 +104,7 @@ async def test_create_fine_tuned_model_success(mock_db, mock_user_id, mock_job_i
     mock_job.user_id = mock_user_id
 
     with patch('app.services.fine_tuned_model.ft_models_queries') as mock_ft_queries, \
-            patch('app.services.fine_tuned_model.app.queries.fine_tuning') as mock_ft_job_queries:
-
+            patch('app.services.fine_tuned_model.ft_jobs_queries') as mock_ft_job_queries:
         # Configure mocks
         mock_ft_queries.get_existing_model = AsyncMock(return_value=None)
         mock_ft_queries.create_model = AsyncMock()
@@ -119,32 +124,45 @@ async def test_create_fine_tuned_model_success(mock_db, mock_user_id, mock_job_i
         )
         mock_db.commit.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_create_fine_tuned_model_existing(mock_db, mock_user_id, mock_job_id, mock_fine_tuned_model):
     """Test model creation when model already exists."""
     artifacts = {"weights": "model.pt"}
 
-    with patch('app.services.fine_tuned_model.ft_models_queries') as mock_queries:
-        mock_queries.get_existing_model = AsyncMock(return_value=mock_fine_tuned_model)
+    # Mock job and queries
+    mock_job = MagicMock()
+    mock_job.id = mock_job_id
+    mock_job.name = "test-job"
+    mock_job.user_id = mock_user_id
+
+    with patch('app.services.fine_tuned_model.ft_models_queries') as mock_ft_queries, \
+            patch('app.services.fine_tuned_model.ft_jobs_queries') as mock_ft_job_queries:
+        mock_ft_queries.get_existing_model = AsyncMock(return_value=mock_fine_tuned_model)
+        mock_ft_queries.create_model = AsyncMock()
+        mock_ft_job_queries.get_job_by_id = AsyncMock(return_value=mock_job)
 
         result = await create_fine_tuned_model(mock_db, mock_job_id, mock_user_id, artifacts)
 
         assert result is True
-        mock_queries.create_model.assert_not_called()
+        mock_ft_queries.create_model.assert_not_awaited()
         mock_db.commit.assert_not_awaited()
+
+
 
 @pytest.mark.asyncio
 async def test_create_fine_tuned_model_job_not_found(mock_db, mock_user_id, mock_job_id):
     """Test model creation when job not found."""
     artifacts = {"weights": "model.pt"}
 
-    with patch('app.services.fine_tuned_model.app.queries.fine_tuning') as mock_queries:
+    with patch('app.services.fine_tuned_model.ft_jobs_queries') as mock_queries:
         mock_queries.get_job_by_id = AsyncMock(return_value=None)
 
         result = await create_fine_tuned_model(mock_db, mock_job_id, mock_user_id, artifacts)
 
         assert result is False
         mock_db.commit.assert_not_awaited()
+
 
 @pytest.mark.asyncio
 async def test_create_fine_tuned_model_error(mock_db, mock_user_id, mock_job_id):
@@ -156,8 +174,7 @@ async def test_create_fine_tuned_model_error(mock_db, mock_user_id, mock_job_id)
     mock_job.user_id = mock_user_id
 
     with patch('app.services.fine_tuned_model.ft_models_queries') as mock_ft_queries, \
-            patch('app.services.fine_tuned_model.app.queries.fine_tuning') as mock_ft_job_queries:
-
+            patch('app.services.fine_tuned_model.ft_jobs_queries') as mock_ft_job_queries:
         # Configure mocks
         mock_ft_queries.get_existing_model = AsyncMock(return_value=None)
         mock_ft_queries.create_model = AsyncMock(side_effect=Exception("Database error"))

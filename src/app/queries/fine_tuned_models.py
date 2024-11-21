@@ -24,6 +24,7 @@ async def get_existing_model(
     )
     return result.scalar_one_or_none()
 
+
 async def create_model(
         db: AsyncSession,
         job_id: UUID,
@@ -40,6 +41,7 @@ async def create_model(
     )
     db.add(model)
     return model
+
 
 async def get_model_by_name(
         db: AsyncSession,
@@ -59,6 +61,7 @@ async def get_model_by_name(
     )
     return result.first()
 
+
 async def list_models(
         db: AsyncSession,
         user_id: UUID,
@@ -75,6 +78,7 @@ async def list_models(
         .limit(limit)
     )
     return result.all()
+
 
 async def count_models(db: AsyncSession, user_id: UUID) -> int:
     """Count total number of fine-tuned models for a user."""

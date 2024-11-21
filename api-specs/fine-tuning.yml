@@ -11,7 +11,7 @@ paths:
       tags:
         - Fine-tuning Jobs
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       requestBody:
         required: true
         content:
@@ -35,7 +35,7 @@ paths:
       tags:
         - Fine-tuning Jobs
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: 'common-structures.yml#/components/parameters/PageParam'
         - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
@@ -62,7 +62,7 @@ paths:
       tags:
         - Fine-tuning Jobs
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - name: job_name
           in: path
@@ -87,7 +87,7 @@ paths:
       tags:
         - Fine-tuning Jobs
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - name: job_name
           in: path
@@ -167,7 +167,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [NEW, QUEUED, RUNNING, COMPLETED, FAILED, STOPPING, STOPPED]
+          enum: [ NEW, QUEUED, RUNNING, COMPLETED, FAILED, STOPPING, STOPPED ]
         base_model_name:
           type: string
         dataset_name:
@@ -221,30 +221,30 @@ components:
               type: object
               additionalProperties: true
             timestamps:
-                type: object
-                properties:
-                    new:
-                        type: string
-                        format: date-time
-                    queued:
-                        type: string
-                        format: date-time
-                    running:
-                        type: string
-                        format: date-time
-                    stopping:
-                        type: string
-                        format: date-time
-                    stopped:
-                        type: string
-                        format: date-time
-                    completed:
-                        type: string
-                        format: date-time
-                    failed:
-                        type: string
-                        format: date-time
-                additionalProperties: true
+              type: object
+              properties:
+                new:
+                  type: string
+                  format: date-time
+                queued:
+                  type: string
+                  format: date-time
+                running:
+                  type: string
+                  format: date-time
+                stopping:
+                  type: string
+                  format: date-time
+                stopped:
+                  type: string
+                  format: date-time
+                completed:
+                  type: string
+                  format: date-time
+                failed:
+                  type: string
+                  format: date-time
+              additionalProperties: true
 
   securitySchemes:
     ApiKeyAuth:

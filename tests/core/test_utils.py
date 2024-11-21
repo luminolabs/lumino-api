@@ -16,6 +16,7 @@ def test_recursive_json_decode_basic():
     array = '[1, 2, 3]'
     assert recursive_json_decode(array) == [1, 2, 3]
 
+
 def test_recursive_json_decode_nested():
     """Test nested JSON decoding."""
     # Deeply nested structure
@@ -37,6 +38,7 @@ def test_recursive_json_decode_nested():
 
     assert recursive_json_decode(nested) == expected
 
+
 def test_recursive_json_decode_mixed():
     """Test mixed content JSON decoding."""
     # Mix of encoded and non-encoded data
@@ -56,6 +58,7 @@ def test_recursive_json_decode_mixed():
 
     assert recursive_json_decode(mixed) == expected
 
+
 def test_recursive_json_decode_invalid():
     """Test invalid JSON handling."""
     # Invalid JSON string should be returned as-is
@@ -72,6 +75,7 @@ def test_recursive_json_decode_invalid():
     assert result["valid"] == {"key": "value"}
     assert result["invalid"] == "Not JSON"
 
+
 def test_recursive_json_decode_special_types():
     """Test JSON decoding with special types."""
     # Test with None
@@ -84,6 +88,7 @@ def test_recursive_json_decode_special_types():
     # Test with boolean
     assert recursive_json_decode(True) is True
     assert recursive_json_decode(False) is False
+
 
 def test_recursive_json_decode_complex_nested():
     """Test complex nested structures with mixed content."""

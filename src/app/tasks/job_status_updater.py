@@ -1,12 +1,11 @@
 from datetime import timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from uuid import UUID
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.constants import FineTuningJobStatus
-from app.core.database import get_db
+from app.core.database import get_db, AsyncSessionLocal
 from app.core.scheduler_client import fetch_job_details
 from app.core.utils import setup_logger
 from app.models.fine_tuning_job import FineTuningJob
@@ -24,27 +23,38 @@ STATUS_MAPPING = {
     "DETACHED_VM": FineTuningJobStatus.QUEUED,
 }
 
-async def update_job_statuses(db: AsyncSession = Depends(get_db)) -> None:
+
+async def update_job_statuses(db: Optional[AsyncSession] = None) -> None:
+    """Wrapper to _update_job_statuses that handles database session."""
+    if db is None:
+        async with AsyncSessionLocal() as db:
+            await _update_job_statuses(db)
+    else:
+        await _update_job_statuses(db)
+
+
+async def _update_job_statuses(db: AsyncSession) -> None:
     """Update the status of all non-terminal jobs."""
     try:
         # Get jobs that need updates
-        jobs = await get_jobs_for_update(db)
+        jobs = await _get_jobs_for_update(db)
         if not jobs:
             logger.info("No jobs found for status update")
             return
 
         # Group jobs by user for scheduler API
-        jobs_by_user = group_jobs_by_user(jobs)
+        jobs_by_user = _group_jobs_by_user(jobs)
 
         # Update each group of jobs
         for user_id, job_ids in jobs_by_user.items():
-            await update_job_group(db, user_id, job_ids)
+            await _update_job_group(db, user_id, job_ids)
 
     except Exception as e:
         await db.rollback()
         logger.error(f"Failed to update job statuses: {str(e)}")
 
-async def get_jobs_for_update(db: AsyncSession) -> List[FineTuningJob]:
+
+async def _get_jobs_for_update(db: AsyncSession) -> List[FineTuningJob]:
     """Get jobs that need status updates."""
     non_terminal_statuses = [
         FineTuningJobStatus.NEW,
@@ -61,7 +71,8 @@ async def get_jobs_for_update(db: AsyncSession) -> List[FineTuningJob]:
         recent_completed_cutoff
     )
 
-def group_jobs_by_user(jobs: List[FineTuningJob]) -> Dict[UUID, List[UUID]]:
+
+def _group_jobs_by_user(jobs: List[FineTuningJob]) -> Dict[UUID, List[UUID]]:
     """Group jobs by user ID for efficient scheduler API calls."""
     jobs_by_user = {}
     for job in jobs:
@@ -70,7 +81,8 @@ def group_jobs_by_user(jobs: List[FineTuningJob]) -> Dict[UUID, List[UUID]]:
         jobs_by_user[job.user_id].append(job.id)
     return jobs_by_user
 
-async def update_job_group(
+
+async def _update_job_group(
         db: AsyncSession,
         user_id: UUID,
         job_ids: List[UUID]
@@ -82,7 +94,7 @@ async def update_job_group(
 
         # Process each job update
         for update in job_updates:
-            await process_job_update(db, update, user_id)
+            await _process_job_update(db, update, user_id)
 
         await db.commit()
         logger.info(f"Updated {len(job_updates)} jobs for user {user_id}")
@@ -91,7 +103,8 @@ async def update_job_group(
         await db.rollback()
         logger.error(f"Failed to update jobs for user {user_id}: {str(e)}")
 
-async def process_job_update(
+
+async def _process_job_update(
         db: AsyncSession,
         update: Dict[str, Any],
         user_id: UUID
@@ -110,15 +123,16 @@ async def process_job_update(
         logger.info(f"Updated status for job {job_id} to {new_status}")
 
     # Update timestamps
-    await update_job_timestamps(job, update['timestamps'])
+    await _update_job_timestamps(job, update['timestamps'])
 
     # Update progress
-    await update_job_steps(db, job, user_id, update['artifacts'])
+    await _update_job_steps(db, job, user_id, update['artifacts'])
 
     # Create fine-tuned model if needed
-    await check_create_model(db, job_id, user_id, update['artifacts'])
+    await _check_create_model(db, job_id, user_id, update['artifacts'])
 
-async def update_job_timestamps(
+
+async def _update_job_timestamps(
         job: Any,
         timestamps: Dict[str, str]
 ) -> None:
@@ -137,7 +151,8 @@ async def update_job_timestamps(
 
     job.details.timestamps = job_timestamps
 
-async def update_job_steps(
+
+async def _update_job_steps(
         db: AsyncSession,
         job: FineTuningJob,
         user_id: UUID,
@@ -169,7 +184,8 @@ async def update_job_steps(
         }
         await update_job_progress(db, job, progress)
 
-async def check_create_model(
+
+async def _check_create_model(
         db: AsyncSession,
         job_id: UUID,
         user_id: UUID,

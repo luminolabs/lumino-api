@@ -22,7 +22,8 @@ async def get_job_with_details(
 ) -> Optional[Tuple[FineTuningJob, FineTuningJobDetail, str, str]]:
     """Get a fine-tuning job with its details and related names."""
     result = await db.execute(
-        select(FineTuningJob, FineTuningJobDetail, BaseModel.name.label('base_model_name'), Dataset.name.label('dataset_name'))
+        select(FineTuningJob, FineTuningJobDetail, BaseModel.name.label('base_model_name'),
+               Dataset.name.label('dataset_name'))
         .join(FineTuningJobDetail)
         .join(BaseModel, FineTuningJob.base_model_id == BaseModel.id)
         .join(Dataset, FineTuningJob.dataset_id == Dataset.id)
@@ -32,6 +33,7 @@ async def get_job_with_details(
         )
     )
     return result.first()
+
 
 async def get_job_by_id(
         db: AsyncSession,
@@ -48,6 +50,7 @@ async def get_job_by_id(
         )
     )
     return result.scalar_one_or_none()
+
 
 async def list_jobs(
         db: AsyncSession,
@@ -70,6 +73,7 @@ async def list_jobs(
     result = await db.execute(query)
     return result.all()
 
+
 async def count_jobs(
         db: AsyncSession,
         user_id: UUID,
@@ -81,6 +85,7 @@ async def count_jobs(
         query = query.where(FineTuningJob.status != FineTuningJobStatus.DELETED)
     result = await db.execute(query)
     return result.scalar_one()
+
 
 async def get_non_terminal_jobs(
         db: AsyncSession,
@@ -104,6 +109,7 @@ async def get_non_terminal_jobs(
     )
     return result.scalars().all()
 
+
 async def get_job_with_details_full(
         db: AsyncSession,
         job_id: UUID
@@ -118,6 +124,7 @@ async def get_job_with_details_full(
         .where(FineTuningJob.id == job_id)
     )
     return result.first()
+
 
 async def get_jobs_for_status_update(
         db: AsyncSession,

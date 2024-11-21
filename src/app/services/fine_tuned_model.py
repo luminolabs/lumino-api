@@ -3,15 +3,16 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.queries.fine_tuning
 from app.core.config_manager import config
 from app.core.exceptions import FineTunedModelNotFoundError
 from app.core.utils import setup_logger
 from app.queries import fine_tuned_models as ft_models_queries
+from app.queries import fine_tuning as ft_jobs_queries
 from app.schemas.common import Pagination
 from app.schemas.model import FineTunedModelResponse
 
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
+
 
 async def get_fine_tuned_models(
         db: AsyncSession,
@@ -44,6 +45,7 @@ async def get_fine_tuned_models(
     logger.info(f"Retrieved {len(models)} fine-tuned models for user: {user_id}, page: {page}")
     return models, pagination
 
+
 async def get_fine_tuned_model(
         db: AsyncSession,
         user_id: UUID,
@@ -60,6 +62,7 @@ async def get_fine_tuned_model(
 
     logger.info(f"Retrieved fine-tuned model: {model_name} for user: {user_id}")
     return FineTunedModelResponse(**model_dict)
+
 
 async def create_fine_tuned_model(
         db: AsyncSession,
@@ -84,7 +87,7 @@ async def create_fine_tuned_model(
         for the same job
     """
     # Check if the job exists and belongs to the user
-    job = await app.queries.fine_tuning.get_job_by_id(db, job_id, user_id)
+    job = await ft_jobs_queries.get_job_by_id(db, job_id, user_id)
     if not job:
         logger.warning(f"Cannot create model: Job {job_id} not found for user {user_id}")
         return False

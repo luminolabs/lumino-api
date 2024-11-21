@@ -14,6 +14,7 @@ logger = setup_logger(__name__)
 
 GCS_BUCKET = config.gcs_bucket
 
+
 def handle_gcs_error(e: ClientResponseError, file_path: str) -> None:
     """Handle Google Cloud Storage errors."""
     if e.status == 404:
@@ -25,6 +26,7 @@ def handle_gcs_error(e: ClientResponseError, file_path: str) -> None:
         )
     else:
         raise StorageError(f"GCS operation failed: {str(e)}", logger)
+
 
 async def upload_file(path: str, file: UploadFile, user_id: UUID) -> str:
     """
@@ -69,6 +71,7 @@ async def upload_file(path: str, file: UploadFile, user_id: UUID) -> str:
         return file_name  # Only reached for 404 errors
     except Exception as e:
         raise StorageError(f"Failed to upload file: {str(e)}", logger)
+
 
 async def delete_file(path: str, file_name: str, user_id: UUID) -> None:
     """

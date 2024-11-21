@@ -14,6 +14,7 @@ from app.services.usage import get_total_cost, get_usage_records
 router = APIRouter(tags=["Usage"])
 logger = setup_logger(__name__)
 
+
 @router.get("/usage/total-cost", response_model=TotalCostResponse)
 async def get_total_cost_route(
         start_date: str = Query(..., description="Start date (YYYY-MM-DD)"),
@@ -23,6 +24,7 @@ async def get_total_cost_route(
 ) -> TotalCostResponse:
     """Get total cost for a given period."""
     return await get_total_cost(db, current_user.id, start_date, end_date)
+
 
 @router.get("/usage/records", response_model=Dict[str, Union[List[UsageRecordResponse], Pagination]])
 async def list_usage_records(

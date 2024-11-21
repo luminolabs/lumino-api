@@ -46,6 +46,7 @@ class FineTuningJobType(str, Enum):
     LORA = "LORA"  # Low-resource fine-tuning job
     QLORA = "QLORA"  # Quantized low-resource fine-tuning job
 
+
 # Enumeration for base model statuses
 class BaseModelStatus(str, Enum):
     ACTIVE = "ACTIVE"  # Base model is available for use

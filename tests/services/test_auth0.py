@@ -17,6 +17,7 @@ def mock_oauth():
     oauth.auth0 = MagicMock()
     return oauth
 
+
 @pytest.fixture
 def mock_request():
     """Create a mock request object."""
@@ -24,6 +25,7 @@ def mock_request():
     request.url_for.return_value = "http://callback-url"
     request.base_url = "http://base-url"
     return request
+
 
 @pytest.fixture
 def auth0_service(mock_oauth):
@@ -35,6 +37,7 @@ def auth0_service(mock_oauth):
     service.use_api_ui = False
     service.new_user_credits = 5.0
     return service
+
 
 @pytest.mark.asyncio
 async def test_get_login_url_success(auth0_service, mock_request):
@@ -53,6 +56,7 @@ async def test_get_login_url_success(auth0_service, mock_request):
         mock_request, "http://callback-url"
     )
 
+
 @pytest.mark.asyncio
 async def test_get_login_url_error(auth0_service, mock_request):
     """Test error handling in login URL generation."""
@@ -63,6 +67,7 @@ async def test_get_login_url_error(auth0_service, mock_request):
     with pytest.raises(Exception) as exc_info:
         await auth0_service.get_login_url(mock_request)
     assert str(exc_info.value) == "Auth error"
+
 
 def test_get_logout_url_with_ui(auth0_service, mock_request):
     """Test logout URL generation with UI redirect."""
@@ -76,6 +81,7 @@ def test_get_logout_url_with_ui(auth0_service, mock_request):
     )
     assert logout_url == expected_url
 
+
 def test_get_logout_url_without_ui(auth0_service, mock_request):
     """Test logout URL generation without UI redirect."""
     auth0_service.use_api_ui = True
@@ -87,6 +93,7 @@ def test_get_logout_url_without_ui(auth0_service, mock_request):
         f"client_id={auth0_service.client_id}"
     )
     assert logout_url == expected_url
+
 
 @pytest.mark.asyncio
 async def test_handle_callback_success(auth0_service, mock_request, mock_db):
@@ -120,6 +127,7 @@ async def test_handle_callback_success(auth0_service, mock_request, mock_db):
 
         # Verify user object
         assert user == mock_user
+
 
 @pytest.mark.asyncio
 async def test_handle_callback_new_user(auth0_service, mock_request, mock_db):
@@ -160,6 +168,7 @@ async def test_handle_callback_new_user(auth0_service, mock_request, mock_db):
             BillingTransactionType.NEW_USER_CREDIT
         )
 
+
 @pytest.mark.asyncio
 async def test_handle_callback_missing_user_info(auth0_service, mock_request, mock_db):
     """Test callback handling with missing user info."""
@@ -170,6 +179,7 @@ async def test_handle_callback_missing_user_info(auth0_service, mock_request, mo
     with pytest.raises(ValueError) as exc_info:
         await auth0_service.handle_callback(mock_request, mock_db)
     assert "No user info found in Auth0 token" in str(exc_info.value)
+
 
 @pytest.mark.asyncio
 async def test_handle_callback_error(auth0_service, mock_request, mock_db):

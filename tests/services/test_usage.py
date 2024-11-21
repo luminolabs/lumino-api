@@ -24,12 +24,14 @@ def mock_usage_record():
     usage.usage_unit = UsageUnit.TOKEN
     return usage
 
+
 @pytest.fixture
 def mock_job():
     """Create a mock fine-tuning job."""
     job = MagicMock(spec=FineTuningJob)
     job.name = "test-job"
     return job
+
 
 @pytest.mark.asyncio
 async def test_get_usage_records_success(mock_db, mock_usage_record, mock_job):
@@ -75,6 +77,7 @@ async def test_get_usage_records_success(mock_db, mock_usage_record, mock_job):
         )
         mock_queries.get_usage_records.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_get_usage_records_invalid_dates(mock_db):
     """Test usage records retrieval with invalid dates."""
@@ -97,6 +100,7 @@ async def test_get_usage_records_invalid_dates(mock_db):
             "2024-01-31",
             "2024-01-01"
         )
+
 
 @pytest.mark.asyncio
 async def test_get_total_cost_success(mock_db):
@@ -125,6 +129,7 @@ async def test_get_total_cost_success(mock_db):
             date(2024, 1, 31)
         )
 
+
 @pytest.mark.asyncio
 async def test_get_total_cost_invalid_dates(mock_db):
     """Test total cost retrieval with invalid dates."""
@@ -147,6 +152,7 @@ async def test_get_total_cost_invalid_dates(mock_db):
             "2024-01-31",
             "2024-01-01"
         )
+
 
 @pytest.mark.asyncio
 async def test_get_usage_records_empty(mock_db):
@@ -173,6 +179,7 @@ async def test_get_usage_records_empty(mock_db):
         assert pagination.total_pages == 0
         assert pagination.current_page == 1
         assert pagination.items_per_page == 20
+
 
 @pytest.mark.asyncio
 async def test_get_usage_records_pagination(mock_db, mock_usage_record, mock_job):
@@ -210,5 +217,5 @@ async def test_get_usage_records_pagination(mock_db, mock_usage_record, mock_job
             date(2024, 1, 1),
             date(2024, 1, 31),
             10,  # offset
-            10   # limit
+            10  # limit
         )

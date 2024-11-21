@@ -25,7 +25,7 @@ api_v1_prefix: /v1
 
 # UI
 ui_url:  # URL to the UI, ex: https://app.luminolabs.ai
-ui_url_settings:  /settings  # URL to the UI settings page
+ui_url_settings: /settings  # URL to the UI settings page
 use_api_ui: False  # Set to True to use the API UI
 base_domain_name: localhost
 

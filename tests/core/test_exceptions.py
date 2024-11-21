@@ -44,9 +44,11 @@ def mock_logger():
     """Create a mock logger for testing."""
     return logging.getLogger("test_logger")
 
+
 @pytest.fixture
 def mock_request():
     """Create a mock request for testing handlers."""
+
     async def mock_body():
         return b""
 
@@ -57,12 +59,14 @@ def mock_request():
         'path': '/',
     })
 
+
 def test_app_exception_base():
     """Test base AppException functionality."""
     exc = AppException(status_code=400, detail="Test error")
     assert exc.status_code == 400
     assert exc.detail == "Test error"
     assert str(exc) == "Test error"
+
 
 def test_exception_logging(mock_logger):
     """Test exception logging functionality."""
@@ -75,6 +79,7 @@ def test_exception_logging(mock_logger):
 
     warning_exc = BadRequestError("Bad request", mock_logger)
     assert warning_exc.status_code == 422
+
 
 def test_specific_exceptions(mock_logger):
     """Test all specific exception types."""
@@ -109,6 +114,7 @@ def test_specific_exceptions(mock_logger):
         assert exc.status_code == status_code
         assert exc.detail == detail
 
+
 @pytest.mark.asyncio
 async def test_app_exception_handler(mock_request):
     """Test app exception handler."""
@@ -119,6 +125,7 @@ async def test_app_exception_handler(mock_request):
     content = json.loads(response.body)
     assert content["status"] == 422
     assert content["message"] == "Test error"
+
 
 @pytest.mark.asyncio
 async def test_validation_exception_handler(mock_request):
@@ -131,6 +138,7 @@ async def test_validation_exception_handler(mock_request):
     assert content["status"] == 422
     assert isinstance(content["message"], list)
 
+
 @pytest.mark.asyncio
 async def test_sqlalchemy_exception_handler(mock_request):
     """Test SQLAlchemy exception handler."""
@@ -142,6 +150,7 @@ async def test_sqlalchemy_exception_handler(mock_request):
     assert content["status"] == 500
     assert "unexpected database error" in content["message"].lower()
 
+
 @pytest.mark.asyncio
 async def test_generic_exception_handler(mock_request):
     """Test generic exception handler."""
@@ -152,6 +161,7 @@ async def test_generic_exception_handler(mock_request):
     content = json.loads(response.body)
     assert content["status"] == 500
     assert "unexpected error" in content["message"].lower()
+
 
 def test_exception_inheritance():
     """Test exception inheritance hierarchy."""
@@ -184,6 +194,7 @@ def test_exception_inheritance():
 
     for exc_class in exceptions:
         assert issubclass(exc_class, AppException)
+
 
 def test_exception_attributes():
     """Test exception attributes preservation."""

@@ -1,21 +1,20 @@
-from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
 
-from app.core.constants import FineTuningJobStatus, FineTunedModelStatus
-from app.queries.common import now_utc, make_naive
+from app.core.constants import FineTuningJobStatus
 from app.tasks.job_status_updater import (
     update_job_statuses,
-    get_jobs_for_update,
-    group_jobs_by_user,
-    update_job_group,
-    process_job_update,
-    update_job_timestamps,
-    update_job_steps,
-    check_create_model
+    _get_jobs_for_update,
+    _group_jobs_by_user,
+    _update_job_group,
+    _process_job_update,
+    _update_job_timestamps,
+    _update_job_steps,
+    _check_create_model
 )
+
 
 @pytest.fixture
 def mock_job():
@@ -30,6 +29,7 @@ def mock_job():
     job.total_epochs = 3
     return job
 
+
 @pytest.fixture
 def mock_job_detail():
     """Create a mock job detail."""
@@ -38,11 +38,12 @@ def mock_job_detail():
     detail.parameters = {"batch_size": 2, "epochs": 3}
     return detail
 
+
 @pytest.mark.asyncio
 async def test_update_job_statuses(mock_db, mock_job):
     """Test the main job status update function."""
-    with patch('app.tasks.job_status_updater.get_jobs_for_update') as mock_get_jobs, \
-            patch('app.tasks.job_status_updater.update_job_group') as mock_update_group:
+    with patch('app.tasks.job_status_updater._get_jobs_for_update') as mock_get_jobs, \
+            patch('app.tasks.job_status_updater._update_job_group') as mock_update_group:
         # Mock jobs retrieval
         mock_get_jobs.return_value = [mock_job]
         mock_update_group.return_value = None
@@ -57,6 +58,7 @@ async def test_update_job_statuses(mock_db, mock_job):
             [mock_job.id]
         )
 
+
 @pytest.mark.asyncio
 async def test_get_jobs_for_update(mock_db):
     """Test retrieving jobs that need updates."""
@@ -64,20 +66,22 @@ async def test_get_jobs_for_update(mock_db):
         # Configure mock
         mock_queries.get_jobs_for_status_update = AsyncMock(return_value=[])
 
-        result = await get_jobs_for_update(mock_db)
+        result = await _get_jobs_for_update(mock_db)
 
         # Verify query was called with correct parameters
         mock_queries.get_jobs_for_status_update.assert_awaited_once()
         assert isinstance(result, list)
 
+
 def test_group_jobs_by_user(mock_job):
     """Test grouping jobs by user ID."""
     jobs = [mock_job]
-    result = group_jobs_by_user(jobs)
+    result = _group_jobs_by_user(jobs)
 
     assert len(result) == 1
     assert mock_job.user_id in result
     assert result[mock_job.user_id] == [mock_job.id]
+
 
 @pytest.mark.asyncio
 async def test_update_job_group_success(mock_db, mock_job):
@@ -94,16 +98,17 @@ async def test_update_job_group_success(mock_db, mock_job):
     }]
 
     with patch('app.tasks.job_status_updater.fetch_job_details') as mock_fetch, \
-            patch('app.tasks.job_status_updater.process_job_update') as mock_process:
+            patch('app.tasks.job_status_updater._process_job_update') as mock_process:
         mock_fetch.return_value = job_updates
         mock_process.return_value = None
 
-        await update_job_group(mock_db, user_id, job_ids)
+        await _update_job_group(mock_db, user_id, job_ids)
 
         # Verify interactions
         mock_fetch.assert_awaited_once_with(user_id, job_ids)
         mock_process.assert_awaited_once()
         mock_db.commit.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_process_job_update(mock_db, mock_job, mock_job_detail):
@@ -126,14 +131,13 @@ async def test_process_job_update(mock_db, mock_job, mock_job_detail):
     }
 
     with patch('app.tasks.job_status_updater.ft_queries') as mock_queries, \
-            patch('app.tasks.job_status_updater.update_job_timestamps') as mock_update_timestamps, \
-            patch('app.tasks.job_status_updater.update_job_steps') as mock_update_steps, \
-            patch('app.tasks.job_status_updater.check_create_model') as mock_check_model:
-
+            patch('app.tasks.job_status_updater._update_job_timestamps') as mock_update_timestamps, \
+            patch('app.tasks.job_status_updater._update_job_steps') as mock_update_steps, \
+            patch('app.tasks.job_status_updater._check_create_model') as mock_check_model:
         # Configure mocks
         mock_queries.get_job_by_id = AsyncMock(return_value=mock_job)
 
-        await process_job_update(mock_db, update, mock_job.user_id)
+        await _process_job_update(mock_db, update, mock_job.user_id)
 
         # Verify job status was updated
         assert mock_job.status == FineTuningJobStatus.COMPLETED
@@ -142,6 +146,7 @@ async def test_process_job_update(mock_db, mock_job, mock_job_detail):
         mock_update_timestamps.assert_awaited_once()
         mock_update_steps.assert_awaited_once()
         mock_check_model.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_update_job_timestamps(mock_job, mock_job_detail):
@@ -155,12 +160,13 @@ async def test_update_job_timestamps(mock_job, mock_job_detail):
     # Mock job details
     mock_job.details = mock_job_detail
 
-    await update_job_timestamps(mock_job, timestamps)
+    await _update_job_timestamps(mock_job, timestamps)
 
     # Verify timestamps were correctly mapped and stored
     assert mock_job.details.timestamps.get('running') == timestamps['RUNNING']
     assert mock_job.details.timestamps.get('completed') == timestamps['COMPLETED']
     assert mock_job.details.timestamps.get('queued') == timestamps['WAIT_FOR_VM']
+
 
 @pytest.mark.asyncio
 async def test_update_job_steps(mock_db, mock_job):
@@ -180,13 +186,14 @@ async def test_update_job_steps(mock_db, mock_job):
     # Mock job details
     mock_job.current_step = 50
 
-    await update_job_steps(mock_db, mock_job, mock_job.user_id, artifacts)
+    await _update_job_steps(mock_db, mock_job, mock_job.user_id, artifacts)
 
     # Verify job progress was updated
     assert mock_job.current_step == 75
     assert mock_job.total_steps == 100
     assert mock_job.current_epoch == 2
     assert mock_job.total_epochs == 3
+
 
 @pytest.mark.asyncio
 async def test_check_create_model(mock_db, mock_job):
@@ -204,7 +211,7 @@ async def test_check_create_model(mock_db, mock_job):
     with patch('app.tasks.job_status_updater.create_fine_tuned_model') as mock_create:
         mock_create.return_value = True
 
-        await check_create_model(mock_db, mock_job.id, mock_job.user_id, artifacts)
+        await _check_create_model(mock_db, mock_job.id, mock_job.user_id, artifacts)
 
         # Verify model creation was attempted
         mock_create.assert_awaited_once_with(

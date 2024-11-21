@@ -33,6 +33,7 @@ def mock_user():
     user.stripe_customer_id = "cus_123"
     return user
 
+
 @pytest.fixture
 def mock_api_key():
     """Create a mock API key object."""
@@ -44,12 +45,14 @@ def mock_api_key():
     api_key.verify_key.return_value = True
     return api_key
 
+
 @pytest.fixture
 def mock_request():
     """Create a mock request object."""
     request = MagicMock(spec=Request)
     request.session = {}
     return request
+
 
 @pytest.mark.asyncio
 async def test_get_api_key():
@@ -62,13 +65,13 @@ async def test_get_api_key():
     api_key = await get_api_key(x_api_key=None)
     assert api_key is None
 
+
 @pytest.mark.asyncio
 async def test_get_user_from_api_key(mock_db, mock_user, mock_api_key):
     """Test getting user from API key."""
     # Set up mocks
     with patch('app.core.authentication.api_key_queries') as mock_api_key_queries, \
             patch('app.core.authentication.user_queries') as mock_user_queries:
-
         # Make query functions async
         mock_api_key_queries.get_api_key_by_prefix = AsyncMock(return_value=mock_api_key)
         mock_user_queries.get_user_by_id = AsyncMock(return_value=mock_user)
@@ -95,6 +98,7 @@ async def test_get_user_from_api_key(mock_db, mock_user, mock_api_key):
         mock_api_key_queries.get_api_key_by_prefix.return_value = None
         with pytest.raises(InvalidApiKeyError):
             await get_user_from_api_key(mock_db, "nonexistent-key")
+
 
 @pytest.mark.asyncio
 async def test_get_session_user(mock_db, mock_user, mock_request):
@@ -124,6 +128,7 @@ async def test_get_session_user(mock_db, mock_user, mock_request):
         mock_user_queries.get_user_by_email.return_value = None
         user = await get_session_user(mock_request, mock_db)
         assert user is None
+
 
 @pytest.mark.asyncio
 async def test_get_current_active_user(mock_db, mock_user):
@@ -157,6 +162,7 @@ async def test_get_current_active_user(mock_db, mock_user):
                 api_key=None,
                 db=mock_db
             )
+
 
 @pytest.mark.asyncio
 async def test_admin_required(mock_user):

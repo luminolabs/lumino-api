@@ -99,7 +99,8 @@ async def get_dataset(db: AsyncSession, user_id: UUID, dataset_name: str) -> Dat
     return DatasetResponse.from_orm(dataset)
 
 
-async def update_dataset(db: AsyncSession, user_id: UUID, dataset_name: str, dataset_update: DatasetUpdate) -> DatasetResponse:
+async def update_dataset(db: AsyncSession, user_id: UUID, dataset_name: str,
+                         dataset_update: DatasetUpdate) -> DatasetResponse:
     """Update a dataset."""
     db_dataset = await dataset_queries.get_dataset_by_name(db, user_id, dataset_name)
     if not db_dataset:

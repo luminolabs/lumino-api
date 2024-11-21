@@ -51,6 +51,7 @@ async def get_usage_records(
     result = await db.execute(query)
     return result.all()
 
+
 async def count_usage_records(
         db: AsyncSession,
         user_id: UUID,
@@ -67,6 +68,7 @@ async def count_usage_records(
 
     result = await db.execute(query)
     return result.scalar_one()
+
 
 async def get_total_cost(
         db: AsyncSession,

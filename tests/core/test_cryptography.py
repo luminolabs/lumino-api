@@ -1,5 +1,5 @@
-import pytest
 from app.core.cryptography import verify_password, get_password_hash, generate_api_key
+
 
 def test_password_hashing_and_verification():
     """Test password hashing and verification flow."""
@@ -18,6 +18,7 @@ def test_password_hashing_and_verification():
     hashed_special = get_password_hash(password_special)
     assert verify_password(password_special, hashed_special)
 
+
 def test_password_hash_consistency():
     """Test that password hashing is consistent but unique."""
     password = "TestPassword123"
@@ -33,6 +34,7 @@ def test_password_hash_consistency():
     assert verify_password(password, hash1)
     assert verify_password(password, hash2)
 
+
 def test_password_hash_length():
     """Test that password hashes have consistent length."""
     # Test with different length passwords
@@ -44,6 +46,7 @@ def test_password_hash_length():
 
     # Hash lengths should be the same regardless of password length
     assert len(short_hash) == len(long_hash)
+
 
 def test_generate_api_key():
     """Test API key generation."""
@@ -68,6 +71,7 @@ def test_generate_api_key():
     assert not verify_password(key1, hash2)
     assert not verify_password(key2, hash1)
 
+
 def test_password_verification_edge_cases():
     """Test password verification with edge cases."""
     # Test empty password
@@ -86,6 +90,7 @@ def test_password_verification_edge_cases():
     unicode_hash = get_password_hash(unicode_password)
     assert verify_password(unicode_password, unicode_hash)
     assert not verify_password("password123", unicode_hash)
+
 
 def test_api_key_format():
     """Test API key format and properties."""

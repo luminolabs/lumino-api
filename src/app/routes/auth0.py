@@ -27,6 +27,7 @@ oauth.register(
 # Initialize Auth0 service
 auth0_service = Auth0Service(oauth)
 
+
 @router.get("/auth0/login")
 async def login(request: Request) -> RedirectResponse:
     """Initiate Auth0 login process."""
@@ -36,6 +37,7 @@ async def login(request: Request) -> RedirectResponse:
     except Exception as e:
         logger.error(f"Login failed: {str(e)}")
         return RedirectResponse(url=request.url_for("login"))
+
 
 @router.get("/auth0/callback")
 async def auth0_callback(
@@ -57,6 +59,7 @@ async def auth0_callback(
     except Exception as e:
         logger.error(f"Callback failed: {str(e)}")
         return RedirectResponse(url=request.url_for("login"))
+
 
 @router.get("/auth0/logout")
 async def logout(request: Request, response: Response) -> RedirectResponse:

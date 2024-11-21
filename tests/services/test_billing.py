@@ -35,6 +35,7 @@ def mock_user():
     user.stripe_customer_id = "cus_123"
     return user
 
+
 @pytest.fixture
 def mock_job():
     """Create a mock fine-tuning job."""
@@ -43,6 +44,7 @@ def mock_job():
     job.status = FineTuningJobStatus.NEW
     job.provider = MagicMock(value='GCP')
     return job
+
 
 @pytest.fixture
 def credit_deduct_request():
@@ -55,6 +57,7 @@ def credit_deduct_request():
         fine_tuning_job_id=UUID('98765432-9876-5432-9876-987654321098')
     )
 
+
 @pytest.fixture
 def credit_add_request():
     """Create a sample credit add request."""
@@ -63,6 +66,7 @@ def credit_add_request():
         amount=50.0,
         transaction_id="test-transaction"
     )
+
 
 @pytest.mark.asyncio
 async def test_add_stripe_credits_success(mock_user):
@@ -75,6 +79,7 @@ async def test_add_stripe_credits_success(mock_user):
         url = await add_stripe_credits(mock_user, 100, "http://base-url")
         assert url == "https://stripe.com/checkout"
 
+
 @pytest.mark.asyncio
 async def test_add_stripe_credits_error(mock_user):
     """Test error handling in Stripe credits addition."""
@@ -83,6 +88,7 @@ async def test_add_stripe_credits_error(mock_user):
         with pytest.raises(ServerError) as exc_info:
             await add_stripe_credits(mock_user, 100, "http://base-url")
         assert "Failed to create Stripe checkout session" in str(exc_info.value)
+
 
 @pytest.mark.asyncio
 async def test_add_manual_credits_success(mock_db, mock_user, credit_add_request):
@@ -97,6 +103,7 @@ async def test_add_manual_credits_success(mock_db, mock_user, credit_add_request
         mock_db.add.assert_called_once()
         mock_db.commit.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_add_manual_credits_user_not_found(mock_db, credit_add_request):
     """Test manual credits addition with non-existent user."""
@@ -106,23 +113,25 @@ async def test_add_manual_credits_user_not_found(mock_db, credit_add_request):
         with pytest.raises(UserNotFoundError):
             await add_manual_credits(mock_db, credit_add_request)
 
+
 @pytest.mark.asyncio
 async def test_deduct_credits_success(mock_db, mock_user, mock_job, credit_deduct_request):
     """Test successful credits deduction."""
     with patch('app.services.billing.billing_queries') as mock_billing_queries, \
-        patch('app.services.billing.user_queries') as mock_user_queries:
-            mock_user_queries.get_user_by_id = AsyncMock(return_value=mock_user)
-            mock_billing_queries.get_credit_record = AsyncMock(return_value=None)
-            mock_billing_queries.get_job_for_credits = AsyncMock(
-                return_value=(mock_job, "llm_llama3_1_8b")
-            )
+            patch('app.services.billing.user_queries') as mock_user_queries:
+        mock_user_queries.get_user_by_id = AsyncMock(return_value=mock_user)
+        mock_billing_queries.get_credit_record = AsyncMock(return_value=None)
+        mock_billing_queries.get_job_for_credits = AsyncMock(
+            return_value=(mock_job, "llm_llama3_1_8b")
+        )
 
-            result = await deduct_credits(credit_deduct_request, mock_db)
+        result = await deduct_credits(credit_deduct_request, mock_db)
 
-            assert result.credits < 0  # Should be negative for deduction
-            assert result.transaction_type == BillingTransactionType.FINE_TUNING_JOB
-            mock_db.add.assert_called()
-            mock_db.commit.assert_awaited_once()
+        assert result.credits < 0  # Should be negative for deduction
+        assert result.transaction_type == BillingTransactionType.FINE_TUNING_JOB
+        mock_db.add.assert_called()
+        mock_db.commit.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_deduct_credits_insufficient_balance(mock_db, mock_user, mock_job, credit_deduct_request):
@@ -140,6 +149,7 @@ async def test_deduct_credits_insufficient_balance(mock_db, mock_user, mock_job,
 
         with pytest.raises(PaymentNeededError):
             await deduct_credits(credit_deduct_request, mock_db)
+
 
 @pytest.mark.asyncio
 async def test_get_credit_history_success(mock_db, mock_user):
@@ -168,6 +178,7 @@ async def test_get_credit_history_success(mock_db, mock_user):
         assert pagination.total_pages == 1
         assert pagination.current_page == 1
 
+
 @pytest.mark.asyncio
 async def test_get_credit_history_invalid_dates(mock_db, mock_user):
     """Test credit history retrieval with invalid dates."""
@@ -180,6 +191,7 @@ async def test_get_credit_history_invalid_dates(mock_db, mock_user):
         await get_credit_history(
             mock_db, mock_user.id, "2024-01-31", "2024-01-01"
         )
+
 
 @pytest.mark.asyncio
 async def test_handle_stripe_webhook_charge_success(mock_db, mock_user):
@@ -206,6 +218,7 @@ async def test_handle_stripe_webhook_charge_success(mock_db, mock_user):
         result = await handle_stripe_webhook(mock_request, mock_db)
         assert result["status"] == "success"
         mock_db.commit.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_handle_stripe_webhook_customer_update(mock_db, mock_user):
@@ -235,6 +248,7 @@ async def test_handle_stripe_webhook_customer_update(mock_db, mock_user):
         assert mock_user.stripe_payment_method_id == "pm_123"
         mock_db.commit.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_handle_stripe_webhook_invalid_signature(mock_db):
     """Test Stripe webhook handling with invalid signature."""
@@ -246,6 +260,7 @@ async def test_handle_stripe_webhook_invalid_signature(mock_db):
                side_effect=stripe.error.SignatureVerificationError("Invalid", "sig")):
         result = await handle_stripe_webhook(mock_request, mock_db)
         assert result["status"] == "error"
+
 
 @pytest.mark.asyncio
 async def test_calculate_required_credits():

@@ -1,4 +1,5 @@
 import os
+
 # Set the application environment to `test`
 os.environ["CAPI_ENV"] = "test"
 
@@ -37,6 +38,7 @@ def mock_db():
             obj.created_at = make_naive(now_utc())
         if not getattr(obj, 'updated_at', None):
             obj.updated_at = make_naive(now_utc())
+
     # Set the side effect of the mock
     db.refresh.side_effect = mock_refresh
 

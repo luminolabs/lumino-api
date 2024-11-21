@@ -47,6 +47,7 @@ def mock_user():
     user.credits_balance = 100.0
     return user
 
+
 @pytest.fixture
 def mock_base_model():
     """Create a mock base model."""
@@ -56,6 +57,7 @@ def mock_base_model():
     model.status = BaseModelStatus.ACTIVE
     return model
 
+
 @pytest.fixture
 def mock_dataset():
     """Create a mock dataset."""
@@ -64,6 +66,7 @@ def mock_dataset():
     dataset.name = "test-dataset"
     dataset.status = DatasetStatus.VALIDATED
     return dataset
+
 
 @pytest.fixture
 def mock_job():
@@ -78,6 +81,7 @@ def mock_job():
     job.status = FineTuningJobStatus.NEW
     return job
 
+
 @pytest.fixture
 def mock_job_detail():
     """Create a mock job detail."""
@@ -90,6 +94,7 @@ def mock_job_detail():
     detail.metrics = {}
     detail.timestamps = {}
     return detail
+
 
 @pytest.mark.asyncio
 async def test_create_fine_tuning_job_success(
@@ -108,7 +113,6 @@ async def test_create_fine_tuning_job_success(
             patch('app.services.fine_tuning.dataset_queries') as mock_dataset_queries, \
             patch('app.services.fine_tuning.ft_queries') as mock_ft_queries, \
             patch('app.services.fine_tuning.start_fine_tuning_job') as mock_start_job:
-
         # Configure mocks
         mock_model_queries.get_base_model_by_name = AsyncMock(return_value=mock_base_model)
         mock_dataset_queries.get_dataset_by_name = AsyncMock(return_value=mock_dataset)
@@ -122,6 +126,7 @@ async def test_create_fine_tuning_job_success(
         mock_db.add.assert_called()
         mock_db.commit.assert_awaited()
         mock_start_job.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_create_fine_tuning_job_unverified_email(mock_db, mock_user, mock_base_model):
@@ -139,6 +144,7 @@ async def test_create_fine_tuning_job_unverified_email(mock_db, mock_user, mock_
     with pytest.raises(ForbiddenError):
         await create_fine_tuning_job(mock_db, mock_user, job_create)
 
+
 @pytest.mark.asyncio
 async def test_create_fine_tuning_job_insufficient_credits(mock_db, mock_user, mock_base_model):
     """Test job creation with insufficient credits."""
@@ -154,6 +160,7 @@ async def test_create_fine_tuning_job_insufficient_credits(mock_db, mock_user, m
 
     with pytest.raises(ForbiddenError):
         await create_fine_tuning_job(mock_db, mock_user, job_create)
+
 
 @pytest.mark.asyncio
 async def test_get_fine_tuning_jobs(mock_db, mock_job):
@@ -174,6 +181,7 @@ async def test_get_fine_tuning_jobs(mock_db, mock_job):
         assert pagination.total_pages == 1
         assert pagination.current_page == 1
 
+
 @pytest.mark.asyncio
 async def test_get_fine_tuning_job_success(mock_db, mock_job, mock_job_detail):
     """Test retrieving a specific fine-tuning job."""
@@ -192,6 +200,7 @@ async def test_get_fine_tuning_job_success(mock_db, mock_job, mock_job_detail):
         assert result.base_model_name == "llm_llama3_1_8b"
         assert result.dataset_name == "test-dataset"
 
+
 @pytest.mark.asyncio
 async def test_get_fine_tuning_job_not_found(mock_db):
     """Test retrieving a non-existent fine-tuning job."""
@@ -204,6 +213,7 @@ async def test_get_fine_tuning_job_not_found(mock_db):
                 UUID('12345678-1234-5678-1234-567812345678'),
                 "nonexistent-job"
             )
+
 
 @pytest.mark.asyncio
 async def test_cancel_fine_tuning_job_success(mock_db, mock_job, mock_job_detail):
@@ -227,6 +237,7 @@ async def test_cancel_fine_tuning_job_success(mock_db, mock_job, mock_job_detail
         mock_stop.assert_awaited_once()
         mock_db.commit.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_cancel_fine_tuning_job_invalid_status(mock_db, mock_job, mock_job_detail):
     """Test cancelling a job with invalid status."""
@@ -243,6 +254,7 @@ async def test_cancel_fine_tuning_job_invalid_status(mock_db, mock_job, mock_job
                 UUID('12345678-1234-5678-1234-567812345678'),
                 "test-job"
             )
+
 
 @pytest.mark.asyncio
 async def test_delete_fine_tuning_job_success(mock_db, mock_job, mock_job_detail):
@@ -267,6 +279,7 @@ async def test_delete_fine_tuning_job_success(mock_db, mock_job, mock_job_detail
         assert mock_model.status == FineTunedModelStatus.DELETED
         mock_db.commit.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_update_job_progress_success(mock_db, mock_job):
     """Test successful job progress update."""
@@ -289,6 +302,7 @@ async def test_update_job_progress_success(mock_db, mock_job):
     assert mock_job.current_step == 100
     assert mock_job.total_steps == 1000
     mock_db.commit.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_get_jobs_for_status_update(mock_db, mock_job):

@@ -5,7 +5,7 @@ import pytest
 from google.api_core.exceptions import NotFound
 
 from app.queries.common import now_utc
-from app.tasks.model_cleanup import cleanup_deleted_model_weights, cleanup_model_weights
+from app.tasks.model_cleanup import cleanup_deleted_model_weights, _cleanup_model_weights
 
 
 @pytest.fixture
@@ -91,7 +91,6 @@ async def test_cleanup_deleted_models_no_artifacts(mock_db, mock_storage_client)
 
     with patch('app.tasks.model_cleanup.model_queries') as mock_queries, \
             patch('app.tasks.model_cleanup.storage.Client', return_value=mock_storage_client):
-
         mock_queries.get_deleted_models = AsyncMock(return_value=[model])
 
         # Execute cleanup
@@ -113,11 +112,10 @@ async def test_cleanup_model_weights_file_not_found(mock_storage_client, mock_de
     bucket.blob.return_value = blob_mock
 
     # Execute cleanup
-    result = await cleanup_model_weights(mock_deleted_model, mock_storage_client)
+    result = await _cleanup_model_weights(mock_deleted_model, mock_storage_client)
 
     # Verify an error occurred
     assert result is None
-
 
 
 @pytest.mark.asyncio
@@ -125,7 +123,6 @@ async def test_cleanup_deleted_models_error(mock_db, mock_storage_client, mock_d
     """Test error handling during cleanup."""
     with patch('app.tasks.model_cleanup.model_queries') as mock_queries, \
             patch('app.tasks.model_cleanup.storage.Client', return_value=mock_storage_client):
-
         # Configure mock to raise an exception
         mock_queries.get_deleted_models = AsyncMock(side_effect=Exception("Database error"))
 
@@ -143,7 +140,7 @@ async def test_cleanup_model_weights_invalid_url(mock_storage_client, mock_delet
     mock_deleted_model.artifacts["base_url"] = "invalid-url"
 
     # Execute cleanup
-    result = await cleanup_model_weights(mock_deleted_model, mock_storage_client)
+    result = await _cleanup_model_weights(mock_deleted_model, mock_storage_client)
 
     # Verify no storage operations were attempted
     mock_storage_client.bucket.assert_not_called()
@@ -158,7 +155,7 @@ async def test_cleanup_model_weights_empty_weight_files(mock_storage_client, moc
     mock_deleted_model.artifacts["weight_files"] = []
 
     # Execute cleanup
-    result = await cleanup_model_weights(mock_deleted_model, mock_storage_client)
+    result = await _cleanup_model_weights(mock_deleted_model, mock_storage_client)
 
     # Verify no storage operations were attempted
     mock_storage_client.bucket.blob.assert_not_called()

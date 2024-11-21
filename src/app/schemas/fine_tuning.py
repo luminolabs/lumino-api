@@ -55,5 +55,6 @@ class FineTuningJobDetailResponse(FineTuningJobResponse):
     """
     parameters: Dict[str, Any] = Field(..., description="The parameters used for the fine-tuning job")
     metrics: Dict[str, Any] | None = Field(None, description="The metrics collected during the fine-tuning process")
-    timestamps: Dict[str, Any] | None = Field(None, description="The timestamps recorded during the fine-tuning process")
+    timestamps: Dict[str, Any] | None = Field(None,
+                                              description="The timestamps recorded during the fine-tuning process")
     model_config = ConfigDict(from_attributes=True)

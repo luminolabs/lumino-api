@@ -176,9 +176,9 @@ components:
           type: string
           description: The unique identifier of the transaction
         transaction_type:
-            type: string
-            enum: [ NEW_USER_CREDIT, FINE_TUNING_JOB, STRIPE_CHECKOUT ]
-            description: The type of transaction
+          type: string
+          enum: [ NEW_USER_CREDIT, FINE_TUNING_JOB, STRIPE_CHECKOUT ]
+          description: The type of transaction
 
   securitySchemes:
     ApiKeyAuth:

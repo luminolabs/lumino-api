@@ -10,16 +10,18 @@
             position: relative;
             display: inline-block;
         }
+
         .dropdown-content {
             display: none;
             position: absolute;
             background-color: #f9f9f9;
             min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
             z-index: 1;
             max-height: 200px;
             overflow-y: auto;
         }
+
         .dropdown-content div {
             color: black;
             padding: 12px 16px;
@@ -27,6 +29,7 @@
             display: block;
             cursor: pointer;
         }
+
         .dropdown-content div:hover {
             background-color: #f1f1f1;
         }
@@ -51,7 +54,8 @@
             <h2 class="text-xl font-semibold mb-2">Create API Key</h2>
             <input id="newKeyName" type="text" placeholder="New API Key Name" class="border p-2 mr-2">
             <input id="newKeyExpiration" type="datetime-local" class="border p-2 mr-2">
-            <button onclick="createApiKey()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            <button onclick="createApiKey()"
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                 Create API Key
             </button>
         </div>
@@ -63,22 +67,27 @@
         <div class="mb-4">
             <h2 class="text-xl font-semibold mb-2">Update API Key</h2>
             <div class="custom-dropdown mb-2">
-                <input id="updateKeySearch" type="text" placeholder="Search and select API Key" class="border p-2 mr-2 w-64" oninput="filterApiKeys()" onclick="showDropdown()" onblur="hideDropdownDelayed()">
+                <input id="updateKeySearch" type="text" placeholder="Search and select API Key"
+                       class="border p-2 mr-2 w-64" oninput="filterApiKeys()" onclick="showDropdown()"
+                       onblur="hideDropdownDelayed()">
                 <div id="apiKeyDropdown" class="dropdown-content"></div>
             </div>
             <input id="updateKeyName" type="text" placeholder="Updated API Key Name (optional)" class="border p-2 mr-2">
             <input id="updateKeyExpiration" type="datetime-local" class="border p-2 mr-2">
-            <button onclick="updateApiKey()" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+            <button onclick="updateApiKey()"
+                    class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
                 Update API Key
             </button>
         </div>
         <div>
             <h2 class="text-xl font-semibold mb-2">API Keys</h2>
             <div class="flex items-center mb-2">
-                <button id="toggleButton" onclick="toggleApiKeyList()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
+                <button id="toggleButton" onclick="toggleApiKeyList()"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">
                     Show Revoked Keys
                 </button>
-                <button onclick="listApiKeys()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                <button onclick="listApiKeys()"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Refresh List
                 </button>
             </div>
@@ -146,8 +155,8 @@
         try {
             const response = await fetch('/v1/api-keys', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, expires_at }),
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, expires_at}),
             });
             if (response.ok) {
                 const data = await response.json();
@@ -187,7 +196,7 @@
         try {
             const response = await fetch(`/v1/api-keys/${selectedKeyName}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(updateData),
             });
             if (response.ok) {
@@ -207,7 +216,7 @@
 
     async function revokeApiKey(keyName) {
         try {
-            const response = await fetch(`/v1/api-keys/${keyName}`, { method: 'DELETE' });
+            const response = await fetch(`/v1/api-keys/${keyName}`, {method: 'DELETE'});
             if (response.ok) {
                 listApiKeys();
             } else {

@@ -11,7 +11,7 @@ paths:
       tags:
         - Users
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       responses:
         '200':
           description: User information retrieved successfully
@@ -27,7 +27,7 @@ paths:
       tags:
         - Users
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       requestBody:
         required: true
         content:
@@ -54,7 +54,7 @@ paths:
         - Users
         - Internal
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: user_id
@@ -96,7 +96,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [ACTIVE, INACTIVE]
+          enum: [ ACTIVE, INACTIVE ]
         name:
           type: string
         email:

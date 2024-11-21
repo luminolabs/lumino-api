@@ -41,6 +41,7 @@ async def get_credit_record(
     )
     return result.scalar_one_or_none()
 
+
 async def get_job_for_credits(
         db: AsyncSession,
         job_id: UUID,
@@ -56,6 +57,7 @@ async def get_job_for_credits(
         )
     )
     return result.first()
+
 
 async def count_credit_history(
         db: AsyncSession,
@@ -85,6 +87,7 @@ async def count_credit_history(
 
     result = await db.execute(query)
     return result.scalar_one()
+
 
 async def get_credit_history(
         db: AsyncSession,

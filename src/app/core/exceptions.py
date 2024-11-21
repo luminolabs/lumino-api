@@ -16,6 +16,7 @@ logger_ = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.
 
 class AppException(HTTPException):
     """Base exception for application-specific errors."""
+
     def __init__(self, status_code: int, detail: str, logger: Optional[Logger] = None):
         """
         Initialize the exception.
@@ -51,36 +52,42 @@ class AppException(HTTPException):
 
 class NotFoundError(AppException):
     """Exception raised when a requested resource is not found."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(status_code=404, detail=detail, logger=logger)
 
 
 class UnauthorizedError(AppException):
     """Exception raised when authentication fails."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(status_code=401, detail=detail, logger=logger)
 
 
 class ForbiddenError(AppException):
     """Exception raised when a user doesn't have permission to access a resource."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(status_code=403, detail=detail, logger=logger)
 
 
 class BadRequestError(AppException):
     """Exception raised when the request is malformed or invalid."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(status_code=422, detail=detail, logger=logger)
 
 
 class ServerError(AppException):
     """Exception raised when an unexpected application error occurs."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(status_code=500, detail=detail, logger=logger)
 
 
 class PaymentNeededError(AppException):
     """Exception raised when a payment is needed."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(status_code=402, detail=detail, logger=logger)
 
@@ -90,12 +97,14 @@ class PaymentNeededError(AppException):
 
 class InvalidApiKeyError(UnauthorizedError):
     """Exception raised when an invalid API key is provided."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class InvalidUserSessionError(UnauthorizedError):
     """Exception raised when an invalid token is provided."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
@@ -105,12 +114,14 @@ class InvalidUserSessionError(UnauthorizedError):
 
 class UserNotFoundError(NotFoundError):
     """Exception raised when a requested user is not found."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class EmailAlreadyExistsError(BadRequestError):
     """Exception raised when attempting to register with an email that's already in use."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
@@ -120,12 +131,14 @@ class EmailAlreadyExistsError(BadRequestError):
 
 class ApiKeyAlreadyExistsError(BadRequestError):
     """Exception raised when there's an error creating an API key."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class ApiKeyNotFoundError(NotFoundError):
     """Exception raised when a requested API key is not found."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
@@ -135,12 +148,14 @@ class ApiKeyNotFoundError(NotFoundError):
 
 class DatasetAlreadyExistsError(BadRequestError):
     """Exception raised when there's an error creating a dataset."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class DatasetNotFoundError(NotFoundError):
     """Exception raised when a requested dataset is not found."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
@@ -150,12 +165,14 @@ class DatasetNotFoundError(NotFoundError):
 
 class BaseModelNotFoundError(NotFoundError):
     """Exception raised when a requested base model is not found."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class FineTunedModelNotFoundError(NotFoundError):
     """Exception raised when a requested fine-tuned model is not found."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
@@ -165,30 +182,35 @@ class FineTunedModelNotFoundError(NotFoundError):
 
 class FineTuningJobNotFoundError(NotFoundError):
     """Exception raised when a requested fine-tuning job is not found."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class FineTuningJobAlreadyExistsError(BadRequestError):
     """Exception raised when a fine-tuning job with the same name already exists."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class FineTuningJobCreationError(ServerError):
     """Exception raised when there's an error creating a fine-tuning job."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class FineTuningJobRefreshError(ServerError):
     """Exception raised when there's an error refreshing fine-tuning job details."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class FineTuningJobCancellationError(ServerError):
     """Exception raised when there's an error stopping a fine-tuning job."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
@@ -198,12 +220,14 @@ class FineTuningJobCancellationError(ServerError):
 
 class StripeCheckoutSessionCreationError(ServerError):
     """Exception raised when there's an error creating a Stripe checkout session."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 
 
 class StorageError(ServerError):
     """Exception for storage operations failures."""
+
     def __init__(self, detail: str, logger: Optional[Logger] = None):
         super().__init__(detail, logger)
 

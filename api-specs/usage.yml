@@ -11,7 +11,7 @@ paths:
       tags:
         - Usage
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: query
           name: start_date
@@ -43,7 +43,7 @@ paths:
       tags:
         - Usage
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: query
           name: start_date

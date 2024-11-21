@@ -97,7 +97,8 @@ async def get_api_key(db: AsyncSession, user_id: UUID, key_name: str) -> ApiKeyR
     return ApiKeyResponse.from_orm(api_key)
 
 
-async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str, api_key_update: ApiKeyUpdate) -> ApiKeyResponse:
+async def update_api_key(db: AsyncSession, user_id: UUID, key_name: str,
+                         api_key_update: ApiKeyUpdate) -> ApiKeyResponse:
     """Update an API key."""
     db_api_key = await api_key_queries.get_api_key_by_name(db, user_id, key_name)
     if not db_api_key:

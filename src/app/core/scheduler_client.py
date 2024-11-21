@@ -18,6 +18,7 @@ logger = setup_logger(__name__)
 
 INTERNAL_API_URL = config.scheduler_zen_url
 
+
 async def start_fine_tuning_job(job_id: UUID) -> None:
     """Start a fine-tuning job via scheduler."""
     if not config.run_with_scheduler:
@@ -105,10 +106,11 @@ async def start_fine_tuning_job(job_id: UUID) -> None:
                 logger
             )
 
+
 async def fetch_job_details(
-                user_id: UUID,
-                job_ids: List[UUID]
-        ) -> List[Dict[str, Any]]:
+        user_id: UUID,
+        job_ids: List[UUID]
+) -> List[Dict[str, Any]]:
     """
     Get job status updates from scheduler.
 
@@ -140,6 +142,7 @@ async def fetch_job_details(
                 raise FineTuningJobRefreshError(
                     f"Error refreshing job statuses: {await response.text()}"
                 )
+
 
 async def stop_fine_tuning_job(job_id: UUID, user_id: UUID) -> None:
     """

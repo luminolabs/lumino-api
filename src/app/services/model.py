@@ -9,6 +9,7 @@ from app.schemas.model import BaseModelResponse
 
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
+
 async def get_base_models(
         db: AsyncSession,
         page: int = 1,
@@ -34,6 +35,7 @@ async def get_base_models(
 
     logger.info(f"Retrieved {len(model_responses)} base models, page: {page}")
     return model_responses, pagination
+
 
 async def get_base_model(db: AsyncSession, model_name: str) -> BaseModelResponse:
     """Get detailed information about a specific base model."""

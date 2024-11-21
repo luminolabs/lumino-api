@@ -18,12 +18,14 @@ async def get_api_key_by_prefix(db: AsyncSession, prefix: str) -> Optional[ApiKe
     )
     return result.scalar_one_or_none()
 
+
 async def get_api_key_by_name(db: AsyncSession, user_id: UUID, name: str) -> Optional[ApiKey]:
     """Get an API key by its name for a specific user."""
     result = await db.execute(
         select(ApiKey).where(ApiKey.user_id == user_id, ApiKey.name == name)
     )
     return result.scalar_one_or_none()
+
 
 async def list_api_keys(db: AsyncSession, user_id: UUID, offset: int, limit: int) -> List[ApiKey]:
     """List API keys for a specific user with pagination."""
@@ -35,12 +37,14 @@ async def list_api_keys(db: AsyncSession, user_id: UUID, offset: int, limit: int
     )
     return result.scalars().all()
 
+
 async def count_api_keys(db: AsyncSession, user_id: UUID) -> int:
     """Count total API keys for a specific user."""
     result = await db.execute(
         select(func.count()).select_from(ApiKey).where(ApiKey.user_id == user_id)
     )
     return result.scalar_one()
+
 
 async def mark_expired_keys(db: AsyncSession) -> int:
     """

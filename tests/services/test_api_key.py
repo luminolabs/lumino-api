@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.constants import ApiKeyStatus
 from app.core.exceptions import ApiKeyAlreadyExistsError, ApiKeyNotFoundError
@@ -18,10 +17,12 @@ from app.services.api_key import (
     revoke_api_key
 )
 
+
 @pytest.fixture
 def mock_user_id():
     """Create a mock user ID."""
     return uuid4()
+
 
 @pytest.fixture
 def mock_api_key():
@@ -33,6 +34,7 @@ def mock_api_key():
     api_key.status = ApiKeyStatus.ACTIVE
     api_key.expires_at = now_utc() + timedelta(days=1)
     return api_key
+
 
 @pytest.mark.asyncio
 async def test_create_api_key_success(mock_db, mock_user_id):
@@ -63,6 +65,7 @@ async def test_create_api_key_success(mock_db, mock_user_id):
         mock_db.commit.assert_awaited_once()
         mock_db.refresh.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_create_api_key_duplicate(mock_db, mock_user_id, mock_api_key):
     """Test API key creation with duplicate name."""
@@ -76,6 +79,7 @@ async def test_create_api_key_duplicate(mock_db, mock_user_id, mock_api_key):
 
         with pytest.raises(ApiKeyAlreadyExistsError):
             await create_api_key(mock_db, mock_user_id, key_create)
+
 
 @pytest.mark.asyncio
 async def test_get_api_keys(mock_db, mock_user_id, mock_api_key):
@@ -98,6 +102,7 @@ async def test_get_api_keys(mock_db, mock_user_id, mock_api_key):
         mock_queries.count_api_keys.assert_awaited_once_with(mock_db, mock_user_id)
         mock_queries.list_api_keys.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_get_api_key_success(mock_db, mock_user_id, mock_api_key):
     """Test retrieving a specific API key."""
@@ -111,6 +116,7 @@ async def test_get_api_key_success(mock_db, mock_user_id, mock_api_key):
             mock_db, mock_user_id, "test-key"
         )
 
+
 @pytest.mark.asyncio
 async def test_get_api_key_not_found(mock_db, mock_user_id):
     """Test retrieving a non-existent API key."""
@@ -119,6 +125,7 @@ async def test_get_api_key_not_found(mock_db, mock_user_id):
 
         with pytest.raises(ApiKeyNotFoundError):
             await get_api_key(mock_db, mock_user_id, "nonexistent-key")
+
 
 @pytest.mark.asyncio
 async def test_update_api_key_success(mock_db, mock_user_id, mock_api_key):
@@ -137,6 +144,7 @@ async def test_update_api_key_success(mock_db, mock_user_id, mock_api_key):
         mock_db.commit.assert_awaited_once()
         mock_db.refresh.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_update_api_key_not_found(mock_db, mock_user_id):
     """Test updating a non-existent API key."""
@@ -147,6 +155,7 @@ async def test_update_api_key_not_found(mock_db, mock_user_id):
 
         with pytest.raises(ApiKeyNotFoundError):
             await update_api_key(mock_db, mock_user_id, "nonexistent-key", key_update)
+
 
 @pytest.mark.asyncio
 async def test_revoke_api_key_success(mock_db, mock_user_id, mock_api_key):
@@ -159,6 +168,7 @@ async def test_revoke_api_key_success(mock_db, mock_user_id, mock_api_key):
         assert result.status == ApiKeyStatus.REVOKED
         mock_db.commit.assert_awaited_once()
         mock_db.refresh.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_revoke_api_key_not_found(mock_db, mock_user_id):

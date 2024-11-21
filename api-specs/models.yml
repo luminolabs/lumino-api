@@ -11,7 +11,7 @@ paths:
       tags:
         - Base Models
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: 'common-structures.yml#/components/parameters/PageParam'
         - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
@@ -38,7 +38,7 @@ paths:
       tags:
         - Base Models
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - name: model_name
           in: path
@@ -63,7 +63,7 @@ paths:
       tags:
         - Fine-tuned Models
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: 'common-structures.yml#/components/parameters/PageParam'
         - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
@@ -90,7 +90,7 @@ paths:
       tags:
         - Fine-tuned Models
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - name: model_name
           in: path
@@ -123,7 +123,7 @@ components:
           type: string
         status:
           type: string
-          enum: [ACTIVE, INACTIVE, DEPRECATED]
+          enum: [ ACTIVE, INACTIVE, DEPRECATED ]
         name:
           type: string
         meta:

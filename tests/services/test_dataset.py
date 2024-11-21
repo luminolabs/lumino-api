@@ -23,6 +23,7 @@ def mock_user_id():
     """Create a mock user ID."""
     return UUID('12345678-1234-5678-1234-567812345678')
 
+
 @pytest.fixture
 def mock_dataset():
     """Create a mock dataset object."""
@@ -39,6 +40,7 @@ def mock_dataset():
     dataset.errors = None
     return dataset
 
+
 @pytest.fixture
 def mock_upload_file():
     """Create a mock upload file."""
@@ -47,6 +49,7 @@ def mock_upload_file():
     file.content_type = "application/json"
     file.size = 1024
     return file
+
 
 @pytest.mark.asyncio
 async def test_create_dataset_success(mock_db, mock_user_id, mock_upload_file):
@@ -79,6 +82,7 @@ async def test_create_dataset_success(mock_db, mock_user_id, mock_upload_file):
         # Verify file upload
         mock_upload.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_create_dataset_exists(mock_db, mock_user_id, mock_upload_file, mock_dataset):
     """Test dataset creation with duplicate name."""
@@ -93,6 +97,7 @@ async def test_create_dataset_exists(mock_db, mock_user_id, mock_upload_file, mo
 
         with pytest.raises(DatasetAlreadyExistsError):
             await create_dataset(mock_db, mock_user_id, dataset_create)
+
 
 @pytest.mark.asyncio
 async def test_create_dataset_upload_error(mock_db, mock_user_id, mock_upload_file):
@@ -111,6 +116,7 @@ async def test_create_dataset_upload_error(mock_db, mock_user_id, mock_upload_fi
         with pytest.raises(Exception):
             await create_dataset(mock_db, mock_user_id, dataset_create)
             mock_db.rollback.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_get_datasets(mock_db, mock_user_id, mock_dataset):
@@ -133,6 +139,7 @@ async def test_get_datasets(mock_db, mock_user_id, mock_dataset):
         mock_queries.count_datasets.assert_awaited_once_with(mock_db, mock_user_id)
         mock_queries.list_datasets.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_get_dataset_success(mock_db, mock_user_id, mock_dataset):
     """Test retrieving a specific dataset."""
@@ -146,6 +153,7 @@ async def test_get_dataset_success(mock_db, mock_user_id, mock_dataset):
             mock_db, mock_user_id, "test-dataset"
         )
 
+
 @pytest.mark.asyncio
 async def test_get_dataset_not_found(mock_db, mock_user_id):
     """Test retrieving a non-existent dataset."""
@@ -154,6 +162,7 @@ async def test_get_dataset_not_found(mock_db, mock_user_id):
 
         with pytest.raises(DatasetNotFoundError):
             await get_dataset(mock_db, mock_user_id, "nonexistent-dataset")
+
 
 @pytest.mark.asyncio
 async def test_update_dataset_success(mock_db, mock_user_id, mock_dataset):
@@ -173,6 +182,7 @@ async def test_update_dataset_success(mock_db, mock_user_id, mock_dataset):
         mock_db.commit.assert_awaited_once()
         mock_db.refresh.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_update_dataset_not_found(mock_db, mock_user_id):
     """Test updating a non-existent dataset."""
@@ -183,6 +193,7 @@ async def test_update_dataset_not_found(mock_db, mock_user_id):
 
         with pytest.raises(DatasetNotFoundError):
             await update_dataset(mock_db, mock_user_id, "nonexistent-dataset", dataset_update)
+
 
 @pytest.mark.asyncio
 async def test_delete_dataset_success(mock_db, mock_user_id, mock_dataset):
@@ -201,6 +212,7 @@ async def test_delete_dataset_success(mock_db, mock_user_id, mock_dataset):
         # Verify file deletion
         mock_delete.assert_awaited_once()
 
+
 @pytest.mark.asyncio
 async def test_delete_dataset_not_found(mock_db, mock_user_id):
     """Test deleting a non-existent dataset."""
@@ -209,6 +221,7 @@ async def test_delete_dataset_not_found(mock_db, mock_user_id):
 
         with pytest.raises(DatasetNotFoundError):
             await delete_dataset(mock_db, mock_user_id, "nonexistent-dataset")
+
 
 @pytest.mark.asyncio
 async def test_delete_dataset_error(mock_db, mock_user_id, mock_dataset):

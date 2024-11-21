@@ -11,7 +11,7 @@ paths:
       tags:
         - Datasets
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       requestBody:
         content:
           multipart/form-data:
@@ -45,7 +45,7 @@ paths:
       tags:
         - Datasets
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: 'common-structures.yml#/components/parameters/PageParam'
         - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
@@ -72,7 +72,7 @@ paths:
       tags:
         - Datasets
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - name: dataset_name
           in: path
@@ -96,7 +96,7 @@ paths:
       tags:
         - Datasets
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - name: dataset_name
           in: path
@@ -128,7 +128,7 @@ paths:
       tags:
         - Datasets
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - name: dataset_name
           in: path
@@ -159,7 +159,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [UPLOADED, VALIDATED, ERROR, DELETED]
+          enum: [ UPLOADED, VALIDATED, ERROR, DELETED ]
         name:
           type: string
         description:

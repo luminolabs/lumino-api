@@ -1,19 +1,28 @@
 from datetime import timedelta
-from typing import Any
+from typing import Any, Optional
 
-from fastapi import Depends
 from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal
 from app.core.utils import setup_logger
 from app.queries import models as model_queries
 from app.queries.common import now_utc
 
 logger = setup_logger(__name__)
 
-async def cleanup_deleted_model_weights(db: AsyncSession = Depends(get_db)) -> None:
+
+async def cleanup_deleted_model_weights(db: Optional[AsyncSession] = None) -> None:
+    """Wrapper to _update_job_statuses that handles database session."""
+    if db is None:
+        async with AsyncSessionLocal() as db:
+            await _cleanup_deleted_model_weights(db)
+    else:
+        await _cleanup_deleted_model_weights(db)
+
+
+async def _cleanup_deleted_model_weights(db: AsyncSession) -> None:
     """Clean up weights files from GCS for deleted models."""
     try:
         # Find recently deleted models
@@ -30,7 +39,7 @@ async def cleanup_deleted_model_weights(db: AsyncSession = Depends(get_db)) -> N
         storage_client = storage.Client()
 
         for model in deleted_models:
-            await cleanup_model_weights(model, storage_client)
+            await _cleanup_model_weights(model, storage_client)
 
         await db.commit()
 
@@ -38,7 +47,8 @@ async def cleanup_deleted_model_weights(db: AsyncSession = Depends(get_db)) -> N
         await db.rollback()
         logger.error(f"Failed to cleanup model weights: {str(e)}")
 
-async def cleanup_model_weights(
+
+async def _cleanup_model_weights(
         model: Any,
         storage_client: storage.Client
 ) -> None:

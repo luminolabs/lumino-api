@@ -11,7 +11,7 @@ paths:
       tags:
         - API Keys
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       requestBody:
         required: true
         content:
@@ -35,7 +35,7 @@ paths:
       tags:
         - API Keys
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - $ref: 'common-structures.yml#/components/parameters/PageParam'
         - $ref: 'common-structures.yml#/components/parameters/ItemsPerPageParam'
@@ -62,7 +62,7 @@ paths:
       tags:
         - API Keys
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: key_name
@@ -86,7 +86,7 @@ paths:
       tags:
         - API Keys
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: key_name
@@ -118,7 +118,7 @@ paths:
       tags:
         - API Keys
       security:
-        - ApiKeyAuth: []
+        - ApiKeyAuth: [ ]
       parameters:
         - in: path
           name: key_name
@@ -181,7 +181,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [ACTIVE, EXPIRED, REVOKED]
+          enum: [ ACTIVE, EXPIRED, REVOKED ]
         name:
           type: string
         prefix:

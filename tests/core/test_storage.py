@@ -19,16 +19,19 @@ def mock_file():
     file.size = len(b"test content")
     return file
 
+
 @pytest.fixture
 def mock_storage():
     """Create a mock Storage instance."""
     return AsyncMock(spec=Storage)
+
 
 @pytest.fixture
 def mock_session():
     """Create a mock aiohttp ClientSession."""
     session = AsyncMock(spec=ClientSession)
     return session
+
 
 @pytest.mark.asyncio
 async def test_upload_file_success(mock_file):
@@ -56,6 +59,7 @@ async def test_upload_file_success(mock_file):
         assert isinstance(result, str)
         assert result.endswith("test_file.txt")
 
+
 @pytest.mark.asyncio
 async def test_upload_file_404_error(mock_file):
     """Test handling of 404 error during upload."""
@@ -79,6 +83,7 @@ async def test_upload_file_404_error(mock_file):
         # Should return filename without raising error
         result = await upload_file(path, mock_file, user_id)
         assert result.endswith("test_file.txt")
+
 
 @pytest.mark.asyncio
 async def test_upload_file_auth_error(mock_file):
@@ -104,6 +109,7 @@ async def test_upload_file_auth_error(mock_file):
             await upload_file(path, mock_file, user_id)
         assert "Authentication error" in str(exc_info.value)
 
+
 @pytest.mark.asyncio
 async def test_upload_file_other_error(mock_file):
     """Test handling of other errors during upload."""
@@ -123,6 +129,7 @@ async def test_upload_file_other_error(mock_file):
             await upload_file(path, mock_file, user_id)
         assert "Failed to upload file" in str(exc_info.value)
 
+
 @pytest.mark.asyncio
 async def test_delete_file_success():
     """Test successful file deletion."""
@@ -139,6 +146,7 @@ async def test_delete_file_success():
         # Should complete without error
         await delete_file(path, file_name, user_id)
         mock_storage.delete.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_delete_file_404_error():
@@ -163,6 +171,7 @@ async def test_delete_file_404_error():
         # Should complete without error for 404
         await delete_file(path, file_name, user_id)
 
+
 @pytest.mark.asyncio
 async def test_delete_file_other_error():
     """Test handling of other errors during deletion."""
@@ -181,6 +190,7 @@ async def test_delete_file_other_error():
         with pytest.raises(StorageError) as exc_info:
             await delete_file(path, file_name, user_id)
         assert "Failed to delete file" in str(exc_info.value)
+
 
 def test_handle_gcs_error():
     """Test GCS error handling function."""

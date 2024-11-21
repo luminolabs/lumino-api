@@ -11,6 +11,7 @@ from app.schemas.usage import UsageRecordResponse, TotalCostResponse
 
 logger = setup_logger(__name__)
 
+
 async def get_usage_records(
         db: AsyncSession,
         user_id: UUID,
@@ -83,6 +84,7 @@ async def get_usage_records(
     )
 
     return usage_responses, pagination
+
 
 async def get_total_cost(
         db: AsyncSession,

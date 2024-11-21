@@ -18,9 +18,11 @@ from app.queries.common import now_utc, make_naive
 
 logger = setup_logger(__name__)
 
+
 async def get_api_key(x_api_key: str | None = Header(None)) -> str | None:
     """Get API key from request header."""
     return x_api_key
+
 
 async def get_user_from_api_key(db: AsyncSession, api_key: str) -> User:
     """
@@ -58,6 +60,7 @@ async def get_user_from_api_key(db: AsyncSession, api_key: str) -> User:
     )
     return user
 
+
 async def get_session_user(
         request: Request,
         db: AsyncSession = Depends(get_db)
@@ -69,6 +72,7 @@ async def get_session_user(
         if db_user and db_user.status == UserStatus.ACTIVE:
             return db_user
     return None
+
 
 async def get_current_active_user(
         user: User = Depends(get_session_user),
@@ -110,6 +114,7 @@ async def get_current_active_user(
         await create_stripe_customer(db, user)
 
     return user
+
 
 def admin_required(user: User = Depends(get_current_active_user)) -> User:
     """Verify user is admin."""

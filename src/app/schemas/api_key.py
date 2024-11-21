@@ -51,6 +51,7 @@ class ApiKeyResponse(BaseModel):
     prefix: str = Field(..., description="The prefix of the API key (first few characters)")
     model_config = ConfigDict(from_attributes=True)
 
+
 class ApiKeyWithSecretResponse(ApiKeyResponse):
     """
     Schema for API key response data including the secret key.

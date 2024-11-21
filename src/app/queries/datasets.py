@@ -14,6 +14,7 @@ async def get_dataset_by_name(db: AsyncSession, user_id: UUID, name: str) -> Opt
     )
     return result.scalar_one_or_none()
 
+
 async def list_datasets(db: AsyncSession, user_id: UUID, offset: int, limit: int) -> List[Dataset]:
     """List datasets for a specific user with pagination."""
     result = await db.execute(
@@ -24,6 +25,7 @@ async def list_datasets(db: AsyncSession, user_id: UUID, offset: int, limit: int
         .limit(limit)
     )
     return result.scalars().all()
+
 
 async def count_datasets(db: AsyncSession, user_id: UUID) -> int:
     """Count total datasets for a specific user."""
