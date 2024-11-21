@@ -25,15 +25,17 @@ async def cleanup_deleted_model_weights(db: Optional[AsyncSession] = None) -> No
 async def _cleanup_deleted_model_weights(db: AsyncSession) -> None:
     """Clean up weights files from GCS for deleted models."""
     try:
+        logger.info("Starting model weights cleanup")
+
         # Find recently deleted models
         cutoff_date = now_utc() - timedelta(days=3)
         deleted_models = await model_queries.get_deleted_models(
             db,
             cutoff_date
         )
+        logger.info(f"Found {len(deleted_models)} deleted models for cleanup")
 
         if not deleted_models:
-            logger.info("No deleted models found for cleanup")
             return
 
         storage_client = storage.Client()
@@ -42,6 +44,8 @@ async def _cleanup_deleted_model_weights(db: AsyncSession) -> None:
             await _cleanup_model_weights(model, storage_client)
 
         await db.commit()
+
+        logger.info("Model weights cleanup complete")
 
     except Exception as e:
         await db.rollback()
@@ -54,9 +58,12 @@ async def _cleanup_model_weights(
 ) -> None:
     """Clean up weights for a single model."""
     if not model.artifacts:
+        logger.info(f"Model {model.id} has no artifacts, skipping")
         return
 
     try:
+        logger.info(f"Cleaning up weights for model {model.id}")
+
         # Extract bucket and path information
         base_url = model.artifacts['base_url']
         bucket_name = base_url.split('/')[3]
@@ -73,12 +80,15 @@ async def _cleanup_model_weights(
                 logger.info(f"Deleted weight file: {gs_path}")
             except NotFound:
                 # Weight file already deleted, continue
+                logger.info(f"Weight file not found: {weight_path}, model {model.id}")
                 pass
+            except Exception as e:
+                logger.error(f"Error deleting weight file {weight_path}, model {model.id}: {str(e)}")
 
         # Update artifacts to remove weight files
         model.artifacts['weight_files'] = []
 
+        logger.info(f"Deleted weights for model {model.id}")
+
     except Exception as e:
-        logger.error(
-            f"Error deleting weights for model {model.id}: {str(e)}"
-        )
+        logger.error(f"Error deleting weights for model {model.id}: {str(e)}")

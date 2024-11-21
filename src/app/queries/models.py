@@ -125,9 +125,7 @@ async def get_deleted_models(
         .where(
             and_(
                 FineTunedModel.status == FineTunedModelStatus.DELETED,
-                FineTunedModel.updated_at >= make_naive(cutoff_date),
-                # Only include models that still have weight files
-                FineTunedModel.artifacts.is_not(None)
+                FineTunedModel.updated_at >= make_naive(cutoff_date)
             )
         )
         .order_by(FineTunedModel.updated_at.desc())
