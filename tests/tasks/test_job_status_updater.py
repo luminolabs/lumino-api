@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 
 from app.core.constants import FineTuningJobStatus
+# noinspection PyProtectedMember
 from app.tasks.job_status_updater import (
     update_job_statuses,
     _get_jobs_for_update,
@@ -186,7 +187,7 @@ async def test_update_job_steps(mock_db, mock_job):
     # Mock job details
     mock_job.current_step = 50
 
-    await _update_job_steps(mock_db, mock_job, mock_job.user_id, artifacts)
+    await _update_job_steps(mock_db, mock_job, artifacts)
 
     # Verify job progress was updated
     assert mock_job.current_step == 75

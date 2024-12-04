@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.constants import FineTuningJobStatus
-from app.core.database import get_db, AsyncSessionLocal
+from app.core.database import AsyncSessionLocal
 from app.core.scheduler_client import fetch_job_details
 from app.core.utils import setup_logger
 from app.models.fine_tuning_job import FineTuningJob
@@ -126,7 +126,7 @@ async def _process_job_update(
     await _update_job_timestamps(job, update['timestamps'])
 
     # Update progress
-    await _update_job_steps(db, job, user_id, update['artifacts'])
+    await _update_job_steps(db, job, update['artifacts'])
 
     # Create fine-tuned model if needed
     await _check_create_model(db, job_id, user_id, update['artifacts'])
@@ -155,7 +155,6 @@ async def _update_job_timestamps(
 async def _update_job_steps(
         db: AsyncSession,
         job: FineTuningJob,
-        user_id: UUID,
         artifacts: Dict[str, Any]
 ) -> None:
     """Update job progress from artifacts."""

@@ -1,9 +1,7 @@
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Optional, Dict, Any
 
-from google.api_core.exceptions import NotFound
-from google.cloud import storage
-from pyasn1_modules.rfc6031 import at_pskc_deviceStartDate
+from gcloud.aio.storage import Storage
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
@@ -16,7 +14,7 @@ logger = setup_logger(__name__)
 
 
 async def cleanup_deleted_model_weights(db: Optional[AsyncSession] = None) -> None:
-    """Wrapper to _update_job_statuses that handles database session."""
+    """Wrapper to _cleanup_deleted_model_weights that handles database session."""
     if db is None:
         async with AsyncSessionLocal() as db:
             await _cleanup_deleted_model_weights(db)
@@ -29,7 +27,7 @@ async def _cleanup_deleted_model_weights(db: AsyncSession) -> None:
     try:
         logger.info("Starting model weights cleanup")
 
-        # Find recently deleted models
+        # Find recently deleted models (within last 3 days)
         cutoff_date = now_utc() - timedelta(days=3)
         deleted_models = await model_queries.get_deleted_models(
             db,
@@ -40,13 +38,11 @@ async def _cleanup_deleted_model_weights(db: AsyncSession) -> None:
         if not deleted_models:
             return
 
-        storage_client = storage.Client()
-
+        storage = Storage()
         for model in deleted_models:
-            await _cleanup_model_weights(model, storage_client)
+            await _cleanup_model_weights(model, storage)
 
         await db.commit()
-
         logger.info("Model weights cleanup complete")
 
     except Exception as e:
@@ -54,45 +50,43 @@ async def _cleanup_deleted_model_weights(db: AsyncSession) -> None:
         logger.error(f"Failed to cleanup model weights: {str(e)}")
 
 
-async def _cleanup_model_weights(
-        model: FineTunedModel,
-        storage_client: storage.Client
-) -> None:
+async def _cleanup_model_weights(model: FineTunedModel, storage: Storage) -> None:
     """Clean up weights for a single model."""
     if not model.artifacts:
         logger.info(f"Model {model.id} has no artifacts, skipping")
         return
 
-    try:
-        logger.info(f"Cleaning up weights for model {model.id}")
+    logger.info(f"Cleaning up weights for model {model.id}")
 
-        # Extract bucket and path information
-        base_url = model.artifacts['base_url']
-        bucket_name = base_url.split('/')[3]
-        user_id, job_id = base_url.split('/')[4:6]
-        bucket = storage_client.bucket(bucket_name)
+    # Extract bucket and path information
+    base_url = model.artifacts['base_url']
+    # Parse gs://bucket-name/path/to/file format
+    bucket_name = base_url.split('/')[3]
+    user_id, job_id = base_url.split('/')[4:6]
 
-        # Delete each weight file
-        for weight_file in model.artifacts.get('weight_files', []):
-            weight_path = f"{user_id}/{job_id}/{weight_file}"
-            blob = bucket.blob(weight_path)
-            try:
-                blob.delete()
-                gs_path = f"gs://{bucket_name}/{weight_path}"
-                logger.info(f"Deleted weight file: {gs_path}")
-            except NotFound:
-                # Weight file already deleted, continue
-                logger.info(f"Weight file not found: {weight_path}, model {model.id}")
-            except Exception as e:
-                # Log error and continue, no need to fail entire cleanup
+    # Delete each weight file
+    for weight_file in model.artifacts.get('weight_files', []):
+        weight_path = f"{user_id}/{job_id}/{weight_file}"
+        try:
+            await storage.delete(bucket=bucket_name, object_name=weight_path)
+            gs_path = f"gs://{bucket_name}/{weight_path}"
+            logger.info(f"Deleted weight file: {gs_path}")
+        except Exception as e:
+            # Log error and continue with next file, we don't want to stop the cleanup process
+            if "404" in str(e):
+                logger.warning(f"Weight file not found: {weight_path}, model {model.id}")
+            else:
                 logger.error(f"Error deleting weight file {weight_path}, model {model.id}: {str(e)}")
 
-        # Update artifacts to remove weight files
-        artifacts = model.artifacts.copy()
-        artifacts['weight_files'] = []
-        model.artifacts = artifacts
+    # Update artifacts to remove weight files
+    artifacts = _update_model_artifacts(model.artifacts)
+    model.artifacts = artifacts
 
-        logger.info(f"Deleted weights for model {model.id}")
+    logger.info(f"Deleted weights for model {model.id}")
 
-    except Exception as e:
-        logger.error(f"Error deleting weights for model {model.id}: {str(e)}")
+
+def _update_model_artifacts(artifacts: Dict[str, Any]) -> Dict[str, Any]:
+    """Update model artifacts to remove weight files."""
+    updated_artifacts = artifacts.copy()
+    updated_artifacts['weight_files'] = []
+    return updated_artifacts
