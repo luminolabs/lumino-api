@@ -12,8 +12,6 @@ from app.core.utils import setup_logger
 
 logger = setup_logger(__name__)
 
-GCS_BUCKET = config.gcs_bucket
-
 
 def handle_gcs_error(e: ClientResponseError, file_path: str) -> None:
     """Handle Google Cloud Storage errors."""
@@ -28,11 +26,12 @@ def handle_gcs_error(e: ClientResponseError, file_path: str) -> None:
         raise StorageError(f"GCS operation failed: {str(e)}", logger)
 
 
-async def upload_file(path: str, file: UploadFile, user_id: UUID) -> str:
+async def upload_file(bucket: str, path: str, file: UploadFile, user_id: UUID) -> str:
     """
     Upload file to Google Cloud Storage.
 
     Args:
+        bucket: GCS bucket name
         path: Storage path
         file: File to upload
         user_id: User ID for file path
@@ -57,7 +56,7 @@ async def upload_file(path: str, file: UploadFile, user_id: UUID) -> str:
         async with ClientSession() as session:
             storage = Storage(session=session)
             await storage.upload(
-                bucket=GCS_BUCKET,
+                bucket=bucket,
                 object_name=file_path,
                 file_data=contents,
                 content_type=file.content_type
@@ -73,11 +72,12 @@ async def upload_file(path: str, file: UploadFile, user_id: UUID) -> str:
         raise StorageError(f"Failed to upload file: {str(e)}", logger)
 
 
-async def delete_file(path: str, file_name: str, user_id: UUID) -> None:
+async def delete_file(bucket: str, path: str, file_name: str, user_id: UUID) -> None:
     """
     Delete file from Google Cloud Storage.
 
     Args:
+        bucket: GCS bucket name
         path: Storage path
         file_name: File name to delete
         user_id: User ID for file path
@@ -91,7 +91,7 @@ async def delete_file(path: str, file_name: str, user_id: UUID) -> None:
         async with ClientSession() as session:
             storage = Storage(session=session)
             await storage.delete(
-                bucket=GCS_BUCKET,
+                bucket=bucket,
                 object_name=file_path
             )
 
