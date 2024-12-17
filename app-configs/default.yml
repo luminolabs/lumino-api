@@ -15,7 +15,7 @@ gcs_datasets_bucket: pipeline-zen-datasets  # Set this without the `lum-` prefix
 # If you change default db settings, you need to change them in docker-compose.yml too
 db_name: lumino_api
 db_user: lumino_api
-# Production environment overrides these two, to use a Cloud SQL instance,
+# Production environment overrides these, to use a Cloud SQL instance,
 # otherwise, we use a local Postgres instance with docker compose
 db_pass: pass123
 db_host: localhost
