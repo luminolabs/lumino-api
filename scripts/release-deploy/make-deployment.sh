@@ -16,9 +16,9 @@ DEPLOY_ENV=$2
 source ./scripts/release-deploy/common.sh
 
 stty -echo  # Hide the user input, so the password is not displayed
-gcloud compute ssh $BUILD_VM --project=$PROJECT_ID --zone=$ZONE \
+gcloud compute ssh $BUILD_VM --project=$RESOURCES_PROJECT_ID --zone=$ZONE \
       --command="CODE_REPO_DIR=$CODE_REPO_DIR $CODE_REPO_DIR/scripts/release-deploy/_git-pull.sh"
 stty echo  # Restore the user input
-gcloud compute ssh $BUILD_VM --project=$PROJECT_ID --zone=$ZONE \
-      --command="CODE_REPO_DIR=$CODE_REPO_DIR $CODE_REPO_DIR/scripts/release-deploy/_make-docker-image.sh"
+gcloud compute ssh $BUILD_VM --project=$RESOURCES_PROJECT_ID --zone=$ZONE \
+      --command="CODE_REPO_DIR=$CODE_REPO_DIR SERVICE_NAME=$SERVICE_NAME $CODE_REPO_DIR/scripts/release-deploy/_make-docker-image.sh"
 echo "Done."
