@@ -3,4 +3,3 @@ run_with_scheduler: False
 scheduler_zen_url: http://localhost:5200
 ui_url: http://localhost:3000
 new_user_credits: 500
-db_pass: pass123  # Change this in docker-compose.yml too, if you change it here

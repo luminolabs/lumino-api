@@ -13,16 +13,14 @@ gcs_datasets_path: datasets
 
 # Database
 # These two are the same in all environments
-# If you want to change these two, you need to change them in docker-compose.yml too
+# If you change default db settings, you need to change them in docker-compose.yml too
 db_name: lumino_api
 db_user: lumino_api
-# This one is read from a GCP secret in all non-local environments,
-# otherwise, it's set in local.yml
-db_pass:
 # Production environment overrides these two, to use a Cloud SQL instance,
 # otherwise, we use a local Postgres instance with docker compose
+db_pass: pass123
 db_host: localhost
-db_port: 35100  # Change this in docker-compose.yml too, if you change it here
+db_port: 35100
 
 # API configuration
 api_v1_prefix: /v1
