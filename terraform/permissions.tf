@@ -26,3 +26,11 @@ resource "google_storage_bucket_iam_member" "pipeline_zen_jobs_results" {
   role   = "roles/storage.objectUser"
   member = "serviceAccount:${google_service_account.lumino_api.email}"
 }
+
+resource "google_artifact_registry_repository_iam_member" "lumino_api" {
+  member     = "serviceAccount:${google_service_account.lumino_api.email}"
+  repository = "lum-docker-images"
+  project    = var.resources_project_id
+  location   = var.region
+  role       = "roles/artifactregistry.reader"
+}

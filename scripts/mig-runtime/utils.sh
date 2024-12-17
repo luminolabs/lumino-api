@@ -10,6 +10,9 @@ is_truthy() {
   echo "0"
 }
 
+# Export all variables
+set -o allexport
+
 # GCP / Build variables
 RESOURCES_PROJECT_ID="neat-airport-407301"
 REGION="us-central1"
@@ -37,21 +40,18 @@ fi
 if [[ $(is_truthy "$IS_GCP") == "1" ]]; then
   CAPI_ENV=$(curl -s -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/instance/attributes/${ENV_VAR_PREFIX}_ENV")
 else
-  CAPI_ENV=LOCAL_ENV
+  CAPI_ENV=$LOCAL_ENV
 fi
 
 # If we're running locally, export variables from the .env file
 if [[ $(is_truthy "$IS_GCP") == "0" ]]; then
-  set -o allexport
   eval $(cat ./.env | grep -v '^#' | tr -d '\r')
 fi
 
 # Set the project ID and service account based on the environment
 PROJECT_ID="eng-ai-$CAPI_ENV"
 SERVICE_ACCOUNT="$SERVICE_NAME-sa@$PROJECT_ID.iam.gserviceaccount.com"
-
-# Work with the correct service account in local environment
-export CLOUDSDK_CORE_ACCOUNT=$SERVICE_ACCOUNT
+CLOUDSDK_CORE_ACCOUNT=$SERVICE_ACCOUNT
 
 # Echo variables for debugging
 echo "Current directory: $(pwd)"
@@ -59,3 +59,4 @@ echo "IS_GCP set to $IS_GCP"
 echo "CAPI_ENV set to $CAPI_ENV"
 echo "PROJECT_ID set to $PROJECT_ID"
 echo "SERVICE_ACCOUNT set to $SERVICE_ACCOUNT"
+echo "CLOUDSDK_CORE_ACCOUNT set to $CLOUDSDK_CORE_ACCOUNT"

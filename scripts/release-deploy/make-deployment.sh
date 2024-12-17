@@ -13,7 +13,7 @@ SERVICE_NAME=$1
 DEPLOY_ENV=$2
 
 # Import common functions and variables
-source ./scripts/release-deploy/common.sh
+source ./scripts/release-deploy/utils.sh
 
 stty -echo  # Hide the user input, so the password is not displayed
 gcloud compute ssh $BUILD_VM --project=$RESOURCES_PROJECT_ID --zone=$ZONE \

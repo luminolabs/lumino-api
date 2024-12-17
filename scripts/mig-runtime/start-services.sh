@@ -12,7 +12,7 @@ echo "COMPOSE_OPTS set to $COMPOSE_OPTS"
 
 # Import common functions and variables
 CODE_REPO_DIR="/$SERVICE_NAME"
-source ./scripts/utils.sh 2>/dev/null || source $CODE_REPO_DIR/scripts/utils.sh 2>/dev/null
+source ./scripts/mig-runtime/utils.sh 2>/dev/null || source $CODE_REPO_DIR/scripts/mig-runtime/utils.sh 2>/dev/null
 
 echo "Fetching secrets from Secret Manager"
 SECRET_NAME="$SERVICE_NAME-config"

@@ -8,7 +8,7 @@ SERVICE_NAME=$1
 DEPLOY_ENV=$2
 
 # Import common functions and variables
-source ./scripts/release-deploy/common.sh
+source ./scripts/release-deploy/utils.sh
 
 echo "About to delete instances in the MIG group: $SERVICE_NAME. Instances will be recreated automatically."
 
