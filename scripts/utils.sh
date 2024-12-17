@@ -50,6 +50,9 @@ fi
 PROJECT_ID="eng-ai-$CAPI_ENV"
 SERVICE_ACCOUNT="$SERVICE_NAME-sa@$PROJECT_ID.iam.gserviceaccount.com"
 
+# Work with the correct service account in local environment
+export CLOUDSDK_CORE_ACCOUNT=$SERVICE_ACCOUNT
+
 # Echo variables for debugging
 echo "Current directory: $(pwd)"
 echo "IS_GCP set to $IS_GCP"
