@@ -21,6 +21,11 @@ from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
 logger = setup_logger(__name__, add_stdout=config.log_stdout, log_level=config.log_level)
 
 
+def _get_dataset_bucket() -> str:
+    """Get the dataset bucket."""
+    return f'lum-{config.env_name}-{config.gcs_datasets_path}'
+
+
 async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate) -> DatasetResponse:
     """Create a new dataset."""
     # Check if a dataset with the same name already exists
@@ -35,7 +40,7 @@ async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate
     dataset.file.filename = sanitized_filename
 
     # Upload the dataset file to storage
-    file_name = await upload_file(config.gcs_datasets_path, dataset.file, user_id)
+    file_name = await upload_file(_get_dataset_bucket(), dataset.file, user_id)
 
     try:
         # Create the dataset record
@@ -56,7 +61,7 @@ async def create_dataset(db: AsyncSession, user_id: UUID, dataset: DatasetCreate
 
     except SQLAlchemyError as e:
         # If there's an SQL error, delete the uploaded file
-        await delete_file(config.gcs_datasets_path, file_name, user_id)
+        await delete_file(_get_dataset_bucket(), file_name, user_id)
         await db.rollback()
         raise e
 
@@ -131,7 +136,7 @@ async def delete_dataset(db: AsyncSession, user_id: UUID, dataset_name: str) -> 
 
     try:
         # Delete the file from storage first
-        await delete_file(config.gcs_datasets_path, db_dataset.file_name, user_id)
+        await delete_file(_get_dataset_bucket(), db_dataset.file_name, user_id)
 
         # Mark the dataset as deleted in the database
         db_dataset.status = DatasetStatus.DELETED
