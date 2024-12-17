@@ -2,3 +2,4 @@ scheduler_zen_url: http://scheduler-zen:5200
 ui_url: https://app.luminolabs.ai
 new_user_credits: 5
 base_domain_name: .luminolabs.ai
+db_port: 5432

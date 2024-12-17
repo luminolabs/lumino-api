@@ -12,13 +12,17 @@ gcs_bucket: lum-pipeline-zen-jobs-us
 gcs_datasets_path: datasets
 
 # Database
-# Set these in your .env file when running on a local env
-# On non-local envs, we store these in a GCP secret
-db_name:
-db_user:
+# These two are the same in all environments
+# If you want to change these two, you need to change them in docker-compose.yml too
+db_name: lumino_api
+db_user: lumino_api
+# This one is read from a GCP secret in all non-local environments,
+# otherwise, it's set in local.yml
 db_pass:
-db_host:
-db_port:
+# Production environment overrides these two, to use a Cloud SQL instance,
+# otherwise, we use a local Postgres instance with docker compose
+db_host: localhost
+db_port: 35100  # Change this in docker-compose.yml too, if you change it here
 
 # API configuration
 api_v1_prefix: /v1

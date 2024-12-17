@@ -32,6 +32,7 @@ async def list_api_keys(db: AsyncSession, user_id: UUID, offset: int, limit: int
     result = await db.execute(
         select(ApiKey)
         .where(ApiKey.user_id == user_id)
+        .order_by(ApiKey.created_at.desc())
         .offset(offset)
         .limit(limit)
     )
