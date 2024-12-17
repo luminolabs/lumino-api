@@ -13,6 +13,7 @@ from app.core.exceptions import (
 )
 from app.core.utils import setup_logger
 from app.queries import fine_tuning as ft_queries
+from app.services.dataset import get_dataset_bucket
 
 logger = setup_logger(__name__)
 
@@ -57,7 +58,7 @@ async def start_fine_tuning_job(db: AsyncSession, job_id: UUID, user_id: UUID) -
         "args": {
             "job_config_name": base_model.name,
             "dataset_id": (
-                f"gs://{config.gcs_bucket}/datasets/{user_id}/"
+                f"gs://{get_dataset_bucket()}/{user_id}/"
                 f"{dataset.file_name}"
             ),
             "batch_size": job_detail.parameters.get("batch_size", 2),
