@@ -20,5 +20,5 @@ gcloud compute ssh $BUILD_VM --project=$RESOURCES_PROJECT_ID --zone=$ZONE \
       --command="CODE_REPO_DIR=$CODE_REPO_DIR $CODE_REPO_DIR/scripts/release-deploy/_git-pull.sh"
 stty echo  # Restore the user input
 gcloud compute ssh $BUILD_VM --project=$RESOURCES_PROJECT_ID --zone=$ZONE \
-      --command="CODE_REPO_DIR=$CODE_REPO_DIR SERVICE_NAME=$SERVICE_NAME $CODE_REPO_DIR/scripts/release-deploy/_make-docker-image.sh"
+      --command="CODE_REPO_DIR=$CODE_REPO_DIR SERVICE_NAME=$SERVICE_NAME ARTIFACT_REPO_URL=$ARTIFACT_REPO_URL $CODE_REPO_DIR/scripts/release-deploy/_make-docker-image.sh"
 echo "Done."

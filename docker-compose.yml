@@ -14,9 +14,9 @@ services:
       - "35100:35100"
 
   api:
-    build: .
-#    image: us-central1-docker.pkg.dev/neat-airport-407301/lum-docker-images/lumino-api:latest
-#    platform: linux/amd64
+#    build: .
+    platform: linux/amd64
+    image: us-central1-docker.pkg.dev/neat-airport-407301/lum-docker-images/lumino-api:latest
     command: python /project/app/main.py
     volumes:
       - .secrets:/project/.secrets
