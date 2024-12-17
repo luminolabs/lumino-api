@@ -10,21 +10,15 @@ COMPOSE_OPTS="${@:2}"  # Additional options to pass to docker compose
 echo "Starting $SERVICE_NAME..."
 echo "COMPOSE_OPTS set to $COMPOSE_OPTS"
 
-# Change to the service directory
-cd /$SERVICE_NAME
-
 # Import common functions and variables
-source ./scripts/utils.sh
-
-# Export .env environment variables
-set -o allexport
-eval $(cat ./.env | grep -v '^#' | tr -d '\r')
-echo "CAPI_ENV set to $CAPI_ENV"
+CODE_REPO_DIR="/$SERVICE_NAME"
+source ./scripts/utils.sh 2>/dev/null || source $CODE_REPO_DIR/scripts/utils.sh 2>/dev/null
 
 echo "Fetching secrets from Secret Manager"
-SECRET_NAME="$SERVICE_NAME-config-$CAPI_ENV"
+SECRET_NAME="$SERVICE_NAME-config"
 SECRET_PAYLOAD=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID)
 # Parse the secret payload and set environment variables
+set -o allexport
 eval "$SECRET_PAYLOAD"
 
 echo "Pull the latest image"
