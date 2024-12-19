@@ -27,3 +27,9 @@ variable "resources_project_id" {
   type        = string
   default     = "neat-airport-407301"
 }
+
+variable "api_internal_port" {
+    description = "The internal port for the API"
+    type        = number
+    default     = 5100
+}

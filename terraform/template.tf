@@ -1,7 +1,12 @@
 resource "google_compute_instance_template" "lumino_api" {
-  name         = "lumino-api-tpl"
   project      = var.project_id
   machine_type = "e2-standard-4"
+
+  # Be sure to update X in the lumino-api-tpl-X name when you update the template
+  # This is because the template is in use by the MIG
+  # and the only way to swap out the template is to create a new one
+  # Terraform will delete the old template and create a new one with the new name
+  name         = "lumino-api-tpl-2"
 
   disk {
     source_image = "projects/${var.resources_project_id}/global/images/lumino-api-image"
@@ -27,7 +32,7 @@ resource "google_compute_instance_template" "lumino_api" {
   }
 
   metadata = {
-    startup-script = "/lumino-api/scripts/mig-runtime/start-services.sh lumino-api"
+    startup-script = "/lumino-api/scripts/mig-runtime/start-services.sh lumino-api api"
     CAPI_ENV = var.environment
   }
 
@@ -51,4 +56,20 @@ resource "google_compute_instance_template" "lumino_api" {
   lifecycle {
     create_before_destroy = true
   }
+
+  tags = ["lumino-api-web"]
+}
+
+resource "google_compute_firewall" "lumino_api" {
+  name    = "lumino-api-firewall"
+  network = "projects/${var.project_id}/global/networks/default"
+
+  allow {
+    protocol = "tcp"
+    ports    = [var.api_internal_port]
+  }
+
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
+
+  target_tags = ["lumino-api-web"]
 }

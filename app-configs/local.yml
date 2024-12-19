@@ -1,5 +1,5 @@
-GOOGLE_APPLICATION_CREDENTIALS: .secrets/gcp_key.json
-run_with_scheduler: False
 scheduler_zen_url: http://localhost:5200
-ui_url: http://localhost:3000
+ui_url: http://localhost:5100
 new_user_credits: 500
+run_with_scheduler: False
+GOOGLE_APPLICATION_CREDENTIALS: .secrets/gcp_key.json

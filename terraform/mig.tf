@@ -13,7 +13,7 @@ resource "google_compute_instance_group_manager" "lumino_api" {
 
   named_port {
     name = "web"
-    port = 5100
+    port = var.api_internal_port
   }
 
   update_policy {

@@ -6,6 +6,7 @@ from starlette.requests import Request
 
 from app.core.config_manager import config
 from app.core.database import get_db
+from app.core.exceptions import ServerError
 from app.core.utils import setup_logger
 from app.services.auth0 import Auth0Service
 
@@ -36,7 +37,7 @@ async def login(request: Request) -> RedirectResponse:
         return RedirectResponse(url=login_url)
     except Exception as e:
         logger.error(f"Login failed: {str(e)}")
-        return RedirectResponse(url=request.url_for("login"))
+        raise ServerError("Failed to initiate login process", logger=logger)
 
 
 @router.get("/auth0/callback")
