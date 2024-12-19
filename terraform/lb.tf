@@ -41,6 +41,33 @@ resource "google_compute_url_map" "lumino_api" {
   default_service = google_compute_backend_service.lumino_api.id
 }
 
+# URL map for HTTP-to-HTTPS redirect
+resource "google_compute_url_map" "lumino_api_redirect" {
+  name = "lumino-api-redirect-url-map"
+
+  # Default action is to redirect to HTTPS
+  default_url_redirect {
+    https_redirect = true
+    strip_query    = false
+  }
+}
+
+# HTTP proxy that references the redirect URL map
+resource "google_compute_target_http_proxy" "lumino_api_redirect" {
+  name    = "lumino-api-redirect-proxy"
+  url_map = google_compute_url_map.lumino_api_redirect.id
+}
+
+# Global forwarding rule for HTTP (port 80)
+# Points to the redirect proxy
+resource "google_compute_global_forwarding_rule" "lumino_api_http_redirect" {
+  name                  = "lumino-api-http-redirect-fwd-rule"
+  target                = google_compute_target_http_proxy.lumino_api_redirect.id
+  port_range            = "80"
+  ip_address            = google_compute_global_address.lumino_api.id
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+}
+
 # Backend service
 resource "google_compute_backend_service" "lumino_api" {
   name                  = "lumino-api-backend"

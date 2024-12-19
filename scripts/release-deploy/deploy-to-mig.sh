@@ -23,7 +23,7 @@ gcloud artifacts docker tags add \
 
 # Start the rolling update
 echo "Starting the rolling update."
-tofu apply -auto-approve
+cd terraform && tofu apply
 echo "Rolling update started and *this script will exit now* - it may take up to 5 minutes for the update to complete."
 echo "Monitor progress at: https://console.cloud.google.com/compute/instanceGroups/details/$ZONE/$SERVICE_NAME-mig"
 echo "Done."
