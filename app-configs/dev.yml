@@ -1,3 +1,3 @@
 scheduler_zen_url: http://scheduler-zen-vm:5200
-ui_url: http://localhost:6100
+ui_url: https://api.dev.luminolabs.ai
 new_user_credits: 500
