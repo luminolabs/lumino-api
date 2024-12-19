@@ -12,30 +12,18 @@ source ./scripts/release-deploy/utils.sh
 
 echo "About to delete instances in the MIG group: $SERVICE_NAME. Instances will be recreated automatically."
 
-# If a version is provided, use it;
-# Set docker image tag to latest in artifact registry to the version provided
-if [ -n "$3" ]; then
-  VERSION=$3
-  echo "Updating service to use version: $VERSION"
-  gcloud artifacts docker tags add \
-    $ARTIFACT_REPO_URL/$SERVICE_NAME:$VERSION \
-    $ARTIFACT_REPO_URL/$SERVICE_NAME:latest > /dev/null
-else
-  VERSION=$(cat VERSION)
-  echo "No version provided, update latest tag to $VERSION"
-  gcloud artifacts docker tags add \
-    $ARTIFACT_REPO_URL/$SERVICE_NAME:$VERSION \
-    $ARTIFACT_REPO_URL/$SERVICE_NAME:latest > /dev/null
-fi
+# Pull the version from the VERSION file
+# if you'd like to roll back to a previous version, you can manually change the VERSION file
+VERSION=$(cat VERSION)
+
+# Make the current version the default version to be used by the MIG
+gcloud artifacts docker tags add \
+  $ARTIFACT_REPO_URL/$SERVICE_NAME:$VERSION \
+  $ARTIFACT_REPO_URL/$SERVICE_NAME:latest > /dev/null
 
 # Start the rolling update
 echo "Starting the rolling update."
-# Flags:
-# --max-unavailable=0: Our minimum number of instances is 1, so we can't have any unavailable
-# --min-ready=Xs: Wait for X seconds (see utils.sh) after an instance is ready before considering it available
-gcloud beta compute instance-groups managed rolling-action replace $SERVICE_NAME-mig \
-  --project=$PROJECT_ID --zone=$ZONE \
-  --max-unavailable=0 --min-ready=${BUILD_DURATION_S}s > /dev/null
+tofu apply -auto-approve
 echo "Rolling update started and *this script will exit now* - it may take up to 5 minutes for the update to complete."
 echo "Monitor progress at: https://console.cloud.google.com/compute/instanceGroups/details/$ZONE/$SERVICE_NAME-mig"
 echo "Done."

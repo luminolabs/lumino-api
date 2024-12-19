@@ -1,12 +1,7 @@
 resource "google_compute_instance_template" "lumino_api" {
   project      = var.project_id
   machine_type = "e2-standard-4"
-
-  # Be sure to update X in the lumino-api-tpl-X name when you update the template
-  # This is because the template is in use by the MIG
-  # and the only way to swap out the template is to create a new one
-  # Terraform will delete the old template and create a new one with the new name
-  name         = "lumino-api-tpl-2"
+  name         = "lumino-api-${local.version}-tpl"
 
   disk {
     source_image = "projects/${var.resources_project_id}/global/images/lumino-api-image"

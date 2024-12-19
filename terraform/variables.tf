@@ -33,3 +33,7 @@ variable "api_internal_port" {
     type        = number
     default     = 5100
 }
+
+locals {
+  version = trimsuffix(replace(file("${path.module}/../VERSION"), ".", "-"), "\n")
+}
