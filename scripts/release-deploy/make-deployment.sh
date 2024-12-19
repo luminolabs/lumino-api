@@ -10,7 +10,6 @@
 
 # Inputs
 SERVICE_NAME=$1
-DEPLOY_ENV=$2
 
 # Import common functions and variables
 source ./scripts/release-deploy/utils.sh
