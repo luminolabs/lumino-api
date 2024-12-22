@@ -24,7 +24,5 @@ PROJECT_ID="eng-ai-$DEPLOY_ENV"
 
 # Echo variables for debugging
 echo "Current directory: $(pwd)"
-echo "DEPLOY_ENV set to DEPLOY_ENV"
+echo "DEPLOY_ENV set to $DEPLOY_ENV"
 echo "PROJECT_ID set to $PROJECT_ID"
-echo "ARTIFACT_REPO_URL set to $ARTIFACT_REPO_URL"
-echo "CODE_REPO_DIR set to $CODE_REPO_DIR"

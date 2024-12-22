@@ -47,7 +47,7 @@ async def test_upload_file_success(mock_file):
         mock_session.return_value.__aenter__.return_value = mock_session
 
         # Call the function
-        result = await upload_file(path, mock_file, user_id)
+        result = await upload_file('lum-pipeline-zen-jobs-us', path, mock_file, user_id)
 
         # Verify the upload was called correctly
         mock_storage.upload.assert_called_once()
@@ -81,7 +81,7 @@ async def test_upload_file_404_error(mock_file):
         mock_session.return_value.__aenter__.return_value = mock_session
 
         # Should return filename without raising error
-        result = await upload_file(path, mock_file, user_id)
+        result = await upload_file('my_bucket', path, mock_file, user_id)
         assert result.endswith("test_file.txt")
 
 
@@ -106,7 +106,7 @@ async def test_upload_file_auth_error(mock_file):
         mock_session.return_value.__aenter__.return_value = mock_session
 
         with pytest.raises(ServerError) as exc_info:
-            await upload_file(path, mock_file, user_id)
+            await upload_file('my_bucket', path, mock_file, user_id)
         assert "Authentication error" in str(exc_info.value)
 
 
@@ -126,7 +126,7 @@ async def test_upload_file_other_error(mock_file):
         mock_session.return_value.__aenter__.return_value = mock_session
 
         with pytest.raises(StorageError) as exc_info:
-            await upload_file(path, mock_file, user_id)
+            await upload_file('my_bucket', path, mock_file, user_id)
         assert "Failed to upload file" in str(exc_info.value)
 
 
@@ -144,7 +144,7 @@ async def test_delete_file_success():
         mock_session.return_value.__aenter__.return_value = mock_session
 
         # Should complete without error
-        await delete_file(path, file_name, user_id)
+        await delete_file('my_bucket', path, file_name, user_id)
         mock_storage.delete.assert_called_once()
 
 
@@ -169,7 +169,7 @@ async def test_delete_file_404_error():
         mock_session.return_value.__aenter__.return_value = mock_session
 
         # Should complete without error for 404
-        await delete_file(path, file_name, user_id)
+        await delete_file('my_bucket', path, file_name, user_id)
 
 
 @pytest.mark.asyncio
@@ -188,7 +188,7 @@ async def test_delete_file_other_error():
         mock_session.return_value.__aenter__.return_value = mock_session
 
         with pytest.raises(StorageError) as exc_info:
-            await delete_file(path, file_name, user_id)
+            await delete_file('my_bucket', path, file_name, user_id)
         assert "Failed to delete file" in str(exc_info.value)
 
 

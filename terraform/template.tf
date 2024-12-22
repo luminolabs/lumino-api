@@ -27,7 +27,7 @@ resource "google_compute_instance_template" "lumino_api" {
   }
 
   metadata = {
-    startup-script = "/lumino-api/scripts/mig-runtime/start-services.sh lumino-api api"
+    startup-script = "/lumino-api/scripts/mig-runtime/start-services.sh api"
     CAPI_ENV = var.environment
   }
 

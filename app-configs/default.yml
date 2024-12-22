@@ -11,15 +11,13 @@ gcp_project: neat-airport-407301
 gcs_datasets_bucket: pipeline-zen-datasets  # Set this without the `lum-` prefix
 
 # Database
-# These two are the same in all environments
-# If you change default db settings, you need to change them in docker-compose.yml too
-db_name: lumino_api
-db_user: lumino_api
-# Production environment overrides these, to use a Cloud SQL instance,
-# otherwise, we use a local Postgres instance with docker compose
-db_pass: pass123
-db_host: localhost
-db_port: 35100
+# Set these in your .env file when running on a local env
+# On non-local envs, we store these in a GCP secret
+db_name:
+db_user:
+db_pass:
+db_host:
+db_port:
 
 # API configuration
 api_v1_prefix: /v1

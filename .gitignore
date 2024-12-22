@@ -4,7 +4,6 @@ __pycache__/
 
 # Environment variables file
 .env
-.gcp
 
 # IDE-specific files
 .idea/
@@ -16,9 +15,8 @@ __pycache__/
 # Secret files
 .secrets/
 
-# This is the repomix genared file that
-# is contains the whole repo content for
-# submitting to AIs, like Claude
+# Generated file containing packed repository contents
+# for AI such as Claude
 lumino-api.txt
 
 # OS-specific files
@@ -31,3 +29,5 @@ Thumbs.db
 **/terraform/.terraform.tfstate.lock.info
 **/terraform/terraform.tfstate
 **/terraform/terraform.tfstate.backup
+**/terraform/secrets.tfvars
+**/terraform/*-config.env
