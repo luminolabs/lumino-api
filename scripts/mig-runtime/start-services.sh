@@ -12,6 +12,9 @@ set -o allexport
 # Constants
 SERVICE_NAME='lumino-api'
 ENV_VAR_PREFIX='CAPI'
+RESOURCES_PROJECT_ID="neat-airport-407301"
+REGION="us-central1"
+ARTIFACT_REPO_URL="$REGION-docker.pkg.dev/$RESOURCES_PROJECT_ID/lum-docker-images"
 
 # Inputs
 COMPOSE_OPTS="${@:1}"  # Options to pass to docker compose

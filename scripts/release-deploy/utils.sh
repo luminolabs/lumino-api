@@ -23,6 +23,5 @@ CODE_REPO_DIR="/$SERVICE_NAME"
 PROJECT_ID="eng-ai-$DEPLOY_ENV"
 
 # Echo variables for debugging
-echo "Current directory: $(pwd)"
 echo "DEPLOY_ENV set to $DEPLOY_ENV"
 echo "PROJECT_ID set to $PROJECT_ID"
