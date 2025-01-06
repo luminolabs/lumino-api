@@ -7,7 +7,10 @@ ssh into the Scheduler VM and paste your private GitHub SSH key to the VM under 
 ```bash
 gcloud compute ssh --zone "us-central1-a" "scheduler-zen"
 ```
-This will allow pulling from our private GitHub repository.
+This will allow pulling from our private GitHub repository during the deployment process.
+
+## Update VERSION file
+Make sure the `VERSION` file is updated with the new version number. This version number will be used to tag the Docker image and name the VM template.
 
 ## Building the Docker Image
 In your terminal, navigate to the root directory of this project and run the following command:
@@ -28,12 +31,8 @@ New VMs will be created and will run the latest Docker image.
 To monitor the rolling update, go to the [Google Cloud Console](https://console.cloud.google.com/compute/instanceGroups/details/us-central1-a/lumino-api-prod)
 
 ### Deploy a Specific Version
-To deploy a specific version of the Docker image, run the following command:
+To deploy a specific version of the Docker image, update the `VERSION` file with the desired version number and run the following command:
 ```bash
-./scripts/release-deploy/deploy-to-mig.sh <VERSION>
+./scripts/release-deploy/deploy-to-mig.sh
 ```
-example:
-```bash
-./scripts/release-deploy/deploy-to-mig.sh 0.10.0
-```
-This will tag the Docker image with the specified version to `latest` and kick off the MIG rolling update.
+This will tag the Docker image with the specified version to `latest` and kick off the MIG rolling update as usual.
