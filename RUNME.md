@@ -30,33 +30,77 @@ docker compose up -d --build
 4. Connect to the database and add this record to the `base_models` table:
 ```sql
 INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
-VALUES (
-    'llm_llama3_1_8b',
-    'The Llama 3.1 8B model',
-    'meta-llama/Meta-Llama-3.1-8B-Instruct',
-    'ACTIVE',
-    NULL,
-    '{"lora":
-        {"gpu_type": "a100-40gb", "num_gpus": 1},
-        "qlora":
-        {"gpu_type": "a100-40gb", "num_gpus": 1},
-        "full":
-        {"gpu_type": "a100-80gb", "num_gpus": 2}}'
-);
+VALUES ('llm_llama3_1_8b',
+        'The Llama 3.1 8B model',
+        'meta-llama/Llama-3.1-8B-Instruct',
+        'ACTIVE',
+        NULL,
+        '{"lora":
+            {"gpu_type": "a100-40gb", "num_gpus": 1},
+            "qlora":
+            {"gpu_type": "a100-40gb", "num_gpus": 1},
+            "full":
+            {"gpu_type": "a100-80gb", "num_gpus": 2}}');
 INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
-VALUES (
-    'llm_dummy',
-    'Dummy model run',
-    '',
-    'ACTIVE',
-    NULL,
-    '{"lora":
-        {"gpu_type": "v100", "num_gpus": 1},
-        "qlora":
-        {"gpu_type": "v100", "num_gpus": 1},
-        "full":
-        {"gpu_type": "v100", "num_gpus": 4}}'
-    );
+VALUES ('llm_llama3_1_70b',
+        'The Llama 3.1 70B model',
+        'meta-llama/Llama-3.1-70B-Instruct',
+        'ACTIVE',
+        NULL,
+        '{"lora":
+        {"gpu_type": "a100-80gb", "num_gpus": 4},
+          "qlora":
+          {"gpu_type": "a100-80gb", "num_gpus": 4},
+          "full":
+          {"gpu_type": "h100-80gb", "num_gpus": 8}}');
+INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
+VALUES ('llm_llama3_2_1b',
+        'The Llama 3.2 1B model',
+        'meta-llama/Llama-3.2-1B-Instruct',
+        'ACTIVE',
+        NULL,
+        '{"lora":
+            {"gpu_type": "a100-40gb", "num_gpus": 1},
+            "qlora":
+            {"gpu_type": "a100-40gb", "num_gpus": 1},
+            "full":
+            {"gpu_type": "a100-40gb", "num_gpus": 1}}');
+INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
+VALUES ('llm_llama3_2_3b',
+        'The Llama 3.2 3B model',
+        'meta-llama/Llama-3.2-3B-Instruct',
+        'ACTIVE',
+        NULL,
+        '{"lora":
+            {"gpu_type": "a100-40gb", "num_gpus": 1},
+            "qlora":
+            {"gpu_type": "a100-40gb", "num_gpus": 1},
+            "full":
+            {"gpu_type": "a100-40gb", "num_gpus": 1}}');
+INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
+VALUES ('llm_llama3_3_70b',
+        'The Llama 3.3 70B model',
+        'meta-llama/Llama-3.3-70B-Instruct',
+        'ACTIVE',
+        NULL,
+        '{"lora":
+        {"gpu_type": "a100-80gb", "num_gpus": 4},
+          "qlora":
+          {"gpu_type": "a100-80gb", "num_gpus": 4},
+          "full":
+          {"gpu_type": "h100-80gb", "num_gpus": 8}}');
+INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
+VALUES ('llm_dummy',
+        'Dummy model run',
+        '',
+        'ACTIVE',
+        NULL,
+        '{"lora":
+            {"gpu_type": "v100", "num_gpus": 1},
+            "qlora":
+            {"gpu_type": "v100", "num_gpus": 1},
+            "full":
+            {"gpu_type": "v100", "num_gpus": 4}}');
 ```
 
 5. To access the UI and generate API keys, navigate to `http://localhost:5100/` in your browser.

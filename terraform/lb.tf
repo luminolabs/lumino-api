@@ -24,7 +24,7 @@ resource "google_compute_managed_ssl_certificate" "lumino_api" {
   name = "lumino-api-ssl-cert"
 
   managed {
-    domains = ["api.${var.environment}.luminolabs.ai"]
+    domains = [var.environment == "prod" ? "api.luminolabs.ai" : "api.${var.environment}.luminolabs.ai"]
   }
 }
 
