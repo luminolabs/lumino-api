@@ -40,7 +40,7 @@ VALUES ('llm_llama3_1_8b',
             "qlora":
             {"gpu_type": "a100-40gb", "num_gpus": 1},
             "full":
-            {"gpu_type": "a100-80gb", "num_gpus": 2}}');
+            {"gpu_type": "a100-40gb", "num_gpus": 4}}');
 INSERT INTO base_models (name, description, hf_url, status, meta, cluster_config)
 VALUES ('llm_llama3_1_70b',
         'The Llama 3.1 70B model',
