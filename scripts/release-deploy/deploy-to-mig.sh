@@ -12,6 +12,9 @@ DEPLOY_ENV=$1
 
 echo "Starting the deploy process for $SERVICE_NAME in $DEPLOY_ENV..."
 
+# Switching to the DEPLOY_ENV terraform workspace
+tofu workspace select $DEPLOY_ENV
+
 # Import common functions and variables
 source ./scripts/release-deploy/utils.sh
 
