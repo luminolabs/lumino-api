@@ -445,9 +445,12 @@ async def calculate_required_credits(
 
     # Define pricing tiers based on model
     model_pricing = {
-        'llm_llama3_1_8b': 2.0,  # $2 per million tokens
-        'llm_llama3_1_70b': 10.0,  # $10 per million tokens
-        'llm_dummy': 2.0,  # $2 per million tokens for testing
+        'llm_llama3_1_8b': 2.0,  # $ per million tokens
+        'llm_llama3_1_70b': 10.0,
+        'llm_llama3_2_1b': 1.0,
+        'llm_llama3_2_3b': 1.0,
+        'llm_llama3_3_70b': 10.0,
+        'llm_dummy': 0.1,
     }
 
     # Get price per million tokens for the model
