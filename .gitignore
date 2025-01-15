@@ -24,11 +24,10 @@ lumino-api.txt
 Thumbs.db
 
 # Terraform
-terraform/.terraform/
+terraform/.terraform
 terraform/.terraform.lock.hcl
 terraform/.terraform.tfstate.lock.info
-terraform/terraform.tfstate
-terraform/terraform.tfstate.backup
+terraform/terraform.tfstate.d
 terraform/secrets.tfvars
 terraform/*-config.env
 terraform/terraform.tfstate.d

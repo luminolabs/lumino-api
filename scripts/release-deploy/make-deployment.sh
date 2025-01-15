@@ -14,7 +14,7 @@ SERVICE_NAME='lumino-api'
 # Inputs
 DEPLOY_ENV=$1
 
-echo "Starting the build process for $SERVICE_NAME in $DEPLOY_ENV..."
+echo "Starting the build process for $SERVICE_NAME..."
 
 # Import common functions and variables
 source ./scripts/release-deploy/utils.sh
