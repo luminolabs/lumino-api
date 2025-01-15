@@ -13,7 +13,9 @@ DEPLOY_ENV=$1
 echo "Starting the deploy process for $SERVICE_NAME in $DEPLOY_ENV..."
 
 # Switching to the DEPLOY_ENV terraform workspace
+cd terraform
 tofu workspace select $DEPLOY_ENV
+cd ../
 
 # Import common functions and variables
 source ./scripts/release-deploy/utils.sh
@@ -24,7 +26,9 @@ gcloud artifacts docker tags add \
   $ARTIFACT_REPO_URL/$SERVICE_NAME:latest > /dev/null
 
 echo "Starting the rolling update."
-cd terraform && tofu apply -var-file="$DEPLOY_ENV.tfvars" -var-file="secrets.tfvars"
+cd terraform
+tofu apply -var-file="$DEPLOY_ENV.tfvars" -var-file="secrets.tfvars"
+cd ../
 echo "Rolling update started and *this script will exit now* - it may take up to 5 minutes for the update to complete."
 echo "Monitor progress at: https://console.cloud.google.com/compute/instanceGroups/details/$ZONE/$SERVICE_NAME-mig"
 
