@@ -12,7 +12,7 @@ from app.core.exceptions import (
     BaseModelNotFoundError,
     DatasetNotFoundError,
     FineTuningJobAlreadyExistsError,
-    ForbiddenError, FineTuningJobNotFoundError, BadRequestError
+    ForbiddenError, FineTuningJobNotFoundError, BadRequestError, FineTuningJobCreationError
 )
 from app.core.scheduler_client import start_fine_tuning_job, stop_fine_tuning_job
 from app.core.utils import setup_logger
@@ -38,6 +38,16 @@ async def create_fine_tuning_job(
         job: FineTuningJobCreate
 ) -> FineTuningJobDetailResponse:
     """Create a new fine-tuning job."""
+
+    # Don't run Llama 3.2 1B and 3B FULL fine-tuning
+    # on production until we fix the issue with that job configuration
+    if job.base_model_name in ["llm_llama3_2_1b", "llm_llama3_2_3b"] and job.type == FineTuningJobType.FULL and \
+            config.env_name == "prod":
+        raise FineTuningJobCreationError(
+            "We're investigating an issue with Llama 3.2 1B and 3B FULL fine-tuning. Please try again later.",
+            logger
+        )
+
     # Validate user status
     if not user.email_verified:
         raise ForbiddenError("Email verification required", logger)
