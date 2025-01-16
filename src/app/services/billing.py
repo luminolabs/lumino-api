@@ -166,6 +166,17 @@ async def process_credit_deduction(
     user.credits_balance -= required_credits
     job.num_tokens = request.usage_amount
 
+    # First, see if we already deducted credits for this job
+    credit_record = await billing_queries.get_credit_record(
+        db,
+        user.id,
+        str(job.id),
+        BillingTransactionType.FINE_TUNING_JOB
+    )
+    # If we did, return success response with existing record
+    if credit_record:
+        return CreditHistoryResponse.from_orm(credit_record)
+
     # Record deduction
     credit_record = BillingCredit(
         user_id=user.id,

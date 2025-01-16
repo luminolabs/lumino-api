@@ -49,6 +49,8 @@ async def create_fine_tuning_job(
     base_model = await model_queries.get_base_model_by_name(db, job.base_model_name)
     if not base_model:
         raise BaseModelNotFoundError(f"Base model not found: {job.base_model_name}", logger)
+    if base_model.status != FineTunedModelStatus.ACTIVE:
+        raise BaseModelNotFoundError(f"Base model is not active: {job.base_model_name}", logger)
 
     # Validate dataset
     dataset = await dataset_queries.get_dataset_by_name(db, user.id, job.dataset_name)
