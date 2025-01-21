@@ -160,8 +160,6 @@ async def get_fine_tuning_jobs(
     return jobs, pagination
 
 
-# app/services/fine_tuning.py (continued)
-
 async def get_fine_tuning_job(
         db: AsyncSession,
         user_id: UUID,
