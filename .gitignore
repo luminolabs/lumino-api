@@ -31,6 +31,3 @@ terraform/terraform.tfstate.d
 terraform/secrets.tfvars
 terraform/*-config.env
 terraform/terraform.tfstate.d
-
-#venv
-.python-version
