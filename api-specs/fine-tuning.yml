@@ -146,7 +146,7 @@ components:
           description: The name of the fine-tuning job
         type:
           type: string
-          enum: [ FULL, LORA, QLORA ]
+          enum: [ LORA, QLORA ]
           description: The type of fine-tuning job to run
         provider:
           type: string
@@ -176,7 +176,7 @@ components:
           type: string
         type:
           type: string
-          enum: [ FULL, LORA, QLORA ]
+          enum: [ LORA, QLORA ]
         provider:
           type: string
           enum: [ GCP, LUM ]

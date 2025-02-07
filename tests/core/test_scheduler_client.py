@@ -160,6 +160,35 @@ async def test_start_fine_tuning_job_scheduler_error(
 
             assert "Validation error" in str(exc_info.value)
 
+# Add test for full fine-tuning disabled
+@pytest.mark.asyncio
+async def test_start_fine_tuning_job_full_disabled(
+        mock_db,
+        mock_job,
+        mock_dataset,
+        mock_base_model,
+        mock_job_detail,
+        mock_user
+):
+    """Test that full fine-tuning is disabled."""
+    # Modify mock_job_detail to attempt full fine-tuning
+    mock_job_detail.parameters = {
+        "batch_size": 2,
+        "shuffle": True,
+        "num_epochs": 1,
+        "use_lora": False,
+        "use_qlora": False
+    }
+
+    # Mock the job query
+    with patch('app.core.scheduler_client.ft_queries.get_job_with_details_full') as mock_query:
+        mock_query.return_value = (mock_job, mock_dataset, mock_base_model, mock_job_detail)
+
+        # Verify that attempting full fine-tuning raises an error
+        with pytest.raises(FineTuningJobCreationError) as exc_info:
+            await start_fine_tuning_job(mock_db, mock_job.id, mock_user.id)
+
+        assert "Full fine-tuning is currently disabled" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_fetch_job_details_success():

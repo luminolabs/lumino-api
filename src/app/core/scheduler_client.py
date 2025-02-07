@@ -39,6 +39,14 @@ async def start_fine_tuning_job(db: AsyncSession, job_id: UUID, user_id: UUID) -
     # Extract cluster configuration
     use_lora = job_detail.parameters.get("use_lora", True)
     use_qlora = job_detail.parameters.get("use_qlora", False)
+
+    # Prevent full fine-tuning
+    if not use_lora and not use_qlora:
+        raise FineTuningJobCreationError(
+            "Full fine-tuning is currently disabled",
+            logger
+        )
+
     if not use_lora:
         use_qlora = False
 
