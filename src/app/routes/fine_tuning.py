@@ -5,6 +5,7 @@ from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.authentication import get_current_active_user
+from app.core.constants import FineTuningJobType
 from app.core.database import get_db
 from app.core.utils import setup_logger
 from app.models.user import User
@@ -33,6 +34,8 @@ async def create_new_fine_tuning_job(
         db: AsyncSession = Depends(get_db),
 ) -> FineTuningJobDetailResponse:
     """Create a new fine-tuning job."""
+    if job.type == FineTuningJobType.FULL:
+        raise SystemError('FULL fine-tuning is not supported yet, but we are working on it')
     return await create_fine_tuning_job(db, current_user, job)
 
 
