@@ -1,0 +1,88 @@
+name: CI/CD
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  check-pr-merge:
+    name: Merge Status
+    runs-on: self-hosted
+    if: github.event.pull_request.merged == true
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      merge_commit_sha: ${{ github.event.pull_request.merge_commit_sha }}
+    steps:
+      - id: check
+        run: |
+          echo "PR${{ github.event.pull_request.number }} merged."
+          echo "should_build=true" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build Pipeline
+    needs: check-pr-merge
+    if: needs.check-pr-merge.outputs.should_build == 'true'
+    # uses: test-org-runner/infra-templates/.github/workflows/build.yml@srujan/ci_cd
+    uses: luminolabs/infra-templates/.github/workflows/build.yml@srujan/ci_cd
+    with:
+      app_name: lumino-api
+      build_sha: ${{ needs.check-pr-merge.outputs.merge_commit_sha }}
+      image_creator_instance: lumino-api-image-creator
+    secrets:
+      PAT: ${{ secrets.PAT}}  # Pass the token
+
+  # deploy:
+  #   name: Deploy Pipeline
+  #   needs: build
+  #   if: success()
+  #   uses: test-org-runner/infra-templates/.github/workflows/deploy-mig.yml@srujan/ci_cd
+  #   # uses: luminolabs/infra-templates/.github/workflows/deploy-mig.yml@srujan/ci_cd
+  #   with:
+  #     app_name: lumino-api
+  #     mig_name: lumino-api-mig
+
+      # code_repo_dir: /lumino-api
+#      resources_project_id: #key to set project-id (default:neat-airport-407301)
+#      region: #key to set region (default:us-central1)
+#      zone: #key to set zone (default:us-central1-a)
+
+  # revert-on-failure:
+  #   needs: [check-pr-merged, build]
+  #   runs-on: self-hosted-runner
+  #   if: failure() && needs.check-pr-merged.outputs.should_build == 'true'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Configure Git
+  #       run: |
+  #         git config --global user.name "GitHub Actions"
+  #         git config --global user.email "actions@github.com"
+
+  #     - name: Create Revert PR
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         PR_NUMBER: ${{ needs.check-pr-merged.outputs.pr_number }}
+  #       run: |
+  #         # Get the merge commit SHA
+  #         MERGE_SHA="${{ needs.check-pr-merged.outputs.merge_commit_sha }}"
+          
+  #         # Create a new branch for the revert
+  #         REVERT_BRANCH="revert-pr-${PR_NUMBER}-$(date +%s)"
+  #         git checkout -b $REVERT_BRANCH
+          
+  #         # Create the revert commit
+  #         git revert -m 1 $MERGE_SHA
+          
+  #         # Push the revert branch
+  #         git push origin $REVERT_BRANCH
+          
+  #         # Create a pull request for the revert
+  #         gh pr create \
+  #           --title "Revert PR #${PR_NUMBER} due to build failure" \
+  #           --body "Automatically reverting PR #${PR_NUMBER} due to build failure in the CI/CD pipeline." \
+  #           --base main \
+  #           --head $REVERT_BRANCH

@@ -1,0 +1,22 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+    branches: [main]
+
+jobs:
+  call-unittest-workflow:
+    name: Unit Test Workflow
+    permissions:
+      contents: read
+      actions: read
+    if: |
+      (github.event.action == 'labeled' && github.event.label.name == 'draft') ||
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'draft'))
+    # uses: test-org-runner/infra-templates/.github/workflows/unittest-python.yml@srujan/ci_cd
+    uses: luminolabs/infra-templates/.github/workflows/unittest-python.yml@srujan/ci_cd
+    with:
+      python_version: "3.11.10"
+    secrets:
+      PAT: ${{ secrets.PAT}}  # Pass the token
