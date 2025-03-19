@@ -35,8 +35,6 @@ async def create_new_fine_tuning_job(
         db: AsyncSession = Depends(get_db),
 ) -> FineTuningJobDetailResponse:
     """Create a new fine-tuning job."""
-    if job.type == FineTuningJobType.FULL:
-        raise BadRequestError('FULL fine-tuning is not supported yet, but we are working on it')
     return await create_fine_tuning_job(db, current_user, job)
 
 
