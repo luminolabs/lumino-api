@@ -13,3 +13,10 @@ provider "google" {
 locals {
   version = trimsuffix(replace(file("${path.module}/../VERSION"), ".", "-"), "\n")
 }
+
+terraform {
+  backend "gcs" {
+    bucket = "lum-terraform-state"
+    prefix = "lumino-api"
+  }
+}
