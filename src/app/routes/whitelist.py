@@ -78,3 +78,28 @@ async def update_nda_status_route(
     """Update NDA status (admin only)."""
     update_request = WhitelistRequestUpdate(is_whitelisted=None, has_signed_nda=update_data.has_signed_nda)
     return await update_whitelist_status(db, user_id, update_request)
+
+@router.post("/whitelist/computing-providers/batch", status_code=status.HTTP_202_ACCEPTED)
+async def add_computing_providers_batch_route(
+        request: WhitelistBatchRequest,
+        current_user: User = Depends(admin_required),  # Use appropriate permission check
+        db: AsyncSession = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    Add multiple computing providers to the whitelist in a single transaction.
+    Admin only endpoint.
+    """
+    return await add_computing_providers_batch(db, request)
+
+
+@router.delete("/whitelist/computing-providers/batch", status_code=status.HTTP_202_ACCEPTED)
+async def remove_computing_providers_batch_route(
+        request: WhitelistBatchRequest,
+        current_user: User = Depends(admin_required),  # Use appropriate permission check
+        db: AsyncSession = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    Remove multiple computing providers from the whitelist in a single transaction.
+    Admin only endpoint.
+    """
+    return await remove_computing_providers_batch(db, request)

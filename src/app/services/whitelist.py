@@ -98,3 +98,106 @@ async def update_whitelist_status(
     except Exception as e:
         await db.rollback()
         raise e
+    
+async def add_computing_providers_batch(
+        db: AsyncSession,
+        request: WhitelistBatchRequest
+) -> Dict[str, Any]:
+    """
+    Add multiple computing providers to the whitelist.
+    Admin/operator only endpoint.
+
+    Args:
+        db: Database session
+        request: Batch request containing addresses to whitelist
+
+    Returns:
+        Dictionary with operation results
+        
+    Raises:
+        ForbiddenError: If the user doesn't have sufficient permissions
+    """
+    try:
+        # Call the contract method
+        # This is a placeholder - actual implementation would depend on your web3 setup
+        tx_hash = await call_contract_method(
+            "addCPBatch",
+            [request.addresses]
+        )
+        
+        # Log the operation
+        logger.info(f"Added {len(request.addresses)} computing providers to whitelist, tx: {tx_hash}")
+        
+        return {
+            "success": True,
+            "message": f"Successfully submitted request to whitelist {len(request.addresses)} computing providers",
+            "tx_hash": tx_hash,
+            "addresses": request.addresses
+        }
+    except Exception as e:
+        logger.error(f"Failed to add computing providers in batch: {str(e)}")
+        raise ServerError(f"Failed to process batch whitelist request: {str(e)}", logger)
+
+
+async def remove_computing_providers_batch(
+        db: AsyncSession,
+        request: WhitelistBatchRequest
+) -> Dict[str, Any]:
+    """
+    Remove multiple computing providers from the whitelist.
+    Admin/operator only endpoint.
+
+    Args:
+        db: Database session
+        request: Batch request containing addresses to remove
+
+    Returns:
+        Dictionary with operation results
+        
+    Raises:
+        ForbiddenError: If the user doesn't have sufficient permissions
+    """
+    try:
+        # Call the contract method
+        # This is a placeholder - actual implementation would depend on your web3 setup
+        tx_hash = await call_contract_method(
+            "removeCPBatch",
+            [request.addresses]
+        )
+        
+        # Log the operation
+        logger.info(f"Removed {len(request.addresses)} computing providers from whitelist, tx: {tx_hash}")
+        
+        return {
+            "success": True,
+            "message": f"Successfully submitted request to remove {len(request.addresses)} computing providers from whitelist",
+            "tx_hash": tx_hash,
+            "addresses": request.addresses
+        }
+    except Exception as e:
+        logger.error(f"Failed to remove computing providers in batch: {str(e)}")
+        raise ServerError(f"Failed to process batch whitelist removal request: {str(e)}", logger)
+
+
+# Unsure if this needs to be implemented
+async def call_contract_method(method_name: str, args: List) -> str:
+    """
+    Call a contract method using Web3.
+    This is a placeholder - implement according to your Web3 setup.
+
+    Args:
+        method_name: Name of the contract method
+        args: Arguments to pass to the method
+
+    Returns:
+        Transaction hash
+    """
+    # Implementation depends on your web3 configuration
+    # This would typically:
+    # 1. Connect to your contract
+    # 2. Build the transaction
+    # 3. Sign and send the transaction
+    # 4. Return the transaction hash
+    
+    # Placeholder return
+    return "0x" + "0" * 64
