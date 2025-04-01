@@ -55,6 +55,7 @@ class User(Base):
     api_keys = relationship("ApiKey", back_populates="user")
     usage_records = relationship("Usage", back_populates="user")
     billing_credits = relationship("BillingCredit", back_populates="user")
+    whitelist_request = relationship("Whitelist", back_populates="user", uselist=False)
 
     # Indexes
     __table_args__ = (

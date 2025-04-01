@@ -20,7 +20,7 @@ from app.core.exceptions import (
     sqlalchemy_exception_handler,
     generic_exception_handler,
 )
-from app.routes import users, api_keys, datasets, fine_tuning, models, usage, auth0, billing
+from app.routes import users, api_keys, datasets, fine_tuning, models, usage, auth0, billing, whitelist
 from app.tasks.api_key_cleanup import cleanup_expired_api_keys
 from app.tasks.job_status_updater import update_job_statuses
 from app.tasks.model_cleanup import cleanup_deleted_model_weights
@@ -76,6 +76,7 @@ app.include_router(models.router, prefix=api_prefix)
 app.include_router(usage.router, prefix=api_prefix)
 app.include_router(auth0.router, prefix=api_prefix)
 app.include_router(billing.router, prefix=api_prefix)
+app.include_router(whitelist.router, prefix=api_prefix)
 
 # Set up Jinja2 HTML templates
 templates = Jinja2Templates(directory="html")
